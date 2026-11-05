@@ -2,6 +2,19 @@
 
 本專案採用語義化版本（Semantic Versioning），每次更新同步對齊 `package.json`、`shared/book.js` 及 `web/index.html`。
 
+## [v1.2.4] — 2026-11-05
+
+### 更改（Changed · 用回總會那隻黃）
+- **主色重新取樣**：直接量度總會《幼童軍紀錄冊》PDF 封面（`page 0`，96 dpi 以上渲染），黃布面的實測像素值＝**`#ead040`**（h≈51°、s 0.73、v 0.92）。之前用的 `#ffd23f`／`#f2b705`／`#ffe27a` 明顯偏亮偏橙，已全部淘汰。
+- **全書色階重寫**：`#f0d85e → #ead040 → #c0a21c`；標題帶中段＝`#ead040`、頁碼圓＝`#ead040`、封面布面中段＝`#ead040`、提示帶＝`#ead040 → #d3b526`。
+- **深色面同步加深**：`--cub-yellow: #dcc02c`、`--cub-yellow-deep: #b3971f`、燙金 `--foil: #d6bd67`、深金標題 `#7a5600`、印章／墨藍 `#6b4608`；七個活動徽章範疇帶改為更沉的金色階（`#f2e2a2` → `#b3971f`）。
+- **圖示重繪**：`scripts/generate_icons.mjs` 改用 `[234, 208, 64]`（`#ead040`），9 個圖示、根目錄 favicon、`favicon.svg`、OG 圖全部重新產生（合計 163.8 KB，限額 260 KB）。
+- **PWA**：`theme-color` 及 `manifest.theme_color` 改 `#ead040`；Service Worker 快取升 `cubbook-cache-v3`，確保舊圖示不會留在用戶機。
+- **文件**：README、AGENTS.md、SCOPE.md、docs/design-review.md 的配色段落改以 `#ead040` 為準；對比度：深墨 `#241605` 於 `#ead040` ＝ 11.4:1、白字於 `#ead040` ＝ 1.5:1（仍禁止）。
+
+### 測試（Tests）
+- UI 契約新增「禁止過淺黃」清單（`#ffd23f #ffe27a #ffe9a6 #ffdf7a #ffd94f #f2b705 #ffd84a`）及 `--cub-yellow-bright: #ead040` 主色鎖定；全套 **45/45**。
+
 ## [v1.2.3] — 2026-11-05
 
 ### 更改（Changed · 全書配色統一）

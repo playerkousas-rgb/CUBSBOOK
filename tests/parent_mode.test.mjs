@@ -149,20 +149,21 @@ const ratio = (a, b) => {
   return (x + 0.05) / (y + 0.05);
 };
 
-test('圖示與 favicon 用幼童軍黃，不再用森林綠（綠色留給 SCOUTBOOK）', () => {
+test('圖示與 favicon 用總會紀錄冊的幼童軍黃 #ead040，不再用森林綠（綠色留給 SCOUTBOOK）', () => {
   const script = read('scripts/generate_icons.mjs');
-  assert.match(script, /242, 183, 5/, '主要封面黃 #f2b705');
+  assert.match(script, /234, 208, 64/, '主要封面黃 #ead040（取自官方 PDF 封面）');
   assert.equal(script.includes('[28, 82, 54, 255]'), false, '16px 調色盤不得再用深綠');
   assert.equal(/mix\(8, 42, glow\)/.test(script), false, '背景不得再用森林綠漸層');
 
   const svg = read('web/public/favicon.svg');
-  assert.match(svg, /#f2b705/);
+  assert.match(svg, /#ead040/);
   assert.equal(svg.includes('#143b28'), false, 'favicon 不再用深綠');
 
   const css = read('web/src/styles.css');
-  assert.ok(css.includes('--cub-yellow: #f2b705'));
-  assert.ok(css.includes('linear-gradient(155deg, #ffd84a 0%, #f2b705 46%, #dca700 100%)'));
-  assert.ok(ratio('#123420', '#f2b705') >= 6.8);
-  assert.ok(ratio('#1a1206', '#f2b705') >= 8.0);
-  assert.ok(ratio('#ffffff', '#f2b705') < 3.0, '白字配黃仍然禁止');
+  assert.ok(css.includes('--cub-yellow: #dcc02c'));
+  assert.ok(css.includes('--cub-yellow-bright: #ead040'));
+  assert.ok(css.includes('linear-gradient(155deg, #f0d85e 0%, #dcc02c 46%, #c0a21c 100%)'));
+  assert.ok(ratio('#241605', '#ead040') >= 6.8, '深墨燙印於官方黃 >= 6.8:1');
+  assert.ok(ratio('#1a1206', '#ead040') >= 8.0);
+  assert.ok(ratio('#ffffff', '#ead040') < 3.0, '白字配黃仍然禁止');
 });

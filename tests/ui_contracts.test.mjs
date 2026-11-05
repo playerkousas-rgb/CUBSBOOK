@@ -114,8 +114,8 @@ test('全本幼童軍黃 × 深墨配色：官方版面亦不得殘留森林綠�
 
   assert.ok(css.includes('--cover-bg: #1a1206'));
   assert.ok(css.includes('--cover-bg-deep: #0d0904'));
-  assert.ok(css.includes('--vs-red: #8a5a00'));
-  assert.ok(css.includes('--foil: #e3c07a'));
+  assert.ok(css.includes('--vs-red: #7a5600'));
+  assert.ok(css.includes('--foil: #d6bd67'));
   assert.ok(css.includes("html[data-lang='zh']"));
   assert.ok(css.includes('.write__dot'));
   assert.ok(css.includes('env(safe-area-inset-top)'));
@@ -130,17 +130,24 @@ test('全本幼童軍黃 × 深墨配色：官方版面亦不得殘留森林綠�
     assert.equal(css.toLowerCase().includes(hex), false, `styles.css 仍有其他 BOOK 顏色 ${hex}`);
   }
 
+  // 主色必須是總會《幼童軍紀錄冊》PDF 封面實測的黃 #ead040（不是更淺的 #ffd23f／#f2b705）
+  assert.ok(css.includes('--cub-yellow-bright: #ead040'), '主色 token 必須為官方黃 #ead040');
+  const bright = ['#ffd23f', '#ffe27a', '#ffe9a6', '#ffdf7a', '#ffd94f', '#f2b705', '#ffd84a'];
+  for (const hex of bright) {
+    assert.equal(css.toLowerCase().includes(hex), false, `styles.css 仍有過淺的黃 ${hex}`);
+  }
+
   // 官方頁：金黃標題帶配深墨字，頁碼金黃圓底
   assert.match(css, /\.sheet__banner h1 \{[^}]*color: #2b1a04/);
-  assert.match(css, /\.sheet__folio \{[^}]*#f2b705/);
+  assert.match(css, /\.sheet__folio \{[^}]*#ead040/);
   assert.match(css, /\.sheet__folio \{[^}]*color: #2b1a04/);
   assert.match(css, /\.offact__head \{[^}]*#241605/);
 
-  assert.ok(contrastRatio('#8a5a00', '#f7f2e7') >= 5.0, '深金標題於象牙紙 >= 5:1');
+  assert.ok(contrastRatio('#7a5600', '#f7f2e7') >= 5.0, '深金標題於象牙紙 >= 5:1');
   assert.ok(contrastRatio('#1e1a14', '#f7f2e7') >= 14.0, '主墨色於象牙紙 >= 14:1');
-  assert.ok(contrastRatio('#19386b', '#f7f2e7') >= 8.0, '手寫藍墨於象牙紙 >= 8:1');
-  assert.ok(contrastRatio('#2b1a04', '#ffd23f') >= 8.0, '深墨字於金黃標題帶 >= 8:1');
-  assert.ok(contrastRatio('#ffffff', '#f2b705') < 3.0, '白字配黃仍然禁止');
+  assert.ok(contrastRatio('#6b4608', '#f7f2e7') >= 7.0, '手寫墨色於象牙紙 >= 7:1');
+  assert.ok(contrastRatio('#2b1a04', '#ead040') >= 8.0, '深墨字於幼童軍黃 #ead040 >= 8:1');
+  assert.ok(contrastRatio('#ffffff', '#ead040') < 3.0, '白字配黃仍然禁止');
 
   // 按鈕一律深墨字
   assert.match(css, /\.btn--gold\s*\{[^}]*color: #1a1206/);
@@ -241,7 +248,7 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
   assert.ok(html.includes('href="/favicon-32.png"'));
   assert.ok(html.includes('href="/favicon-48.png"'));
   assert.ok(html.includes('href="/icons/apple-touch-icon.png"'));
-  assert.ok(html.includes('content="#f2b705"'), '幼童軍黃 theme-color');
+  assert.ok(html.includes('content="#ead040"'), '幼童軍黃 theme-color');
 
   const files = [
     'web/public/favicon.svg',
@@ -265,14 +272,14 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
 
   const manifest = JSON.parse(read('web/public/manifest.webmanifest'));
   assert.equal(manifest.short_name, 'CUBBOOK');
-  assert.equal(manifest.theme_color, '#f2b705');
+  assert.equal(manifest.theme_color, '#ead040');
   assert.equal(manifest.background_color, '#14100a');
   for (const icon of manifest.icons) {
     assert.ok(fs.existsSync(path.join(root, 'web/public', icon.src.replace(/^\//, ''))), `manifest 圖示不存在 ${icon.src}`);
   }
 
   const sw = read('web/public/sw.js');
-  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v2'"), '配色改版後需更新快取版本');
+  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v3'"), '配色改版後需更新快取版本');
   // 官方 PDF 圖稿必須離線可用，否則露營現場翻開紀錄冊會破圖
   for (const asset of OFFICIAL_ASSETS) assert.ok(sw.includes(`'/official/${asset}'`), `Service Worker 未預快取 /official/${asset}`);
   assert.ok(!sw.includes('vsbook'));

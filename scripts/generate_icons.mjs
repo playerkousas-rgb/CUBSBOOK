@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Generate the complete 9-file G11 icon suite in web/public/icons/
- * Theme: CUBS YELLOW (#ffd23f -> #f2b705 -> #dca700) on warm charcoal (#14100a -> #3a2c18)
+ * Theme: CUBS YELLOW (#ead040, sampled from the official HK Scout Record Book PDF cover)
+ * on warm charcoal (#14100a -> #3a2c18)
  * + ivory page edge (#f8f3e8) + deep ink (#1a1206) emblem. Yellow is the Cub Scout identity;
  * green is deliberately NOT used here (reserved for SCOUTBOOK). Never white on yellow.
  * Zero external npm dependencies (uses node:zlib + pure PNG/ICO encoder).
@@ -147,7 +148,7 @@ function renderSquareIcon(size, { maskable = false } = {}) {
     const v = y / (size - 1);
     for (let x = 0; x < size; x++) {
       const u = x / (size - 1);
-      // Full-bleed deep forest green radial + diagonal gradient (Cub Scout cloth)
+      // Full-bleed warm charcoal radial + diagonal gradient
       const rad = Math.hypot(u - 0.35, v - 0.22);
       const glow = clamp(1 - rad * 1.15);
 
@@ -174,18 +175,18 @@ function renderSquareIcon(size, { maskable = false } = {}) {
       g = mix(g, 236, aPages);
       b = mix(b, 218, aPages);
 
-      // Maroon hardbound cover plate
+      // Cub yellow cloth cover plate — official #ead040 with a slightly deeper shade
       const aBook = 1 - smooth(-aa, aa, dBook);
       const coverTone = clamp(1 - Math.hypot(nx + 0.25, ny + 0.35) * 0.55);
-      r = mix(r, mix(216, 255, coverTone), aBook);
-      g = mix(g, mix(154, 214, coverTone), aBook);
-      b = mix(b, mix(0, 70, coverTone), aBook);
+      r = mix(r, mix(192, 234, coverTone), aBook);
+      g = mix(g, mix(162, 208, coverTone), aBook);
+      b = mix(b, mix(28, 64, coverTone), aBook);
 
       // Darker stitched spine on left of book
       const dSpine = Math.max(dBook, nx + 0.50);
       const aSpine = 1 - smooth(-aa, aa, dSpine);
-      r = mix(r, 132, aSpine * 0.72);
-      g = mix(g, 96, aSpine * 0.72);
+      r = mix(r, 128, aSpine * 0.72);
+      g = mix(g, 100, aSpine * 0.72);
       b = mix(b, 0, aSpine * 0.72);
 
       // Gold foil border rule + spine groove
@@ -222,15 +223,15 @@ function renderSquareIcon(size, { maskable = false } = {}) {
 /**
  * Hand-crafted 16x16 pixel-art icon (G11 rule: NEVER downscale 512->16; draw crisp pixel grid!)
  * Palette (CUBS YELLOW):
- *   M = Cub Yellow (#f2b705), B = Bright Yellow (#ffd23f), S = Spine (#8a6a00),
- *   G = Deep Ink emblem (#1a1206), D = Dark Gold frame (#a07a00), P = Ivory Page (#f6efe0)
+ *   M = Cub Yellow (#ead040 official), B = Bright Yellow (#f2dc64), S = Spine (#806408),
+ *   G = Deep Ink emblem (#1a1206), D = Dark Gold frame (#967406), P = Ivory Page (#f6efe0)
  */
 function renderHandcrafted16() {
   const PAL = {
-    S: [138, 106, 0, 255],
-    M: [242, 183, 5, 255],
-    B: [255, 210, 63, 255],
-    D: [160, 122, 0, 255],
+    S: [128, 100, 8, 255],
+    M: [234, 208, 64, 255],
+    B: [242, 220, 100, 255],
+    D: [150, 116, 6, 255],
     G: [26, 18, 6, 255],
     P: [246, 239, 224, 255],
   };
@@ -288,9 +289,9 @@ function renderOgImage() {
       // Gold outer hairline frame
       const dOuter = Math.abs(sdRoundBox(x, y, W / 2, H / 2, W / 2 - 28, H / 2 - 28, 14)) - 1.5;
       const aOuter = 1 - smooth(-1, 1, dOuter);
-      r = mix(r, 242, aOuter * 0.6);
-      g = mix(g, 183, aOuter * 0.6);
-      b = mix(b, 5, aOuter * 0.6);
+      r = mix(r, 234, aOuter * 0.6);
+      g = mix(g, 208, aOuter * 0.6);
+      b = mix(b, 64, aOuter * 0.6);
 
       // Left hardbound book emblem centered at (300, 315)
       const bx = (x - 300) / 195;
@@ -305,13 +306,13 @@ function renderOgImage() {
 
         const dBook = sdRoundBox(bx, by, 0, 0, 0.72, 0.86, 0.09);
         const aBook = 1 - smooth(-aa, aa, dBook);
-        r = mix(r, 242, aBook);
-        g = mix(g, 183, aBook);
-        b = mix(b, 5, aBook);
+        r = mix(r, 234, aBook);
+        g = mix(g, 208, aBook);
+        b = mix(b, 64, aBook);
 
         const aSpine = 1 - smooth(-aa, aa, Math.max(dBook, bx + 0.48));
-        r = mix(r, 138, aSpine * 0.8);
-        g = mix(g, 106, aSpine * 0.8);
+        r = mix(r, 128, aSpine * 0.8);
+        g = mix(g, 100, aSpine * 0.8);
         b = mix(b, 0, aSpine * 0.8);
 
         const aFrame = (1 - smooth(-aa, aa, Math.abs(sdRoundBox(bx, by, 0.08, 0, 0.50, 0.70, 0.04)) - 0.015)) * aBook;
@@ -340,8 +341,8 @@ function renderOgImage() {
         // Gold accent pill inside header
         const dPill = sdRoundBox(x, y, 645, 178, 46, 10, 4);
         const aPill = 1 - smooth(-1, 1, dPill);
-        cr = mix(cr, 242, aPill);
-        cg = mix(cg, 183, aPill);
+        cr = mix(cr, 234, aPill);
+        cg = mix(cg, 208, aPill);
         cb = mix(cb, 5, aPill);
 
         // Five progress bars: Membership, Bronze Arrow, Silver Arrow, Gold Arrow, Golden Bauhinia
@@ -356,16 +357,16 @@ function renderOgImage() {
 
           const fw = fills[ri];
           const aFill = 1 - smooth(-1, 1, sdRoundBox(x, y, 580 + fw, ry, fw, 10, 5));
-          cr = mix(cr, ri === 3 ? 242 : 26, aFill);
-          cg = mix(cg, ri === 3 ? 183 : 18, aFill);
-          cb = mix(cb, ri === 3 ? 5 : 6, aFill);
+          cr = mix(cr, ri === 3 ? 234 : 26, aFill);
+          cg = mix(cg, ri === 3 ? 208 : 18, aFill);
+          cb = mix(cb, ri === 3 ? 64 : 6, aFill);
         }
 
         // Gold foil chop circle bottom-right of card
         const dSeal = Math.abs(Math.hypot(x - 1025, y - 455) - 26) - 2.2;
         const aSeal = 1 - smooth(-1, 1, dSeal);
-        cr = mix(cr, 242, aSeal * 0.85);
-        cg = mix(cg, 183, aSeal * 0.85);
+        cr = mix(cr, 234, aSeal * 0.85);
+        cg = mix(cg, 208, aSeal * 0.85);
         cb = mix(cb, 5, aSeal * 0.85);
 
         r = mix(r, cr, aCard);

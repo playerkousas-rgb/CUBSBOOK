@@ -25,7 +25,7 @@
 3. **零個人資料同步**：跨系統只准傳 `SCOUT ID`／YMIS、項目代號及日期；伺服器端必須硬性剝除姓名、電話、地址、家長／監護人資料、相片及任何其他成員紀錄。`pendingRequests` **永不**錄入 BOOK。
 4. **不可自我核實**：BOOK 送出的進度只可經 `requestComplete` 變成 `status: 'pending'`；`save`／`saveOtherBadge`／`reviewRequest` 一律回 `403`；只有團長在 BADGE 內按 CONFIRM 才算完成。
 5. **版權擺位僅三處**：封面頁腳 `LegalLine`、數位附錄 `LegalNote`、選單「關於」`LegalNote`。其餘頁面、列印及表格不得重複。
-6. **幼童軍黃是主色，且對比不可退讓**：封面為黃布面（`#ffd84a → #f2b705 → #dca700`），黃底文字一律深綠 `#123420`／深炭 `#1a1206`；深綠底可配金黃字。**禁止白字配黃**（對比 < 3:1）。中英文完全分開，一鍵切換，不得並排塞入同一表格。家長模式（`web/src/parent.js`）是**第二部手機**的只讀鏡像：只可 `login`＋`load`（由 BADGE 匯出）或掃描孩子 `CB1`，不得加入任何輸入欄位、不得呼叫 `save`／`requestComplete`、不得改寫主紀錄冊（鏡像另存 `cubbook.parent.book.v1`）。
+6. **幼童軍黃是主色，且對比不可退讓**：封面為黃布面，色值＝總會《幼童軍紀錄冊》PDF 封面實測 **`#ead040`**（色階 `#f0d85e → #ead040 → #c0a21c`），黃底文字一律深墨 `#2b1a04`／`#1a1206`；深墨底可配金黃字。森林綠屬 SCOUTBOOK，酒紅屬 ROVERBOOK，兩者都不得在本書出現。**禁止白字配黃**（對比 < 3:1）。中英文完全分開，一鍵切換，不得並排塞入同一表格。家長模式（`web/src/parent.js`）是**第二部手機**的只讀鏡像：只可 `login`＋`load`（由 BADGE 匯出）或掃描孩子 `CB1`，不得加入任何輸入欄位、不得呼叫 `save`／`requestComplete`、不得改寫主紀錄冊（鏡像另存 `cubbook.parent.book.v1`）。
 7. **項目 ID 單一真相**：任何 `L1-*`…`L4-*`、`OT-*` 的改動必須先在 `cubbadge/data/items.json` 落地，再執行 `npm run syllabus`，並更新 `tests/fixtures/cubbadge-ids.json`；測試會以 sha256 與清單鎖死。
 8. **雙重版本號（V）與體積預算（S7 / G11）**：任何可見更新須同步遞增 `package.json`、`web/index.html`（`meta[name="app-version"]`、`window.APP_VERSION`）、`shared/book.js`（`APP_VERSION`）及 `CHANGELOG.md`；`dist/` 總體積須 `< 5 MB`，`web/public/icons/` 9 個圖示總和須 `<= 260 KB`。
 9. **禁止在 `.js/.mjs/.jsx` 寫 `// v1.0` 行內版本註解（F15）**：版本號只寫在常數、HTML meta 與 `CHANGELOG.md`。

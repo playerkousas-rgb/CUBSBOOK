@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CUBBOOK">
   <defs>
     <linearGradient id="cubs" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ffd23f"/>
-      <stop offset="0.55" stop-color="#f2b705"/>
-      <stop offset="1" stop-color="#dca700"/>
+      <stop offset="0" stop-color="#ead040"/>
+      <stop offset="0.55" stop-color="#dcc02c"/>
+      <stop offset="1" stop-color="#c0a21c"/>
     </linearGradient>
     <linearGradient id="backdrop" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#241c10"/>
@@ -13,7 +13,7 @@
   <rect width="64" height="64" rx="13" fill="url(#backdrop)"/>
   <rect x="9" y="10" width="47" height="44" rx="5" fill="#f8f3e8"/>
   <rect x="8" y="9" width="42" height="44" rx="5" fill="url(#cubs)"/>
-  <rect x="8" y="9" width="7" height="44" rx="3" fill="#8a6a00"/>
+  <rect x="8" y="9" width="7" height="44" rx="3" fill="#806408"/>
   <rect x="16.4" y="16" width="27" height="30" rx="2" fill="none" stroke="#1a1206" stroke-width="1.4"/>
   <path d="M30 23.5c2.3 0 3.8 1.6 3.8 3.6 0 2.7-3.8 6.7-3.8 6.7s-3.8-4-3.8-6.7c0-2 1.5-3.6 3.8-3.6z" fill="#1a1206"/>
   <rect x="22" y="37.5" width="16" height="2.4" rx="1.2" fill="#1a1206"/>

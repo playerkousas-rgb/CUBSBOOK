@@ -61,9 +61,9 @@ export function Crest({ size = 40, className = '' }) {
     <svg className={cx('crest', className)} width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
       <defs>
         <linearGradient id="vsfoil" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f6e3b6" />
-          <stop offset="48%" stopColor="#d8b871" />
-          <stop offset="100%" stopColor="#9f7933" />
+          <stop offset="0%" stopColor="#f0dda0" />
+          <stop offset="48%" stopColor="#c9ab55" />
+          <stop offset="100%" stopColor="#8f6f22" />
         </linearGradient>
       </defs>
       <circle cx="32" cy="32" r="26" fill="none" stroke="url(#vsfoil)" strokeWidth="1.2" opacity="0.45" />
