@@ -5448,9 +5448,9 @@ html[data-print-preview] .write--multi.is-empty {
   display: block;
   padding-bottom: 0.4%;
 }
-.offcover2__row--1 { left: 64.2%; right: 4.4%; bottom: 25.75%; }
-.offcover2__row--2 { left: 61.4%; right: 4.4%; bottom: 16.95%; }
-.offcover2__row--3 { left: 63.4%; right: 2.2%; bottom: 8.15%; }
+.offcover2__row--1 { left: 64.9%; right: 4.4%; bottom: 25.75%; }
+.offcover2__row--2 { left: 61.2%; right: 4.4%; bottom: 16.95%; }
+.offcover2__row--3 { left: 65.0%; right: 2.4%; bottom: 8.15%; }
 .offcover2__row .write {
   width: 100%;
   border-bottom: 0 !important;
