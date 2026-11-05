@@ -14,6 +14,7 @@ import { Crest, Icon, useToast } from '../ui.jsx';
 import { Link, navigate } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
 import { exitLeaderMode } from '../leader.js';
+import { enterParentMode, exitParentMode, mirrorFromTransfer, saveParentBook } from '../parent.js';
 
 const SCAN_MEMBER_KEY = 'cubbook.scan.member.v1';
 const SCAN_SIGNOFF_KEY = 'cubbook.scan.signoff.v1';
@@ -39,7 +40,7 @@ const readSession = (key) => {
    相機／貼上掃描器 (/scan) —— 領袖當面唯讀查閱單一成員紀錄冊並簽署回傳碼
    ============================================================ */
 
-export function Scan({ hasBook = true }) {
+export function Scan({ hasBook = true, parentMode = false }) {
   const { isEn } = useLang();
   const videoRef = useRef(null);
   const [status, setStatus] = useState('starting');
@@ -154,24 +155,54 @@ export function Scan({ hasBook = true }) {
         </Link>
         <div style={{ flex: 1 }}>
           <span className="eyebrow">
-            {isEn ? 'LEADER MODE · READ-ONLY' : '領袖只讀模式 · 不修改本機紀錄冊'}
+            {parentMode
+              ? isEn
+                ? 'PARENT MODE · READ-ONLY'
+                : '家長模式 · 只讀'
+              : isEn
+                ? 'LEADER MODE · READ-ONLY'
+                : '領袖只讀模式 · 不修改本機紀錄冊'}
           </span>
-          <h1>{isEn ? 'Scan Member Record Book (Read-Only)' : '掃描成員紀錄冊（只讀檢視及當面核簽）'}</h1>
+          <h1>
+            {parentMode
+              ? isEn
+                ? 'Scan your child’s QR code'
+                : '掃描孩子的二維碼'
+              : isEn
+                ? 'Scan Member Record Book (Read-Only)'
+                : '掃描成員紀錄冊（只讀檢視及當面核簽）'}
+          </h1>
           <p>
-            {isEn
-              ? 'Leader Mode is strictly read-only: inspect a member’s shared book sections face-to-face and issue a signed Return QR.'
-              : '領袖模式為只讀狀態：對準成員出示的二維碼即可唯讀查閱已分享內容，核對後可當面簽發核簽回傳碼。'}
+            {parentMode
+              ? isEn
+                ? 'Point the camera at the QR your child shows. The shared progress becomes a read-only copy on this phone — nothing is sent back, and no sign-off is possible.'
+                : '對準孩子手機出示的二維碼即可。分享的進度會成為這部手機上的只讀副本；不會回傳任何內容，亦不能核簽。'
+              : isEn
+                ? 'Leader Mode is strictly read-only: inspect a member’s shared book sections face-to-face and issue a signed Return QR.'
+                : '領袖模式為只讀狀態：對準成員出示的二維碼即可唯讀查閱已分享內容，核對後可當面簽發核簽回傳碼。'}
           </p>
         </div>
         <button
           type="button"
           className="btn btn--ghost btn--sm"
           onClick={() => {
+            if (parentMode) {
+              exitParentMode();
+              navigate('/parent/connect');
+              return;
+            }
             exitLeaderMode();
             navigate('/');
           }}
         >
-          <Icon name="lock" size={13} /> {isEn ? 'Leave Leader Mode' : '退出領袖模式'}
+          <Icon name="lock" size={13} />{' '}
+          {parentMode
+            ? isEn
+              ? 'Leave parent mode'
+              : '退回家長模式'
+            : isEn
+              ? 'Leave Leader Mode'
+              : '退出領袖模式'}
         </button>
       </header>
 
@@ -369,9 +400,10 @@ export function MemberPayloadView({ payload, withSignoff = false, onCloseHref = 
   );
 }
 
-export function ScanView() {
+export function ScanView({ parentMode = false }) {
   const payload = readSession(SCAN_MEMBER_KEY);
   const { isEn } = useLang();
+  const [saved, setSaved] = useState('');
   if (!payload) {
     return (
       <div className="scanpage">
@@ -390,7 +422,40 @@ export function ScanView() {
       </div>
     );
   }
-  return <MemberPayloadView payload={payload} withSignoff onCloseHref="/scan" />;
+  const saveAsParentCopy = () => {
+    try {
+      const res = mirrorFromTransfer(payload);
+      saveParentBook(res.book);
+      enterParentMode();
+      setSaved(
+        isEn
+          ? `Saved ${res.imported} shared items as a read-only copy on this phone.`
+          : `已把 ${res.imported} 項分享內容存為這部手機上的只讀副本。`,
+      );
+      navigate('/parent');
+    } catch (err) {
+      setSaved(err.message || (isEn ? 'Cannot read this QR code' : '無法讀取這個二維碼'));
+    }
+  };
+
+  return (
+    <>
+      {parentMode && (
+        <div className="parentsave">
+          <span>
+            {isEn
+              ? 'Parent mode: this QR is a one-off snapshot. Save it to review again later — it stays read-only.'
+              : '家長模式：這個二維碼是一次性快照。可存為只讀副本，日後再查看。'}
+          </span>
+          <button type="button" className="btn btn--gold btn--sm" onClick={saveAsParentCopy}>
+            <Icon name="download" size={14} /> {isEn ? 'Save as parent copy' : '存為家長只讀副本'}
+          </button>
+          {saved && <em>{saved}</em>}
+        </div>
+      )}
+      <MemberPayloadView payload={payload} withSignoff={!parentMode} onCloseHref={parentMode ? '/parent/connect' : '/scan'} />
+    </>
+  );
 }
 
 /* ============================================================

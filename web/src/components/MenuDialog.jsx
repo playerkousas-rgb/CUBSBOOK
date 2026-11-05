@@ -139,8 +139,12 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
             onClick={() => {
               enterParentMode();
               onClose();
-              navigate('/parent');
-              push(isEn ? 'Parent mode — read-only' : '已進入家長模式（只讀）');
+              navigate('/parent/connect');
+              push(
+                isEn
+                  ? 'Parent mode — read-only. Your own record book stays safe on this device; leave parent mode to return.'
+                  : '已進入家長模式（只讀）。你自己的紀錄冊仍安全保存在本機，退出家長模式即會返回。',
+              );
             }}
           >
             <Icon name="lock" size={18} />

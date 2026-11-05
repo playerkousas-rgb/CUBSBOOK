@@ -497,7 +497,7 @@ export function P19() {
    ============================================================ */
 
 export function AppendixPage() {
-  const { book, replace } = useBook();
+  const { book, replace, parent = false } = useBook();
   const readOnly = useReadOnly();
   const { push } = useToast();
   const { isEn } = useLang();
@@ -535,7 +535,18 @@ export function AppendixPage() {
     <Page id="appendix">
       <H en="DIGITAL APPENDIX · SYNC, BACKUP & PRINT">數位附錄</H>
 
-      <CubBadgeSyncCard readOnly={readOnly} />
+      {parent ? (
+        <p className="cubsync__offline">
+          <Icon name="lock" size={15} />
+          <span>
+            {isEn
+              ? 'Parent mode: progress is exported from cubbadge in Parent Mode (read-only). Nothing is ever submitted from this phone.'
+              : '家長模式：請在「家長模式」頁由 cubbadge 匯出進度（只讀）。這部手機永遠不會提交任何內容。'}
+          </span>
+        </p>
+      ) : (
+        <CubBadgeSyncCard readOnly={readOnly} />
+      )}
 
       <section className="appxcard">
         <h3>

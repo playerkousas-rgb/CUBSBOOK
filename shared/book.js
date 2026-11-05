@@ -28,7 +28,7 @@ export {
   toBookId,
 };
 
-export const APP_VERSION = 'v1.0.2';
+export const APP_VERSION = 'v1.1.0';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 

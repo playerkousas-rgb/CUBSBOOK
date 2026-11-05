@@ -27,7 +27,7 @@ npm test
   - `sanitizePendingSubmissions` 剝除 PII、轉官方編號、去重、日期合法性、200 項上限；
   - 端到端：空白冊同步、只匯入已核實、申報永不自我核實。
 - `tests/parent_mode.test.mjs`
-  - 家長模式只讀：旗標開關與事件、全域 `readOnly` 鎖、零輸入欄位、三個入口與退出、與領袖模式變數分離、幼童軍黃對比公式。
+  - 家長模式（第二部手機）：鏡像獨立儲存與退出清除、由 QR 與 cubbadge 匯出、pending 不入冊、家長模組零 `fetch`、只寫家長 store、零輸入欄位、圖示改黃且不含森林綠。
 - `tests/standalone_book.test.mjs`
   - 完全離線的端到端流程：建立空白冊 → 填寫 → 統計 → `PT/67`/`PT/68` → `CB1` 出示 → `CB1S` 核簽 → 19 頁列印 → JSON 備份；
   - `probeCubBadgeBridge` 對靜態主機 HTML fallback、404、壞 payload、離線、逾時、無 fetch 一律安全降級；

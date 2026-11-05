@@ -253,7 +253,7 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
   const manifest = JSON.parse(read('web/public/manifest.webmanifest'));
   assert.equal(manifest.short_name, 'CUBBOOK');
   assert.equal(manifest.theme_color, '#f2b705');
-  assert.equal(manifest.background_color, '#08180f');
+  assert.equal(manifest.background_color, '#14100a');
   for (const icon of manifest.icons) {
     assert.ok(fs.existsSync(path.join(root, 'web/public', icon.src.replace(/^\//, ''))), `manifest 圖示不存在 ${icon.src}`);
   }

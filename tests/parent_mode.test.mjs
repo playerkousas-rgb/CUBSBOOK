@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 const read = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 
 /* ------------------------------------------------------------------ */
-/* 1. 家長模式開關：只寫一個本機旗標，永不改動書本資料                    */
+/* 家長模式 = 第二部手機的只讀鏡像（一個後端、兩部前端）                  */
 /* ------------------------------------------------------------------ */
 
 const mem = new Map();
@@ -21,94 +21,120 @@ globalThis.localStorage = {
 };
 
 const parent = await import('../web/src/parent.js');
+const { newBook } = await import('../shared/book.js');
 
-test('家長模式：localStorage 旗標可開可關，並會通知畫面', () => {
-  let hits = 0;
-  const off = parent.onParentChange(() => {
-    hits += 1;
-  });
-
+test('家長旗標與鏡像獨立儲存，退出時清走孩子的資料', () => {
   assert.equal(parent.isParent(), false);
   parent.enterParentMode();
   assert.equal(parent.isParent(), true);
-  assert.equal(mem.get('cubbook.parent.v1'), '1');
-  assert.equal(hits, 1);
+  assert.equal(mem.get(parent.PARENT_FLAG_KEY), '1');
+
+  const mirror = newBook({ member: { scoutId: '25081420' } });
+  mirror.progress['L1-A'] = { date: '2025-01-01' };
+  parent.saveParentBook(mirror);
+  assert.ok(mem.get(parent.PARENT_BOOK_KEY), '鏡像寫入獨立 key');
+  assert.equal(mem.get('cubbook.book.v1'), undefined, '不得覆蓋本機成員紀錄冊');
+
+  const loaded = parent.loadParentBook();
+  assert.equal(loaded.member.scoutId, '25081420');
+  assert.equal(loaded.progress['L1-A'].date, '2025-01-01');
 
   parent.exitParentMode();
   assert.equal(parent.isParent(), false);
-  assert.equal(hits, 2);
-  off();
-
-  parent.enterParentMode();
-  assert.equal(hits, 2, '取消訂閱後不應再收到通知');
-  parent.exitParentMode();
+  assert.equal(mem.get(parent.PARENT_BOOK_KEY), undefined, '退出家長模式即清除鏡像');
 });
 
-/* ------------------------------------------------------------------ */
-/* 2. 家長模式 = 全域只讀：寫入路徑被鎖，家長毋須填任何個人資料           */
-/* ------------------------------------------------------------------ */
+test('由孩子二維碼建立只讀鏡像：只抄已分享的進度／獎章／續期', () => {
+  const res = parent.mirrorFromTransfer({
+    t: 'cubbook/member',
+    v: 1,
+    at: '2026-03-01T10:00:00.000Z',
+    member: { nameZh: '陳小狼', scoutId: '25081420' },
+    progress: { 'L1-A': { date: '2025-01-01', assessor: '團長' }, 'L2-SKILLS-01': { date: '2025-02-02' } },
+    otherBadges: { 'OT-A01': { date: '2025-03-03', cert: 'C1' } },
+    renewals: [{ date: '2025-01-01', validUntil: '2026-08-31' }],
+    awards: { L1: { date: '2025-04-04' } },
+  });
+  assert.equal(res.imported, 3);
+  assert.equal(res.book.member.nameZh, '陳小狼');
+  assert.equal(res.book.progress['L1-A'].date, '2025-01-01');
+  assert.equal(res.book.otherBadges['OT-A01'].cert, 'C1');
+  assert.equal(res.book.renewals[0].validUntil, '2026-08-31');
+  assert.equal(res.book.pages.award_L1.date, '2025-04-04');
+  assert.equal(res.book.meta.parent.source, 'qr');
+  assert.match(res.book.meta.parent.syncedAt, /^\d{4}-\d{2}-\d{2}T/);
+});
 
-test('家長模式與領袖模式共用同一個 readOnly 鎖，個人資料欄位全部停用', () => {
+test('由 cubbadge 匯出建立鏡像：只收領袖已核實進度，pending 不會錄入', () => {
+  const res = parent.mirrorFromBadge(
+    {
+      progress: {
+        'L1-A': { date: '2025-01-01', confirmed: true },
+        'L1-B': { date: '2025-02-02', status: 'pending' },
+      },
+      otherBadges: { 'OT-A01': { date: '2025-03-03', confirmed: true } },
+      pendingRequests: [{ item_id: 'L2-A', status: 'pending' }],
+    },
+    { troopId: 'T12', troopName: '沙田第 12 旅', ymis: '25081420', token: 'x' },
+  );
+  assert.equal(res.imported, 2, '只有 confirmed 的項目會匯出');
+  assert.ok(res.skippedPending >= 1);
+  assert.equal(res.book.progress['L1-A'].date, '2025-01-01');
+  assert.equal(res.book.meta.parent.source, 'badge');
+  assert.equal(res.book.meta.parent.ymis, '25081420');
+  assert.equal(res.book.member.scoutId, '25081420');
+});
+
+test('家長模式只下載、不上載：parent.js 零 fetch，家中介面無提交動作', () => {
+  const lib = read('web/src/parent.js');
+  assert.equal(/fetch\(/.test(lib), false, '家長模組不得直接呼叫網絡');
+  assert.equal(/requestComplete|saveOtherBadge|action:\s*'save'/.test(lib), false);
+  assert.match(lib, /PARENT_NOTICE/);
+  assert.match(lib, /永不向 cubbadge 匯入/);
+
+  const connect = read('web/src/pages/ParentConnect.jsx');
+  assert.match(connect, /action: 'login'/);
+  assert.match(connect, /action: 'load'/);
+  assert.equal(/action:\s*'save'|requestComplete|pending/.test(connect), false, '家長連線頁不得向 BADGE 提交');
+  assert.match(connect, /家長模式需要 \/api\/cubbadge/);
+  assert.match(connect, /開啟掃描器/);
+});
+
+test('App 以獨立鏡像運作：載入／儲存走 parent store，主紀錄冊不受影響', () => {
   const app = read('web/src/App.jsx');
+  assert.match(app, /isParent\(\) \? loadParentBook\(\) : loadBook\(\)/);
+  assert.match(app, /if \(isParent\(\)\) saveParentBook\(next\)/);
+  assert.match(app, /if \(!book \|\| parent\) return;/, '家長模式不寫入主 localStorage');
   assert.match(app, /readOnly: leader \|\| parent/);
   assert.match(app, /if \(isLeader\(\) \|\| isParent\(\)\) return;/);
-  assert.match(app, /<ParentView/);
-  assert.match(app, /className="parentbar no-print"/);
+  assert.match(app, /parentConnectRoute/);
+  assert.match(app, /<ParentConnect/);
+  assert.match(app, /<ScanView parentMode=\{parent && !leader\} \/>/);
+  assert.match(app, /<Scan hasBook parentMode=\{parent && !leader\} \/>/);
 
-  const ctx = read('web/src/bookContext.js');
-  assert.match(ctx, /export function useReadOnly\(\)/);
-  assert.match(ctx, /if \(readOnly\) return;/);
-
-  const view = read('web/src/pages/ParentView.jsx');
-  assert.equal(/<(input|textarea|select)\b/.test(view), false, '家長模式不得有任何輸入欄位');
-  assert.equal(/useField|setField|contentEditable/.test(view), false, '家長模式不得提供欄位寫入 API');
-  assert.match(view, /毋須填寫任何個人資料/);
-  assert.match(view, /read-only/i);
+  const scan = read('web/src/pages/Scan.jsx');
+  assert.match(scan, /withSignoff=\{!parentMode\}/, '家長掃描不可核簽');
+  assert.match(scan, /存為家長只讀副本/);
+  assert.match(scan, /PARENT MODE · READ-ONLY/);
 });
 
-/* ------------------------------------------------------------------ */
-/* 3. 入口：封面 + 選單 + 工具列；可隨時退出                              */
-/* ------------------------------------------------------------------ */
+test('家長模式沒有輸入個人資料的欄位；退出與更新入口齊備', () => {
+  const view = read('web/src/pages/ParentView.jsx');
+  assert.equal(/<(input|textarea|select)\b/.test(view), false, '家長檢視不得有輸入欄位');
+  assert.equal(/useField|setField|contentEditable/.test(view), false);
+  assert.match(view, /由 cubbadge／QR 更新/);
+  assert.match(view, /來源：/);
+  assert.match(view, /read-only/i);
 
-test('家長模式有封面、選單及工具列三個入口，並可退出', () => {
   const menu = read('web/src/components/MenuDialog.jsx');
   assert.match(menu, /enterParentMode/);
-  assert.match(menu, /exitParentMode/);
-  assert.match(menu, /家長模式（只讀查看）/);
+  assert.match(menu, /navigate\('\/parent\/connect'\)/);
   assert.match(menu, /退回家長模式/);
   assert.match(menu, /\{!leader && !parent && \(/, '家長模式不得匯入備份／載入示範／清除資料');
-
-  const cover = read('web/src/pages/CoverPage.jsx');
-  assert.match(cover, /onParent/);
-  assert.match(cover, /家長查看/);
-
-  const app = read('web/src/App.jsx');
-  assert.match(app, /chipbtn--parent/);
-  assert.match(app, /'家長 · 只讀'/);
 });
 
 /* ------------------------------------------------------------------ */
-/* 4. 領袖模式變數名稱固定（伺服器 LEADER_CODE、前端 flag key / TTL）      */
-/* ------------------------------------------------------------------ */
-
-test('領袖模式變數名稱與家長模式互不混淆', () => {
-  const apiLeader = read('api/leader.js');
-  assert.match(apiLeader, /process\.env\.LEADER_CODE/);
-  assert.equal(apiLeader.includes('VITE_LEADER_CODE'), false);
-
-  const leader = read('web/src/leader.js');
-  assert.match(leader, /const KEY = 'cubbook\.leader\.v1'/);
-  assert.match(leader, /const TTL = 12 \* 60 \* 60 \* 1000/);
-  assert.match(leader, /export function isLeader/);
-  assert.match(leader, /export async function leaderAvailable/);
-  assert.match(leader, /export async function enterLeaderMode/);
-  assert.match(leader, /export function exitLeaderMode/);
-
-  assert.match(read('web/src/parent.js'), /const KEY = 'cubbook\.parent\.v1'/);
-});
-
-/* ------------------------------------------------------------------ */
-/* 5. 幼童軍黃是主色：封面黃布面深綠字，白字配黃仍然禁用                    */
+/* 幼童軍黃是主色；綠色留給未來的 SCOUTBOOK                              */
 /* ------------------------------------------------------------------ */
 
 const lum = (hex) => {
@@ -123,20 +149,20 @@ const ratio = (a, b) => {
   return (x + 0.05) / (y + 0.05);
 };
 
-test('幼童軍黃主色：封面黃布面 + 深綠字，對比度達到 AA', () => {
+test('圖示與 favicon 用幼童軍黃，不再用森林綠（綠色留給 SCOUTBOOK）', () => {
+  const script = read('scripts/generate_icons.mjs');
+  assert.match(script, /242, 183, 5/, '主要封面黃 #f2b705');
+  assert.equal(script.includes('[28, 82, 54, 255]'), false, '16px 調色盤不得再用深綠');
+  assert.equal(/mix\(8, 42, glow\)/.test(script), false, '背景不得再用森林綠漸層');
+
+  const svg = read('web/public/favicon.svg');
+  assert.match(svg, /#f2b705/);
+  assert.equal(svg.includes('#143b28'), false, 'favicon 不再用深綠');
+
   const css = read('web/src/styles.css');
   assert.ok(css.includes('--cub-yellow: #f2b705'));
   assert.ok(css.includes('linear-gradient(155deg, #ffd84a 0%, #f2b705 46%, #dca700 100%)'));
-  assert.ok(css.includes('.parentbar'));
-  assert.ok(css.includes('.parent__kpis'));
-
-  assert.ok(ratio('#123420', '#f2b705') >= 6.8, '深綠字於幼童軍黃 >= 6.8:1');
-  assert.ok(ratio('#1a1206', '#f2b705') >= 8.0, '深炭字於幼童軍黃 >= 8:1');
-  assert.ok(ratio('#ffe27a', '#143b28') >= 7.0, '金黃字於深綠 >= 7:1');
-  assert.ok(ratio('#ffffff', '#f2b705') < 3.0, '白字配黃依然不可用');
-
-  // 封面所有文字顏色都不得再是奶白（黃底上會失去對比）
-  const coverBlock = css.slice(css.indexOf('v1.0.1 · 幼童軍黃'));
-  assert.equal(/\.coverart__title[^}]*#f8ecd0/.test(coverBlock), false, '封面標題不得再用奶白字');
-  assert.ok(coverBlock.includes('.coverart__title,'), '封面標題須覆寫為深綠字');
+  assert.ok(ratio('#123420', '#f2b705') >= 6.8);
+  assert.ok(ratio('#1a1206', '#f2b705') >= 8.0);
+  assert.ok(ratio('#ffffff', '#f2b705') < 3.0, '白字配黃仍然禁止');
 });

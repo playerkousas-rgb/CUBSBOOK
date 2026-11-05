@@ -2,6 +2,27 @@
 
 本專案採用語義化版本（Semantic Versioning），每次更新同步對齊 `package.json`、`shared/book.js` 及 `web/index.html`。
 
+## [v1.1.0] — 2026-11-05
+
+### 更改（Changed · 家長模式重新定義）
+- **家長模式 = 第二部手機**（一個 cubbadge 後端、兩部 BOOK 前端）。孩子在自己手機填寫；家長在自己手機取得同一成員的**只讀鏡像**，明白「一本簿 ≠ 一部手機」。
+- 兩條取得資料的路徑，皆為單向下載：
+  - **A. 連接 cubbadge**：旅團＋孩子的 SCOUT ID＋密碼 → `login` → `load` → 匯出全部「領袖已核實」進度；`pendingRequests` 一律略過。
+  - **B. 掃描孩子 `CB1` 二維碼**：免登入、可離線；分享的進度可「存為家長只讀副本」。
+- **只讀鐵律**：家長端無任何輸入欄位、不能核簽、不能掃描他人、不能向 cubbadge 匯入或提交（`requestComplete`／`save` 完全不出現）；同步卡在家長模式改為提示，不做任何寫入。
+- **獨立鏡像**：家長資料存於 `cubbook.parent.book.v1`，不覆蓋這部手機原有的成員紀錄冊；退出家長模式即清除鏡像與 token。
+- 新增 `/parent/connect` 連線頁、`/parent` 總覽頁（來源、匯出項目數、最後更新時間、由 BADGE／QR 更新、列印、出示 QR、退出）。
+- 掃描頁支援家長模式：標題與說明改為家長版本，`withSignoff=false`，只可讀取快照。
+- 上一版「同一部手機只讀」已移除。
+
+### 更改（Changed · 顏色）
+- **CUBSBOOK 圖示全面轉黃**：9 個圖示、根目錄 favicon、`favicon.svg` 及 OG 圖改為幼童軍黃（`#ffd23f → #f2b705 → #dca700`）配暖炭底（`#14100a`）及深墨徽號；**森林綠不再用於 CUBSBOOK**，留給未來的 `SCOUTBOOK`。
+- PWA `background_color` 改為 `#14100a`（`theme_color` 已是 `#f2b705`）。
+
+### 測試（Tests）
+- 重寫 `tests/parent_mode.test.mjs`（7 項）：鏡像獨立儲存／退出即清除、QR 與 BADGE 兩條路徑的匯出內容、pending 不入冊、家長模組零 `fetch`、App 只寫家長 store、家長零輸入欄位、圖示與 favicon 不含森林綠。
+- 全套 **44/44** 通過；guard 16 項全綠。
+
 ## [v1.0.2] — 2026-11-05
 
 ### 新增（Added）
