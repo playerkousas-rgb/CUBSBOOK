@@ -26,13 +26,15 @@ jobs:
         run: npm test
       - name: Build production bundle
         run: npm run build
+      - name: Clean build output (dist 是建置產物，唔入版控)
+        run: rm -rf dist
       - name: Guard (docs / secrets / size / links)
         run: node scripts/guard.mjs
       - name: Final check (six-angle gate)
         run: node scripts/final_check_v1.0.mjs --json
       - name: Repo health & preflight
         run: |
-          rm -rf dist
           node scripts/repo_health_v1.0.mjs . --json
+          node scripts/preflight_v1.0.mjs . --json
       - name: Dependency audit (A16)
         run: npm audit --audit-level=high
