@@ -1,0 +1,27 @@
+# Node / build
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+.cache/
+.turbo/
+.parcel-cache/
+.vercel/
+
+# Env & secrets (never commit real .env)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+
+# Logs & OS & editor scratch
+*.log
+*.bak
+*.tmp
+.DS_Store
+Thumbsumbs.db
+Unselected files/
+google_drive/

@@ -1,0 +1,26 @@
+Copyright © 2026 SCOUT SYSTEM
+All Rights Reserved · 版權所有，保留一切權利。
+
+1. 軟件、介面與程式碼版權歸屬（Proprietary Software Notice）
+本倉庫（CUBBOOK）內所有原始碼、前端介面設計、互動手寫與單色簽名壓縮機制、
+二維碼封包與核簽回傳協定、資料轉換邏輯、圖示及附隨技術文件，均由 SCOUT SYSTEM
+獨立開發及創作，版權歸 SCOUT SYSTEM 獨家所有（All Rights Reserved）。
+
+未經 SCOUT SYSTEM 事先書面授權，任何機構、團體或個人（包括但不限於任何童軍總會、
+地域、區會或附屬單位）均不得：
+  (a) 複製、抄襲、改作、反編譯、重新包裝或再發佈本專案之全部或部分原始碼、介面或架構；
+  (b) 將本專案或其衍生作品聲稱為其官方系統、內部研發成果或據為己有；
+  (c) 將本專案用於任何商業收費、招標交付或未經授權之機構系統整合。
+
+2. 成員及領袖個人前端使用許可（Personal & Unit Front-End Use）
+SCOUT SYSTEM 免費開放已部署之前端網頁應用程式予幼童軍成員、家長及童軍領袖作日常個人紀錄、
+當面二維碼出示核簽、匯出個人備份及列印表格之非商業個人用途。此項個人使用許可不構成對
+任何原始碼、專利、商標或著作財產權之轉讓或開放授權（非 MIT／非開源授權）。
+
+3. 非官方獨立工具聲明及訓練綱要版權說明（Unofficial Tool Disclaimer）
+本網站為非官方獨立工具，旨在方便成員，與香港童軍總會無任何官方從屬關係。
+所有訓練綱要及紀錄冊內容，版權歸香港童軍總會所有。
+
+This site is an independent, unofficial tool for members, and has no official
+affiliation with The Scout Association of Hong Kong. All training syllabus and
+record-book content is the copyright of The Scout Association of Hong Kong.

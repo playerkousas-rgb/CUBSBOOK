@@ -1,0 +1,11 @@
+node_modules/
+.git/
+.github/
+.cache/
+.vite/
+coverage/
+tests/
+docs/
+*.bak
+*.log
+*.test.mjs
