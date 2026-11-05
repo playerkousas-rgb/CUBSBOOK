@@ -2404,6 +2404,11 @@ html[data-print-preview] .write--multi.is-empty {
     break-after: page;
   }
   .printall__one { page-break-after: always; break-after: page; }
+  /* 最後一頁不再強制換頁，避免多出一張空白 A4 */
+  .sheet:last-child, .a4sheet:last-child, .printall__one:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
 }
 
 /* ==========================================================================
@@ -4239,4 +4244,46 @@ html[data-print-preview] .write--multi.is-empty {
   .pgbtns { display: none !important; }
   .assrow__detail { display: none; }
   .coverart__awardnote { display: none; }
+}
+
+/* 獨立模式提示（沒有 /api/cubbadge 的純靜態部署） */
+.cubsync__offline {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 6px 0 8px;
+  padding: 8px 10px;
+  border: 1px dashed rgba(28, 82, 54, 0.4);
+  border-radius: 8px;
+  background: rgba(28, 82, 54, 0.06);
+  color: var(--ink-2);
+}
+.cubsync__offline > svg { color: var(--vs-red); flex: none; margin-top: 2px; }
+.cubsync__offline strong { display: block; font-size: 12px; color: var(--ink); }
+.cubsync__offline p { margin: 2px 0 0; font-size: 11px; line-height: 1.55; }
+.cubsync__offline .btn { margin-left: auto; flex: none; }
+
+/* 可剔選檢查清單（第 17 頁制服項目） */
+.checklist li.is-interactive { cursor: pointer; }
+.checklist li.is-interactive:hover .checklist__text { color: var(--vs-red); }
+.checklist__box.is-on {
+  background: var(--vs-red);
+  border-color: var(--vs-red);
+  position: relative;
+}
+.checklist__box.is-on::after {
+  content: '';
+  position: absolute;
+  left: 3.5px;
+  top: 0.5px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 1.6px 1.6px 0;
+  transform: rotate(42deg);
+}
+.checklist__text { min-width: 0; }
+
+@media print {
+  .cubsync__offline { display: none; }
 }

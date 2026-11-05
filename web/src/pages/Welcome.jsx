@@ -116,8 +116,8 @@ export default function Welcome({ onReady, onLeader }) {
         <h1>{isEn ? 'This record book is yours.' : '這本紀錄冊，是你的。'}</h1>
         <p className="welcome__lede">
           {isEn
-            ? 'No account, no login. Your entire record book stays on this device — tap any line to fill, and present a QR code when sharing selected sections with your leader.'
-            : '不需要帳號、不需要登入。整本冊子存在你這部裝置；逐頁點擊就可以填寫，並可出示二維碼讓領袖在「領袖模式（只讀）」下查閱及核簽。'}
+            ? 'No account, no login, no cubbadge required. Your entire record book stays on this device — start completely blank and fill in particulars later if you prefer.'
+            : '不需要帳號、不需要登入，也不需要連接 cubbadge。整本冊子存在你這部裝置；逐頁點擊就可以填寫，也可完全空白開始，日後才補個人資料。'}
         </p>
 
         <form className="welcome__form" onSubmit={create}>
@@ -162,6 +162,20 @@ export default function Welcome({ onReady, onLeader }) {
           <div className="welcome__actions">
             <button className="btn btn--gold btn--lg" type="submit">
               <Icon name="book" size={17} /> {isEn ? 'Create My Record Book' : '建立我的紀錄冊'}
+            </button>
+            <button
+              type="button"
+              className="btn btn--onpaper"
+              onClick={() => {
+                start(newBook(), '/p/p01');
+                push(
+                  isEn
+                    ? 'Blank record book ready — fill in only what you need'
+                    : '已建立空白紀錄冊，只需填寫你需要的部分',
+                );
+              }}
+            >
+              <Icon name="file" size={14} /> {isEn ? 'Start with a Blank Book' : '以空白紀錄冊開始'}
             </button>
             <button
               type="button"

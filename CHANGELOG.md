@@ -2,6 +2,18 @@
 
 本專案採用語義化版本（Semantic Versioning），每次更新同步對齊 `package.json`、`shared/book.js` 及 `web/index.html`。
 
+## [v1.0.1] — 2026-11-05
+
+### 修正（Fixed / Standalone-first）
+- **BOOK 完全獨立運作**：所有核心功能（逐頁填寫、簽名、`PT/67`・`PT/68`、A4 列印、`CB1` 二維碼、JSON 備份）毋須 `cubbadge`、毋須帳號、毋須網絡。`cubbadge` 同步改為明確標示「可選」。
+- **同步卡優雅降級**：新增 `web/src/cubadgeBridge.js` 探測 `/api/cubbadge`（拒絕純靜態主機的 HTML fallback、404、壞 payload、逾時），失敗時顯示「現時以獨立模式運作」面板與重試鍵，並隱藏登入表單，不再讓使用者卡在錯誤畫面。
+- **空白簿一鍵開始**：歡迎頁新增「以空白紀錄冊開始」，可先填寫、後補個人資料；`cubbadge` 登入時自動以 SCOUT ID 綁定空白簿。
+- **第 17 頁制服及徽章清單**：7 項改為可剔選並持久化（`pages.p17.uniform`），加進度條，列印亦反映狀態。
+- **進度總覽更準確**：`allStats().earned` 同時計入「已完成」與「已填頒發日期」的獎章，避免已宣誓／已頒發仍顯示未完成。
+- **列印尾頁**：最後一頁不再留下空白分頁。
+- **文字修正**：統一「cubbadge」品牌串法（多處誤植為 `cubadge`）。
+- **測試**：新增 `tests/standalone_book.test.mjs`（5 個契約），總數 37 個全綠。
+
 ## [v1.0.0] — 2026-11-05
 
 ### 新增（Added）

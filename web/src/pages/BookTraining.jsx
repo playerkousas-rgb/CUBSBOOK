@@ -64,8 +64,8 @@ function SyncFootnote() {
       <Icon name="verified" size={13} />
       <span>
         {isEn
-          ? 'Items marked “cubadge · verified” came from your leader’s confirmed records. New entries stay local until you submit them — they arrive at cubbadge as pending and need the leader’s CONFIRM.'
-          : '標示「cubadge · 已核實」的項目來自團長在 cubbadge 已核實的紀錄。新填寫的項目只留在本機；送交後在 cubbadge 只會是「待批」，須由團長按 CONFIRM。'}
+          ? 'Items marked “cubbadge · verified” came from your leader’s confirmed records. New entries stay local until you submit them — they arrive at cubbadge as pending and need the leader’s CONFIRM.'
+          : '標示「cubbadge · 已核實」的項目來自團長在 cubbadge 已核實的紀錄。新填寫的項目只留在本機；送交後在 cubbadge 只會是「待批」，須由團長按 CONFIRM。'}
       </span>
       <Link to="/p/appendix" className="syncfoot__link">
         {isEn ? 'Sync' : '同步'}

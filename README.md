@@ -6,6 +6,7 @@
 - **架構形態**：離線優先 PWA（React + Vite + Service Worker，`localStorage` 本機儲存，零帳號、零雲端上傳；可選配 Vercel `/api/leader` 與 `/api/cubbadge` 伺服器端接口）
 - **設計主題**：對齊 `ROVERBOOK` `v16`／`VSBOOK` `v1.0.0` 的介面、安全區與版權規範，改用**深森林綠布面燙金封面**（`#143b28` × `#08180f` × 幼童軍金黃 `#e6a800`／`#e3c07a` × 象牙內頁 `#f7f2e7`）。幼童軍黃**只作底色或裝飾**，文字一律深炭或深綠，確保 WCAG AA（白字配 `#e6a800` 對比僅約 2.0:1，設計上禁止使用）。
 - **一句話**：BOOK 是「這一位成員」的口袋紀錄冊；全團名冊、批量簽核、多成員切換一律留在 `cubbadge`。
+- **獨立優先**：BOOK **不接 cubbadge 亦 100% 可用** —— 逐頁填寫、簽名、官方表格、A4 列印、離線二維碼、JSON 備份全部在本機完成。`cubbadge` 只是「可選」的免重打同步；純靜態主機（無 `/api`）會自動顯示「獨立模式」，不會卡住任何功能。
 
 ---
 
@@ -38,7 +39,7 @@ node scripts/preflight_v1.0.mjs .
 | :-: | :--- | :--- |
 | 1 | **BOOK ≠ BADGE** | 只做單一成員的 19 頁紀錄冊、進度獎章、活動徽章與官方表格。**不做**全團名冊、批量簽核、多成員切換槽（屬 `cubbadge`）。 |
 | 2 | **全螢幕＝一本實體書 + 幼童軍黃對比陷阱** | `100dvh` 布面封面與紙本內頁、無卡片框線陰影；空白欄只顯示小圓點 `.write__dot`（列印自動隱藏）；就地打字自動縮字；簽名壓縮為單色透明 PNG。封面／按鈕用深綠配金，不用白字配黃。中英文完全分開，一鍵 `中文 / EN`。 |
-| 3 | **BOOK ⇄ BADGE 純進度同步** | 只傳 `SCOUT ID`、項目代號、日期。空白簿輸入 SCOUT ID + `cubbadge` 密碼即可綁定並拉取已核實進度；`pendingRequests` **永不**錄入；`save`／`saveOtherBadge` 一律 `403`；BOOK→BADGE 只轉發 `requestComplete`，寫入 `status: 'pending'`。旅團下拉由 `CUBBADGE_ORIGIN` 伺服器端取得，BOOK 不存 Google Sheet 網址或 API key。 |
+| 3 | **BOOK ⇄ BADGE 純進度同步（可選）** | 只傳 `SCOUT ID`、項目代號、日期；未接駁時以獨立模式運作。空白簿輸入 SCOUT ID + `cubbadge` 密碼即可綁定並拉取已核實進度；`pendingRequests` **永不**錄入；`save`／`saveOtherBadge` 一律 `403`；BOOK→BADGE 只轉發 `requestComplete`，寫入 `status: 'pending'`。旅團下拉由 `CUBBADGE_ORIGIN` 伺服器端取得，BOOK 不存 Google Sheet 網址或 API key。 |
 | 4 | **領袖模式（只讀）與普通模式嚴格分離** | 普通模式不能讀取他人紀錄冊，只能貼上領袖簽發的 `CB1S.` 核簽碼；出示 QR（`CB1.`）預設全不剔選。領袖模式以伺服器端 `LEADER_CODE`（**不加 `VITE_`**、`crypto.timingSafeEqual` 比對）解鎖後，本機紀錄冊鎖為唯讀，只可當面掃描及簽發 `CB1S.`。 |
 | 5 | **項目 ID 單一真相** | `shared/syllabus.js` 由 `cubbadge/data/items.json` 產生，72 個進度細項 + 49 個活動徽章逐一對照，測試以 fixture 的 sha256 與 ID 清單鎖定。 |
 | 6 | **官方表格自動帶入 + A4 忠實列印** | `PT/67`（1 頁）、`PT/68`（2 頁）自動填入；2026 新制只提供**明確標示非官方**的資料核對清單，不自行編造表格編號。桌面／平板維持 A4 比例，`≤740px` 手機自動單欄、無水平捲軸。 |
@@ -56,7 +57,7 @@ node scripts/preflight_v1.0.mjs .
    - `FORM PT/68 (06/2024)` 金紫荊獎章及證書申請表（2 頁）
    - **2026 新制資料核對清單**（非官方，1 頁；官方表格編號待總會公布）
 5. **純離線二維碼**：`CB1.`（gzip）／`CB1P.`（未壓縮）／`CB1S.`（領袖核簽）＋ `#v=` 連結，上限 2,400 字元；出示前逐項剔選，預設全不選。
-6. **`cubbadge` 純進度同步**：見規則 3；登入只回傳 `token` 與 `ymis`，不帶姓名、電話、地址、家長資料、相片。
+6. **`cubbadge` 純進度同步（可選）**：見規則 3；登入只回傳 `token` 與 `ymis`，不帶姓名、電話、地址、家長資料、相片。偵測失敗（純靜態主機、SPA fallback 回傳 HTML、404、逾時）一律降級為獨立模式，介面另提供本機 JSON 交換。
 
 ### Vercel 環境變數
 

@@ -38,9 +38,12 @@ import {
 import { BOOK_TO_BADGE_ID, BADGE_ID_TO_BOOK, isKnownItem, awardOfItem } from '../shared/syllabus.js';
 
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/cubbadge-ids.json', import.meta.url), 'utf8'));
+const pkgVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 
 test('《幼童軍紀錄冊》19 頁逐頁映射完整、無缺漏與重覆，數位附錄不列印', () => {
-  assert.equal(APP_VERSION, 'v1.0.0');
+  // 版本單一真相：APP_VERSION 必須等於 package.json 版號（`v` + semver）
+  assert.match(APP_VERSION, /^v\d+\.\d+\.\d+$/);
+  assert.equal(APP_VERSION, `v${pkgVersion}`);
   assert.equal(PAGE_TOTAL, 19);
   assert.equal(PRINT_PAGES.length, 19);
   assert.deepEqual(

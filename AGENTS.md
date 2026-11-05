@@ -20,15 +20,16 @@
 
 ## 3. 不可退讓底線（Non-Negotiables）
 
-1. **BOOK 只服務一位成員**：不設全團名冊、批量簽核工作台、多成員切換槽——那些屬 `cubbadge`（BADGE）。新增任何「一次看多位成員」的介面即屬越界。
-2. **零個人資料同步**：跨系統只准傳 `SCOUT ID`／YMIS、項目代號及日期；伺服器端必須硬性剝除姓名、電話、地址、家長／監護人資料、相片及任何其他成員紀錄。`pendingRequests` **永不**錄入 BOOK。
-3. **不可自我核實**：BOOK 送出的進度只可經 `requestComplete` 變成 `status: 'pending'`；`save`／`saveOtherBadge`／`reviewRequest` 一律回 `403`；只有團長在 BADGE 內按 CONFIRM 才算完成。
-4. **版權擺位僅三處**：封面頁腳 `LegalLine`、數位附錄 `LegalNote`、選單「關於」`LegalNote`。其餘頁面、列印及表格不得重複。
-5. **幼童軍黃對比陷阱**：`#e6a800` 只作底色或裝飾，配深炭文字；深綠布面配金黃字。**禁止白字配黃**（對比 < 3:1）。中英文完全分開，一鍵切換，不得並排塞入同一表格。
-6. **項目 ID 單一真相**：任何 `L1-*`…`L4-*`、`OT-*` 的改動必須先在 `cubbadge/data/items.json` 落地，再執行 `npm run syllabus`，並更新 `tests/fixtures/cubbadge-ids.json`；測試會以 sha256 與清單鎖死。
-7. **雙重版本號（V）與體積預算（S7 / G11）**：任何可見更新須同步遞增 `package.json`、`web/index.html`（`meta[name="app-version"]`、`window.APP_VERSION`）、`shared/book.js`（`APP_VERSION`）及 `CHANGELOG.md`；`dist/` 總體積須 `< 5 MB`，`web/public/icons/` 9 個圖示總和須 `<= 260 KB`。
-8. **禁止在 `.js/.mjs/.jsx` 寫 `// v1.0` 行內版本註解（F15）**：版本號只寫在常數、HTML meta 與 `CHANGELOG.md`。
-9. **`LEADER_CODE` 不得加 `VITE_` 前綴**：只在 `api/leader.js` 以 `crypto.timingSafeEqual` 比對；前端 bundle 不得出現任何密碼。
+1. **BOOK 必須可獨立運作**：不得讓任何核心功能（逐頁填寫、簽名、表格、列印、二維碼、備份還原）依賴 `/api/*` 或網絡；`cubbadge` 同步只屬可選加速，偵測失敗必須安全降級為「獨立模式」並保留本機 JSON 交換。
+2. **BOOK 只服務一位成員**：不設全團名冊、批量簽核工作台、多成員切換槽——那些屬 `cubbadge`（BADGE）。新增任何「一次看多位成員」的介面即屬越界。
+3. **零個人資料同步**：跨系統只准傳 `SCOUT ID`／YMIS、項目代號及日期；伺服器端必須硬性剝除姓名、電話、地址、家長／監護人資料、相片及任何其他成員紀錄。`pendingRequests` **永不**錄入 BOOK。
+4. **不可自我核實**：BOOK 送出的進度只可經 `requestComplete` 變成 `status: 'pending'`；`save`／`saveOtherBadge`／`reviewRequest` 一律回 `403`；只有團長在 BADGE 內按 CONFIRM 才算完成。
+5. **版權擺位僅三處**：封面頁腳 `LegalLine`、數位附錄 `LegalNote`、選單「關於」`LegalNote`。其餘頁面、列印及表格不得重複。
+6. **幼童軍黃對比陷阱**：`#e6a800` 只作底色或裝飾，配深炭文字；深綠布面配金黃字。**禁止白字配黃**（對比 < 3:1）。中英文完全分開，一鍵切換，不得並排塞入同一表格。
+7. **項目 ID 單一真相**：任何 `L1-*`…`L4-*`、`OT-*` 的改動必須先在 `cubbadge/data/items.json` 落地，再執行 `npm run syllabus`，並更新 `tests/fixtures/cubbadge-ids.json`；測試會以 sha256 與清單鎖死。
+8. **雙重版本號（V）與體積預算（S7 / G11）**：任何可見更新須同步遞增 `package.json`、`web/index.html`（`meta[name="app-version"]`、`window.APP_VERSION`）、`shared/book.js`（`APP_VERSION`）及 `CHANGELOG.md`；`dist/` 總體積須 `< 5 MB`，`web/public/icons/` 9 個圖示總和須 `<= 260 KB`。
+9. **禁止在 `.js/.mjs/.jsx` 寫 `// v1.0` 行內版本註解（F15）**：版本號只寫在常數、HTML meta 與 `CHANGELOG.md`。
+10. **`LEADER_CODE` 不得加 `VITE_` 前綴**：只在 `api/leader.js` 以 `crypto.timingSafeEqual` 比對；前端 bundle 不得出現任何密碼。
 
 ## 4. 交付前必跑指令
 

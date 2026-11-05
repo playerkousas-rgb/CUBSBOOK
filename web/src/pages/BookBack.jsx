@@ -108,7 +108,7 @@ export function ActivityBadgeTable({ page }) {
                     <span className="otrow__id">{badge.badgeId}</span>
                     {entry.confirmedByBadge && (
                       <span className="assrow__verified">
-                        <Icon name="verified" size={10} /> cubadge
+                        <Icon name="verified" size={10} /> cubbadge
                       </span>
                     )}
                   </div>
@@ -296,34 +296,78 @@ export function P16() {
    ============================================================ */
 
 const UNIFORM_ITEMS = [
-  { zh: '幼童軍帽（總會指定款式）', en: 'Cub Scout cap (Association pattern)' },
-  { zh: '幼童軍旅巾及旅巾圈', en: 'Group scarf and woggle' },
-  { zh: '幼童軍制服上衣（短袖）', en: 'Cub Scout uniform shirt (short sleeves)' },
-  { zh: '總會指定長褲／短褲及皮帶', en: 'Association pattern trousers/shorts and belt' },
-  { zh: '深色襪及皮鞋', en: 'Dark socks and leather shoes' },
-  { zh: '會員章、進度性獎章及活動徽章', en: 'Membership badge, progress badges and activity badges' },
+  { key: 'cap', zh: '幼童軍帽（總會指定款式）', en: 'Cub Scout cap (Association pattern)' },
+  { key: 'scarf', zh: '幼童軍旅巾及旅巾圈', en: 'Group scarf and woggle' },
+  { key: 'shirt', zh: '幼童軍制服上衣（短袖）', en: 'Cub Scout uniform shirt (short sleeves)' },
+  { key: 'trousers', zh: '總會指定長褲／短褲及皮帶', en: 'Association pattern trousers/shorts and belt' },
+  { key: 'shoes', zh: '深色襪及皮鞋', en: 'Dark socks and leather shoes' },
+  { key: 'badges', zh: '會員章、進度性獎章及活動徽章', en: 'Membership badge, progress badges and activity badges' },
+  { key: 'groupName', zh: '旅團名牌（如有）', en: 'Group name tape (if issued)' },
 ];
 
+const uniformChecked = (book) => book?.pages?.p17?.uniform || {};
+
 export function P17() {
+  const { book, update, readOnly } = useBook();
   const { isEn } = useLang();
+  const checked = uniformChecked(book);
+  const doneCount = UNIFORM_ITEMS.filter((i) => checked[i.key]).length;
+
+  const toggle = (key) => {
+    if (readOnly) return;
+    update((b) => {
+      const cur = b.pages?.p17?.uniform || {};
+      const next = { ...cur, [key]: !cur[key] };
+      if (!next[key]) delete next[key];
+      return {
+        ...b,
+        pages: { ...b.pages, p17: { ...(b.pages?.p17 || {}), uniform: next } },
+      };
+    });
+  };
+
   return (
     <Page id="p17">
       <H en="UNIFORM & BADGE PLACEMENT">制服及徽章位置</H>
       <p className="pglead">
         {isEn
-          ? 'Tick what you already have. Always check the Association’s current uniform guidance before sewing on badges.'
-          : '剔選已齊備的項目。縫上徽章前，請先核對總會最新的制服及佩戴指引。'}
+          ? 'Tick what you already have — the ticks are saved in this book. Always check the Association’s current uniform guidance before sewing on badges.'
+          : '剔選已齊備的項目，勾選會即時存在紀錄冊。縫上徽章前，請先核對總會最新的制服及佩戴指引。'}
       </p>
+      <div className="ribbon">
+        <span className="ribbon__bar">
+          <i style={{ width: `${(doneCount / UNIFORM_ITEMS.length) * 100}%` }} />
+        </span>
+        <span className="ribbon__text">
+          {isEn ? `${doneCount} / ${UNIFORM_ITEMS.length} ready` : `已齊備 ${doneCount} / ${UNIFORM_ITEMS.length} 項`}
+        </span>
+      </div>
       <ul className="checklist">
-        {UNIFORM_ITEMS.map((item) => (
-          <li key={item.zh}>
-            <span className="checklist__box" aria-hidden="true" />
-            <span>
-              {isEn ? item.en : item.zh}
-              {!isEn && <em>{item.en}</em>}
-            </span>
-          </li>
-        ))}
+        {UNIFORM_ITEMS.map((item) => {
+          const on = Boolean(checked[item.key]);
+          return (
+            <li
+              key={item.key}
+              className={cx('is-interactive', on && 'is-done')}
+              role={readOnly ? undefined : 'checkbox'}
+              aria-checked={on}
+              tabIndex={readOnly ? undefined : 0}
+              onClick={() => toggle(item.key)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggle(item.key);
+                }
+              }}
+            >
+              <span className={cx('checklist__box', on && 'is-on')} aria-hidden="true" />
+              <span className="checklist__text">
+                {isEn ? item.en : item.zh}
+                {!isEn && <em>{item.en}</em>}
+              </span>
+            </li>
+          );
+        })}
       </ul>
       <Note en="Badge positions (2026 scheme): Membership Badge on the left chest; progress badges on the right chest in the order awarded; activity badges on the right sleeve. New and old activity badges may be worn side by side; only the current scheme badges count for progress.">
         徽章位置（2026 新制）：會員章佩戴於左胸；進度性獎章按取得次序佩戴於右胸；活動徽章佩戴於右袖。
@@ -475,7 +519,7 @@ export function AppendixPage() {
           throw new Error(
             isEn
               ? 'This is not a full CUBBOOK backup (progress files are imported in the sync card above).'
-              : '這不是完整的 CUBBOOK 備份檔（cubadge 進度檔請用上方同步卡）',
+              : '這不是完整的 CUBBOOK 備份檔（cubbadge 進度檔請用上方同步卡）',
           );
         }
         replace(newBook(parsed));

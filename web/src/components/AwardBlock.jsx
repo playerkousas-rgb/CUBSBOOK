@@ -76,7 +76,7 @@ export default function AwardBlock({ award, showDetail = false }) {
                           </span>
                           {!isEn && item.en && <em>{item.en}</em>}
                           {st.confirmedByBadge && (
-                            <span className="assrow__verified" title="cubadge 領袖已核實">
+                            <span className="assrow__verified" title="cubbadge 領袖已核實">
                               <Icon name="verified" size={11} /> cubbadge · {isEn ? 'verified' : '已核實'}
                             </span>
                           )}

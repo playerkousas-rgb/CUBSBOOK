@@ -28,7 +28,7 @@ export {
   toBookId,
 };
 
-export const APP_VERSION = 'v1.0.0';
+export const APP_VERSION = 'v1.0.1';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 
@@ -259,7 +259,10 @@ export function allStats(book) {
   const awards = ALL_AWARDS.map((a) => ({ ...badgeStats(book, a.id), award: a }));
   const total = awards.reduce((n, a) => n + a.total, 0);
   const done = awards.reduce((n, a) => n + a.done, 0);
-  const earned = awards.filter((a) => a.complete);
+  // 「已獲獎章」= 全部細項完成，或已在第 15 頁／獎章頁記錄頒發日期（領袖頒發即算）。
+  const earned = awards.filter(
+    (a) => a.complete || Boolean(book?.pages?.[`award_${a.award.id}`]?.date),
+  );
   return {
     awards,
     total,

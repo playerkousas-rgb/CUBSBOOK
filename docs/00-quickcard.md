@@ -2,7 +2,8 @@
 
 | 項目 | 內容 |
 | :--- | :--- |
-| **定位** | 香港幼童軍個人隨身離線電子紀錄冊（紙本第 1–19 頁 ＋ 2026 第十版訓練綱要 ＋ `PT/67`・`PT/68`） |
+| **定位** | 香港幼童軍個人隨身離線電子紀錄冊（紙本第 1–19 頁 ＋ 2026 第十版訓練綱要 ＋ `PT/67`・`PT/68`）；**可獨立運作**，`cubbadge` 同步屬可選 |
+| **獨立模式** | 沒有 `/api/cubbadge`（純靜態主機）時，數位附錄自動顯示「現時以獨立模式運作」＋本機 JSON 交換；其餘功能不變 |
 | **網址路由** | `/` 封面・`/p/p01`–`/p/p19` 紙本第 1–19 頁・`/p/contents` 目錄・`/p/appendix` 數位附錄・`/forms` 官方表格（`pt67`、`pt68`、`gbac`、`all`）・`/scan` 掃描二維碼・`/print` 整本列印 |
 | **本機儲存鍵** | `cubbook.book.v1`（紀錄冊主體）、`cubbook.lang`（語言 `zh`/`en`）、`cubbook.last`（上次頁面）、`cubbook.signoff.applied.v1`（已寫入核簽序號）、`cubbook.cubbadge.member.v1`（同步身分） |
 | **互通格式** | `cubbadge.pending.v1`（以 `scoutId` 對齊 `L1-*`…`L4-*`、`OT-*`；送出前轉回 `cubbadge` 官方 `badgeId`） |

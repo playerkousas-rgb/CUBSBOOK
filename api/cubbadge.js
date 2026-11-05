@@ -371,7 +371,7 @@ export default async function handler(req, res) {
         data: { login_id, password },
       });
       if (!rawJson || typeof rawJson !== 'object') {
-        return sendJson(res, 502, { success: false, error: 'cubadge 回應異常，請稍後重試' });
+        return sendJson(res, 502, { success: false, error: 'cubbadge 回應異常，請稍後重試' });
       }
       if (!rawJson.success) {
         return sendJson(res, 200, { success: false, error: String(rawJson.error || '登入失敗') });

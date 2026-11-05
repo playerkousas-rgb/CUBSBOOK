@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   collectPendingForBadge,
   exportForBadge,
@@ -9,6 +9,7 @@ import { useBook } from '../bookContext.js';
 import { download, slugify } from '../bookStore.js';
 import { useLang } from '../i18n.jsx';
 import { Icon, useToast } from '../ui.jsx';
+import { probeCubBadgeBridge } from '../cubadgeBridge.js';
 
 const CUBBADGE_MEMBER_SESSION_KEY = 'cubbook.cubbadge.member.v1';
 
@@ -43,6 +44,8 @@ export default function CubBadgeSyncCard({ readOnly = false }) {
   const [session, setSession] = useState(() => readMemberSession());
   const [showLogin, setShowLogin] = useState(false);
   const [busy, setBusy] = useState(false);
+  // 'checking' → 尚未探測；'ready' → 伺服器端橋接可用；'unavailable' → 純靜態部署，BOOK 以獨立模式運作
+  const [bridge, setBridge] = useState('checking');
   const [remoteConfirmed, setRemoteConfirmed] = useState({});
   const [remotePendingIds, setRemotePendingIds] = useState([]);
 
@@ -50,22 +53,26 @@ export default function CubBadgeSyncCard({ readOnly = false }) {
     if (mySid && !loginYmis) setLoginYmis(mySid);
   }, [mySid, loginYmis]);
 
+  const probeBridge = useCallback(async () => {
+    setBridge('checking');
+    const result = await probeCubBadgeBridge();
+    // 靜態主機（GitHub Pages／S3／本機 file://）沒有 /api：BOOK 仍 100% 可用，只是少了自動同步。
+    if (!result.available) {
+      setBridge('unavailable');
+      return;
+    }
+    setTroops(result.troops);
+    setBridge('ready');
+    if (!troopId) {
+      const first = Object.keys(result.troops)[0];
+      if (first) setTroopId(first);
+    }
+  }, [troopId]);
+
   useEffect(() => {
-    let alive = true;
-    fetch('/api/cubbadge')
-      .then((r) => r.json())
-      .then((d) => {
-        if (!alive || !d?.troops) return;
-        setTroops(d.troops);
-        if (!troopId) {
-          const first = Object.keys(d.troops)[0];
-          if (first) setTroopId(first);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
+    probeBridge();
+    // 只在首次掛載探測一次；使用者可按「重新偵測」再試。
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const confirmedInBookCount = useMemo(
@@ -278,14 +285,31 @@ export default function CubBadgeSyncCard({ readOnly = false }) {
       <h3>
         <Icon name="verified" size={16} />{' '}
         {isEn
-          ? 'Sync Progress with cubbadge (Progress Only · Zero Personal Data)'
-          : '與 cubbadge 同步個人進度（只同步進度 · 不錄入個人資料）'}
+          ? 'Optional: Sync Progress with cubbadge (Progress Only · Zero Personal Data)'
+          : '可選：與 cubbadge 同步個人進度（只同步進度 · 不錄入個人資料）'}
       </h3>
       <p className="tiny">
         {isEn
-          ? 'Saves typing twice: BOOK → cubbadge always submits as “Pending Leader Confirmation” (cannot self-confirm); cubbadge → BOOK unconditionally trusts leader-confirmed items and ignores unconfirmed ones.'
-          : '免除在紀錄冊與 cubbadge 重複輸入：由 BOOK 送往 cubbadge 一律轉為「待領袖核實（pending）」，必須由領袖在 cubbadge 內 CONFIRM；由 cubbadge 錄入回 BOOK 時，只無條件相信領袖已核實的資料，未核實項目絕不錄入。'}
+          ? 'Everything works without cubbadge. Connecting only saves double typing: BOOK → cubbadge always submits as “Pending Leader Confirmation” (cannot self-confirm); cubbadge → BOOK trusts only leader-confirmed items.'
+          : '不連接亦可用完整紀錄冊、簽名、列印與二維碼。連接後可免除重複輸入：由 BOOK 送往 cubbadge 一律轉為「待領袖核實（pending）」，必須由領袖在 cubbadge 內 CONFIRM；由 cubbadge 錄入回 BOOK 時，只無條件相信領袖已核實的資料，未核實項目絕不錄入。'}
       </p>
+
+      {bridge === 'unavailable' && (
+        <div className="cubsync__offline">
+          <Icon name="info" size={15} />
+          <div>
+            <strong>{isEn ? 'Running in standalone mode' : '現時以獨立模式運作'}</strong>
+            <p>
+              {isEn
+                ? 'This deployment has no cubbadge bridge (static hosting). Your record book is fully usable: pages, signatures, forms, printing and QR all work offline. You can still exchange progress with a leader using the JSON file below.'
+                : '此部署未接駁 cubbadge（純靜態主機）。紀錄冊全部功能照常運作：逐頁填寫、簽名、表格、列印及二維碼均可離線使用。你仍可用下方 JSON 檔與領袖交換進度。'}
+            </p>
+          </div>
+          <button type="button" className="btn btn--ghost btn--sm" onClick={probeBridge}>
+            <Icon name="refresh" size={13} /> {isEn ? 'Retry' : '重新偵測'}
+          </button>
+        </div>
+      )}
 
       <div className="cubsync__stats">
         <span>
@@ -346,14 +370,23 @@ export default function CubBadgeSyncCard({ readOnly = false }) {
             </button>
           </>
         ) : (
-          <button
-            type="button"
-            className="btn btn--gold btn--sm"
-            onClick={() => setShowLogin((v) => !v)}
-          >
-            <Icon name="link" size={14} />{' '}
-            {isEn ? 'Connect My cubbadge Account' : '連接我的 cubbadge 帳戶（一鍵同步）'}
-          </button>
+          bridge !== 'unavailable' && (
+            <button
+              type="button"
+              className="btn btn--gold btn--sm"
+              disabled={bridge === 'checking'}
+              onClick={() => setShowLogin((v) => !v)}
+            >
+              <Icon name="link" size={14} />{' '}
+              {bridge === 'checking'
+                ? isEn
+                  ? 'Checking cubbadge…'
+                  : '正在偵測 cubbadge…'
+                : isEn
+                  ? 'Connect My cubbadge Account'
+                  : '連接我的 cubbadge 帳戶（一鍵同步）'}
+            </button>
+          )
         )}
       </div>
 

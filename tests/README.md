@@ -26,6 +26,10 @@ npm test
   - `login` 只回傳 `token` + `ymis`；`load` 過濾他人紀錄與個人資料；`submitPending` 只轉發 `requestComplete`；
   - `sanitizePendingSubmissions` 剝除 PII、轉官方編號、去重、日期合法性、200 項上限；
   - 端到端：空白冊同步、只匯入已核實、申報永不自我核實。
+- `tests/standalone_book.test.mjs`
+  - 完全離線的端到端流程：建立空白冊 → 填寫 → 統計 → `PT/67`/`PT/68` → `CB1` 出示 → `CB1S` 核簽 → 19 頁列印 → JSON 備份；
+  - `probeCubBadgeBridge` 對靜態主機 HTML fallback、404、壞 payload、離線、逾時、無 fetch 一律安全降級；
+  - 只有可選同步卡可觸及 `/api`；第 17 頁制服清單可剔選並持久化。
 - `tests/ui_contracts.test.mjs`
   - 19 頁 + 目錄 + 附錄路由映射；版權聲明只出現三處；
   - 幼童軍綠金 WCAG AA 與「禁止白字配黃」；`api/leader.js` 的 `timingSafeEqual` 與零前端密碼；
