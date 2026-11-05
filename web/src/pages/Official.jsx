@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { BADGE_SYLLABUS, GOLD_AWARD, OTHER_BADGES, allStats, ageFromDob, membershipStatus } from '@shared/book.js';
+import { BADGE_SYLLABUS, GOLD_AWARD, OTHER_BADGES, ageFromDob, allStats, membershipStatus } from '@shared/book.js';
 import { OFFICIAL_GROUPS, OFFICIAL_PAGES } from '@shared/officialPages.js';
+import { ACTIVITY_DOMAINS, LEVEL_LABEL, expandActivityPlan } from '@shared/officialActivityBadges.js';
 import { useBook, useField } from '../bookContext.js';
-import { Area, AssessTable, Grid, H, Line, Note, P, Page, Rows, Sig } from '../components/Form.jsx';
+import { Area, AssessTable, Grid, H, Line, Note, P, Page, Sig } from '../components/Form.jsx';
 import Write from '../components/Write.jsx';
 import { PhotoPicker } from '../components/PhotoPicker.jsx';
 import { SignModal } from '../components/Ink.jsx';
@@ -11,19 +12,16 @@ import { useLang } from '../i18n.jsx';
 import { Link } from '../router.jsx';
 
 /**
- * 官方《幼童軍紀錄冊》（© 2026 香港童軍總會）32 頁的電子版。
- * 每一頁的頁碼、標題、欄目、表格排列均照官方；不加入官方沒有的欄位。
- * 72 項課程細節只放在「數位附錄」，不在官方頁上出現勾選表。
+ * 官方《幼童軍紀錄冊》（© 2026 香港童軍總會）電子版。
+ * 頁碼、頁序、標題、欄目、表格排列一律照官方：封面不計頁碼，內頁第 1–32 頁。
+ * 官方頁不出現逐項勾選表；72 項課程細節只放在「數位附錄」。
  */
 
 const awardById = Object.fromEntries([...BADGE_SYLLABUS, GOLD_AWARD].map((a) => [a.id, a]));
-
-const CORE_ROWS = (awardId) => {
-  const award = awardById[awardId];
-  return award.segments
+const CORE_ROWS = (awardId) =>
+  awardById[awardId].segments
     .filter((s) => !s.code.endsWith('-INTEREST'))
-    .map((s, i) => ({ code: s.code, no: String(i + 1), zh: s.name, en: s.en, items: s.items }));
-};
+    .map((s, i) => ({ code: s.code, no: String(i + 1), zh: s.name.replace(/^（.）/, ''), en: s.en, items: s.items }));
 
 /* ------------------------------------------------------------------ 小元件 */
 
@@ -33,7 +31,7 @@ function CslSign({ path, label = '幼童軍團長簽署', en = 'C.S.L. Signature
   const [open, setOpen] = useState(false);
   return (
     <div className="offsign">
-      <span className="frow__label">
+      <span className="offsign__label">
         {isEn ? en : label}
         {!isEn && <em>{en}</em>}
       </span>
@@ -43,7 +41,7 @@ function CslSign({ path, label = '幼童軍團長簽署', en = 'C.S.L. Signature
         </button>
       ) : (
         <button type="button" className="offsign__btn no-print" onClick={() => setOpen(true)}>
-          <Icon name="pen" size={13} /> {isEn ? 'Sign' : '簽署'}
+          <Icon name="pen" size={12} /> {isEn ? 'Sign' : '簽署'}
         </button>
       )}
       <SignModal
@@ -65,28 +63,23 @@ function AwardDate({ awardId, label = '頒發／完成日期', en = 'Awarded / C
   const [row, set] = useField(`pages.award_${awardId}`, {});
   const { isEn } = useLang();
   return (
-    <div className="offaward">
-      <div className="frow">
-        <span className="frow__label">
+    <>
+      <div className="offline">
+        <span className="offline__label">
           {isEn ? en : label}
           {!isEn && <em>{en}</em>}
         </span>
-        <span className="frow__value">
-          <Write
-            value={row.date || ''}
-            onChange={(v) => set({ ...row, date: v })}
-            type="date"
-            compact
-            label={isEn ? en : label}
-          />
+        <span className="offline__field">
+          <Write value={row.date || ''} onChange={(v) => set({ ...row, date: v })} type="date" compact label={en} />
         </span>
       </div>
       <CslSign path={`pages.award_${awardId}.signature`} />
-    </div>
+    </>
   );
 }
 
-function ExamTable({ rows, en = 'Examiner / Date', showDigital = false, awardId }) {
+/** 官方「主考人／日期」點線表 */
+function ExamTable({ rows, showDigital = false, awardId = '', withNo = true }) {
   const { book, update, readOnly } = useBook();
   const { isEn } = useLang();
   const setCell = (code, key, value) => {
@@ -97,69 +90,58 @@ function ExamTable({ rows, en = 'Examiner / Date', showDigital = false, awardId 
     }));
   };
   return (
-    <div className="offtable">
-      <div className="offtable__head">
-        <span className="offtable__c-no">{isEn ? 'No.' : '項'}</span>
-        <span className="offtable__c-name">{isEn ? 'Domain / Item' : '範疇／項目'}</span>
-        <span className="offtable__c-exam">{isEn ? 'Examiner' : '主考人'}</span>
-        <span className="offtable__c-date">{isEn ? 'Date' : '日期'}</span>
+    <div className="offexam">
+      <div className="offexam__head">
+        <span />
+        <span />
+        <span className="offexam__h">{isEn ? 'Examiner' : '主考人'}<em>Examiner</em></span>
+        <span className="offexam__h">{isEn ? 'Date' : '日期'}<em>Date</em></span>
       </div>
       {rows.map((r) => {
         const st = book.domains?.[r.code] || {};
         return (
-          <div className="offtable__row" key={r.code}>
-            <span className="offtable__c-no">({r.no})</span>
-            <span className="offtable__c-name">
+          <div className="offexam__row" key={r.code}>
+            <span className="offexam__no">{withNo ? `(${r.no})` : ''}</span>
+            <span className="offexam__name">
               {isEn ? r.en || r.zh : r.zh}
               {!isEn && r.en && <em>{r.en}</em>}
               {showDigital && r.items?.length > 0 && (
-                <small className="offtable__hint">
+                <small className="offexam__hint">
                   {isEn
                     ? `${r.items.filter((i) => book.progress?.[i.id]?.date).length}/${r.items.length} items in appendix`
                     : `附錄 ${r.items.filter((i) => book.progress?.[i.id]?.date).length}/${r.items.length} 項`}
                 </small>
               )}
             </span>
-            <span className="offtable__c-exam">
-              <Write
-                value={st.examiner || ''}
-                onChange={(v) => setCell(r.code, 'examiner', v)}
-                compact
-                placeholder={isEn ? 'Name' : '姓名'}
-                label={`${r.no} 主考人`}
-              />
+            <span className="offexam__cell">
+              <Write value={st.examiner || ''} onChange={(v) => setCell(r.code, 'examiner', v)} compact placeholder={isEn ? 'Name' : '姓名'} label={`${r.zh} 主考人`} />
             </span>
-            <span className="offtable__c-date">
-              <Write
-                value={st.date || ''}
-                onChange={(v) => setCell(r.code, 'date', v)}
-                type="date"
-                compact
-                label={`${r.no} 日期`}
-              />
+            <span className="offexam__cell">
+              <Write value={st.date || ''} onChange={(v) => setCell(r.code, 'date', v)} type="date" compact label={`${r.zh} 日期`} />
             </span>
           </div>
         );
       })}
       {awardId && (
-        <p className="offtable__foot no-print">
-          <Link to="/p/appendix">
-            {isEn ? 'Item-by-item detail lives in the digital appendix' : '逐項課程細節請看「數位附錄」'}
-          </Link>
+        <p className="offexam__foot no-print">
+          <Link to="/p/appendix">{isEn ? 'Item-by-item detail → digital appendix' : '逐項課程細節 → 數位附錄'}</Link>
         </p>
       )}
     </div>
   );
 }
 
-function CheckLine({ path, zh, en }) {
+function CheckLine({ path, zh, en, inline = false }) {
   const [checked, set] = useField(path, false);
   const { isEn } = useLang();
   return (
-    <label className={cx('offcheck', checked && 'is-checked')}>
+    <label className={cx('offcheck', inline && 'offcheck--inline', checked && 'is-checked')}>
       <input type="checkbox" checked={Boolean(checked)} onChange={(e) => set(e.target.checked)} />
-      <span aria-hidden="true">{checked ? '✓' : ''}</span>
-      {isEn ? en : zh}
+      <span aria-hidden="true" className="offcheck__box">{checked ? '✓' : ''}</span>
+      <span className="offcheck__text">
+        {isEn ? en : zh}
+        {!isEn && <em>{en}</em>}
+      </span>
     </label>
   );
 }
@@ -175,13 +157,8 @@ function MiniSig({ path, label = '團長簽署', en = 'C.S.L. Signature' }) {
           <img src={sig.png} alt={isEn ? 'Signature' : '簽署'} />
         </button>
       ) : (
-        <button
-          type="button"
-          className="offsig offsig--empty no-print"
-          onClick={() => setOpen(true)}
-          aria-label={isEn ? en : label}
-        >
-          <Icon name="pen" size={11} />
+        <button type="button" className="offsig offsig--empty no-print" onClick={() => setOpen(true)} aria-label={isEn ? en : label}>
+          <Icon name="pen" size={10} />
         </button>
       )}
       <SignModal
@@ -199,83 +176,90 @@ function MiniSig({ path, label = '團長簽署', en = 'C.S.L. Signature' }) {
   );
 }
 
-/* ------------------------------------------------------------------ 第 1 頁 封面 */
+/* ------------------------------------------------------------------ 封面（不計頁碼） */
 
-export function P01() {
+export function PCover() {
   const { isEn } = useLang();
   return (
-    <Page id="p01" className="offcover">
+    <Page id="cover" className="offcover">
       <div className="offcover__inner">
-        <Crest size={64} />
-        <p className="offcover__org">{isEn ? 'SCOUT ASSOCIATION OF HONG KONG' : '香港童軍總會'}</p>
+        <div className="offcover__emblem" aria-hidden="true">
+          <span className="offcover__diamond offcover__diamond--1" />
+          <span className="offcover__diamond offcover__diamond--2" />
+          <span className="offcover__diamond offcover__diamond--3" />
+        </div>
         <h1 className="offcover__title">
           {isEn ? 'CUB SCOUT' : '幼童軍'}
           <em>{isEn ? 'RECORD BOOK' : '紀　錄　冊'}</em>
         </h1>
-        <p className="offcover__edition">{isEn ? 'Cub Scout Record Book' : 'Cub Scout Record Book · 2026 年版'}</p>
+        <p className="offcover__org">{isEn ? 'Scout Association of Hong Kong' : '香港童軍總會'}</p>
         <div className="offcover__fields">
           <Line label="姓名" en="Name" path="member.nameZh" />
           <Line label="小隊" en="Six" path="member.six" />
           <Line label="旅別" en="Group" path="member.group" />
         </div>
-        <p className="offcover__foot">
-          {isEn ? '© 2026 Scout Association of Hong Kong' : '© 2026 香港童軍總會'}
-        </p>
+        <p className="offcover__foot">© 2026 · 九龍柯士甸道童軍徑香港童軍中心 10 樓</p>
       </div>
     </Page>
   );
 }
 
-/* ------------------------------------------------------------------ 第 2 頁 個人摘要 */
+/* ------------------------------------------------------------------ 第 1 頁 個人摘要（一） */
 
-export function P02() {
+export function P01() {
   const [photo, setPhoto] = useField('member.photo', null);
   const { book } = useBook();
   const { isEn } = useLang();
-  const joined = book.member?.dateJoined && book.member?.dob ? ageFromDob(book.member.dob, new Date(book.member.dateJoined)) : null;
+  return (
+    <Page id="p01">
+      <Line label="童軍成員編號" en="Scout ID." path="member.scoutId" placeholder="0012345678" />
+      <div className="offphoto">
+        <PhotoPicker value={photo} onChange={setPhoto} />
+        <p className="offphoto__note">
+          {isEn ? 'Please stamp group chop across the photo' : '請於相片上蓋上旅印'}
+          <em>Please stamp group chop across the photo</em>
+        </p>
+        <p className="offphoto__cap">{isEn ? 'Photo' : '相片'}<em>Photo</em></p>
+      </div>
+      <div className="offstack">
+        <Line label="姓名（中文）" en="Name (in Chinese)" path="member.nameZh" />
+        <Line label="（英文）" en="(in English)" path="member.nameEn" />
+        <Sig label="持有人簽署" en="Holder's Signature" path="holderSignature" defaultName={book.member?.nameZh || ''} />
+      </div>
+      <div className="offbannerbar">
+        {isEn ? 'In the event of accident please contact:' : '如有意外請代通知：'}
+        <em>In the event of accident please contact:</em>
+      </div>
+      <div className="offstack">
+        <Line label="姓名" en="Name" path="member.emergencyName" />
+        <Line label="電話" en="Telephone" path="member.emergencyPhone" />
+      </div>
+    </Page>
+  );
+}
 
+/* ------------------------------------------------------------------ 第 2 頁 個人摘要（二） */
+
+export function P02() {
+  const { isEn } = useLang();
   return (
     <Page id="p02">
-      <H en="PERSONAL DETAILS">個人摘要</H>
-      <p className="pglead">{isEn ? 'Please also refer to the information on Page 4.' : '（請同時參閱第 4 頁之資料）'}</p>
-
-      <div className="ptop">
-        <div className="ptop__photo">
-          <PhotoPicker value={photo} onChange={setPhoto} />
-          <small className="ptop__stamp">{isEn ? 'Please stamp group chop across the photo' : '請於相片上蓋上旅印'}</small>
-        </div>
-        <div className="ptop__id">
-          <Line label="姓名（中文）" en="Name (in Chinese)" path="member.nameZh" />
-          <Line label="姓名（英文）" en="Name (in English)" path="member.nameEn" />
-          <Line label="童軍成員編號" en="Scout ID." path="member.scoutId" placeholder="0012345678" />
-          <Line label="電話" en="Telephone" path="member.phone" />
-        </div>
-      </div>
-
-      <Grid cols={2}>
+      <div className="offstack">
+        <Line label="身份證號碼" en="HKID No." path="member.hkidPrefix" transform={(v) => v.toUpperCase()} />
         <Line label="出生日期" en="Date of Birth" path="member.dob" type="date" />
         <Line label="出生地點" en="Place of Birth" path="member.pob" />
-        <Line label="學校" en="School" path="member.school" />
-        <Line label="身份證號碼" en="HKID No." path="member.hkidPrefix" transform={(v) => v.toUpperCase()} hint={isEn ? 'CUBBOOK only stores the first 4 characters.' : 'CUBBOOK 只儲存首 4 個字元。'} />
-      </Grid>
-
-      <Area label="地址" en="Address" path="member.addressZh" rows={2} />
-
-      <Grid cols={2}>
+      </div>
+      <Area label="地址" en="Address" path="member.addressZh" rows={3} />
+      <div className="offstack">
         <Line label="家長或監護人姓名" en="Parent or Guardian" path="member.parentName" />
         <Line label="聯絡電話" en="Telephone" path="member.parentPhone" />
-      </Grid>
-      <Grid cols={2}>
+        <Line label="學校" en="School" path="member.school" />
         <Line label="簽證日期" en="Date of Issue" path="member.dateOfIssue" type="date" />
-        <Line
-          label="入團年歲"
-          en="Age on Joining"
-          path="member.ageOnJoining"
-          placeholder={joined == null ? '' : String(joined)}
-        />
-      </Grid>
-
-      <Sig label="持有人簽署" en="Holder's Signature" path="holderSignature" defaultName={book.member?.nameZh || ''} />
+      </div>
+      <p className="offref">
+        {isEn ? '(Please also refer to the information on Page 4)' : '（請同時參閱第 4 頁之資料）'}
+        <em>(Please also refer to the information on Page 4)</em>
+      </p>
     </Page>
   );
 }
@@ -286,101 +270,134 @@ export function P03() {
   const { book } = useBook();
   const { isEn } = useLang();
   const age = book.member?.dateJoined && book.member?.dob ? ageFromDob(book.member.dob, new Date(book.member.dateJoined)) : null;
-
   return (
     <Page id="p03">
-      <H en="SCOUTING RECORD">童軍紀錄</H>
-      <Grid cols={2}>
-        <Line label="小隊" en="Six" path="member.six" />
+      <div className="offstack">
+        <Line label="隊名" en="Six" path="member.six" />
         <Line label="旅別" en="Group" path="member.group" />
-        <Line label="所屬幼童軍區" en="Scout District" path="member.district" />
+        <Line label="所屬童軍區" en="Scout District" path="member.district" />
         <Line label="所屬地域" en="Region" path="member.region" />
         <Line label="幼童軍團長姓名" en="Name of C.S.L." path="member.csl" />
         <Line label="聯絡電話" en="Telephone" path="member.cslPhone" />
         <Line label="入團日期" en="Date Joined" path="member.dateJoined" type="date" />
-        <Line
-          label="入團年歲"
-          en="Age on Joining"
-          path="member.ageOnJoining"
-          placeholder={age == null ? '' : String(age)}
-        />
-      </Grid>
+        <Line label="入團年歲" en="Age on Joining" path="member.ageOnJoining" placeholder={age == null ? '' : String(age)} />
+      </div>
       <Area label="旅部地址" en="Address of Group HQ" path="member.groupAddress" rows={2} />
-      <Note en="The Scout ID is the only identifier CUBBOOK uses to match your cubbadge record. Everything else may be left blank.">
-        童軍成員編號是 CUBBOOK 與 cubbadge 對應的唯一識別；其餘資料可留白。
+    </Page>
+  );
+}
+
+/* ------------------------------------------------------------------ 第 4 頁 會員資格 */
+
+export function P04() {
+  const { book, update, readOnly } = useBook();
+  const { isEn } = useLang();
+  const rows = book.renewals || [];
+  const total = Math.max(8, rows.length);
+  const setCell = (i, key, value) => {
+    if (readOnly) return;
+    update((b) => {
+      const next = (b.renewals || []).slice();
+      while (next.length <= i) next.push({});
+      next[i] = { ...(next[i] || {}), [key]: value };
+      return { ...b, renewals: next };
+    });
+  };
+  return (
+    <Page id="p04" dense>
+      <div className="offgrid offgrid--renewal">
+        <div className="offgrid__head offgrid__head--span">
+          <span>{isEn ? 'Valid Date' : '有效日期'}<em>Valid Date</em></span>
+          <span>{isEn ? 'Signature of Leader and Group Chop' : '領袖簽署及旅印'}<em>Signature of Leader and Group Chop</em></span>
+          <span>{isEn ? 'Name of Leader' : '領袖姓名'}<em>Name of Leader</em></span>
+        </div>
+        <div className="offgrid__head offgrid__head--sub">
+          <span>{isEn ? 'From' : '由'}<em>From</em></span>
+          <span>{isEn ? 'To' : '至'}<em>To</em></span>
+          <span aria-hidden="true" />
+          <span aria-hidden="true" />
+        </div>
+        {Array.from({ length: total }).map((_, i) => {
+          const row = rows[i] || {};
+          return (
+            <div className="offgrid__row" key={i}>
+              <span><Write value={row.from || ''} onChange={(v) => setCell(i, 'from', v)} type="date" compact label="由" /></span>
+              <span><Write value={row.validUntil || ''} onChange={(v) => setCell(i, 'validUntil', v)} type="date" compact label="至" /></span>
+              <span><MiniSig path={`renewals.${i}.signature`} label={`第 ${i + 1} 年領袖簽署`} /></span>
+              <span><Write value={row.leaderName || ''} onChange={(v) => setCell(i, 'leaderName', v)} compact label="領袖姓名" /></span>
+            </div>
+          );
+        })}
+      </div>
+      <Note en="Membership is normally renewed on 1st January by the Group, and valid until 31st December each year.">
+        會員資格通常每年由旅部簽認，由一月一日起至十二月三十一日止。
       </Note>
     </Page>
   );
 }
 
-/* ------------------------------------------------------------------ 第 4 頁 會員資格續期 */
-
-export function P04() {
-  const { isEn } = useLang();
-  return (
-    <Page id="p04">
-      <H en="RENEWAL OF MEMBERSHIP">會員資格續期</H>
-      <P en="Membership is normally renewed on 1st January by the Group, and valid until 31st December each year.">
-        會員資格通常每年由旅部簽認，由一月一日至十二月三十一日止。
-      </P>
-      <Rows
-        path="renewals"
-        min={6}
-        addLabel="加一年"
-        cols={[
-          { k: 'from', label: '由', en: 'From', type: 'date' },
-          { k: 'validUntil', label: '至', en: 'To', type: 'date' },
-          { k: 'leaderName', label: '領袖姓名', en: 'Name of Leader' },
-          { k: 'memberNo', label: '會員編號', en: 'Membership No.' },
-        ]}
-      />
-      <CslSign path="pages.renewalSignature" label="領袖簽署及旅印" en="Signature of Leader and Group Chop" />
-    </Page>
-  );
-}
-
-/* ------------------------------------------------------------------ 第 5 頁 轉旅及遷移地址 */
+/* ------------------------------------------------------------------ 第 5 頁 轉旅／遷移地址 */
 
 export function P05() {
+  const { book, update, readOnly } = useBook();
   const { isEn } = useLang();
+  const setCell = (key, i, field, value) => {
+    if (readOnly) return;
+    update((b) => {
+      const next = (b[key] || []).slice();
+      while (next.length <= i) next.push({});
+      next[i] = { ...(next[i] || {}), [field]: value };
+      return { ...b, [key]: next };
+    });
+  };
   return (
-    <Page id="p05">
-      <H en="TRANSFER OF GROUP & CHANGE OF ADDRESS">轉旅及遷移地址</H>
+    <Page id="p05" dense>
+      <h3 className="offband offband--orange">{isEn ? 'Transfer of Group' : '轉旅'}<em>Transfer of Group</em></h3>
+      <div className="offgrid offgrid--transfer">
+        <div className="offgrid__head">
+          <span>{isEn ? 'Date' : '日期'}<em>Date</em></span>
+          <span>{isEn ? 'No. of New Group' : '新旅號'}<em>No. of New Group</em></span>
+        </div>
+        {[0, 1, 2].map((i) => {
+          const row = book.transfers?.[i] || {};
+          return (
+            <div className="offgrid__row" key={i}>
+              <span>
+                <b className="offgrid__idx">{i + 1})</b>
+                <Write value={row.date || ''} onChange={(v) => setCell('transfers', i, 'date', v)} type="date" compact label="日期" />
+              </span>
+              <span><Write value={row.group || ''} onChange={(v) => setCell('transfers', i, 'group', v)} compact label="新旅號" /></span>
+            </div>
+          );
+        })}
+      </div>
 
-      <h3 className="offsub">{isEn ? 'Transfer of Group' : '轉旅'}</h3>
-      <Rows
-        path="transfers"
-        min={3}
-        addLabel="加一次轉旅"
-        cols={[
-          { k: 'date', label: '日期', en: 'Date', type: 'date' },
-          { k: 'group', label: '新旅別', en: 'No. of New Group' },
-          { k: 'address', label: '新旅部地址', en: 'Address of New Group HQ' },
-        ]}
-      />
-
-      <h3 className="offsub">{isEn ? 'Change of Address' : '遷移地址'}</h3>
-      <Rows
-        path="addressChanges"
-        min={3}
-        addLabel="加一次遷移"
-        cols={[
-          { k: 'date', label: '日期', en: 'Date', type: 'date' },
-          { k: 'address', label: '新地址', en: 'New Address' },
-        ]}
-      />
+      <h3 className="offband offband--orange">{isEn ? 'Change of Address' : '遷移地址'}<em>Change of Address</em></h3>
+      <div className="offgrid offgrid--address">
+        <div className="offgrid__head">
+          <span>{isEn ? 'Date' : '日期'}<em>Date</em></span>
+          <span>{isEn ? 'Address of New Group HQ' : '新旅部地址'}<em>Address of New Group HQ</em></span>
+        </div>
+        {[0, 1, 2, 3, 4].map((i) => {
+          const row = book.addressChanges?.[i] || {};
+          return (
+            <div className="offgrid__row" key={i}>
+              <span><Write value={row.date || ''} onChange={(v) => setCell('addressChanges', i, 'date', v)} type="date" compact label="日期" /></span>
+              <span><Write value={row.address || ''} onChange={(v) => setCell('addressChanges', i, 'address', v)} compact label="新地址" /></span>
+            </div>
+          );
+        })}
+      </div>
     </Page>
   );
 }
 
-/* ------------------------------------------------------------------ 第 6 頁 誓詞、規律、銘言 */
+/* ------------------------------------------------------------------ 第 6 頁 誓詞／規律／銘言 */
 
 export function P06() {
   const { isEn } = useLang();
   return (
-    <Page id="p06">
-      <H en="CUB SCOUT PROMISE, LAW AND MOTTO">幼童軍誓詞、規律及銘言</H>
-
+    <Page id="p06" banner={false}>
       <section className="offcreed">
         <h3>{isEn ? 'Cub Scout Promise' : '幼童軍誓詞'}<em>Cub Scout Promise</em></h3>
         <p>
@@ -407,7 +424,6 @@ export function P06() {
           )}
         </p>
       </section>
-
       <section className="offcreed">
         <h3>{isEn ? 'Cub Scout Law' : '幼童軍規律'}<em>Cub Scout Law</em></h3>
         <p>
@@ -430,7 +446,6 @@ export function P06() {
           )}
         </p>
       </section>
-
       <section className="offcreed">
         <h3>{isEn ? 'Scout Motto' : '童軍銘言'}<em>Scout Motto</em></h3>
         <p className="offcreed__motto">{isEn ? '“Be Prepared”' : '「準備」'}</p>
@@ -445,34 +460,25 @@ export function P07() {
   const { isEn } = useLang();
   return (
     <Page id="p07">
-      <H en="PROGRESSIVE BADGES">進度性獎章</H>
       <P en="There are four progressive badges, including Cub Scout Experience Badge, Cub Scout Adventure Award, Cub Scout Adventure Crest Award, and Golden Bauhinia Award.">
         共有四個進度性獎章，包括幼童軍體驗章、幼童軍歷奇章、幼童軍高級歷奇章及金紫荊獎章。
       </P>
       <P en="Under normal circumstances, a Cub Scout should complete the entire syllabus of a badge before proceeding to the next one. For late-joining Cub Scouts, they are required to complete the designated syllabus within the “Core Domains” of the preceding progressive badge(s) before they can commence the progressive badge syllabus appropriate for their age.">
         在正常情況下，一個幼童軍應完成某一獎章全部課程後，才去考取另一個獎章；而遲加入的幼童軍成員，則須完成之前進度性獎章內的「核心範疇」指定課程後，才可開展該年齡的進度性獎章課程。
       </P>
-
       <div className="offawards">
         {[
-          { id: 'L2', zh: '幼童軍體驗章', en: 'C.S. Experience Badge', page: 'p12' },
-          { id: 'L3', zh: '幼童軍歷奇章', en: 'C.S. Adventure Award', page: 'p14' },
-          { id: 'L4', zh: '幼童軍高級歷奇章', en: 'C.S. Adventure Crest Award', page: 'p16' },
-          { id: 'OT-GB', zh: '金紫荊獎章', en: 'Golden Bauhinia Award', page: 'p18' },
+          { zh: '幼童軍體驗章', en: 'C.S. Experience Badge', page: 'p13' },
+          { zh: '幼童軍歷奇章', en: 'C.S. Adventure Award', page: 'p14' },
+          { zh: '幼童軍高級歷奇章', en: 'C.S. Adventure Crest Award', page: 'p16' },
+          { zh: '金紫荊獎章', en: 'Golden Bauhinia Award', page: 'p18' },
         ].map((b) => (
-          <Link key={b.id} to={`/p/${b.page}`} className="offawards__card">
+          <Link key={b.page} to={`/p/${b.page}`} className="offawards__card">
             <strong>{isEn ? b.en : b.zh}</strong>
             {!isEn && <em>{b.en}</em>}
-            <span>
-              {isEn ? 'See page' : '見第'} {Number(b.page.slice(1))} {isEn ? '' : '頁'}
-            </span>
           </Link>
         ))}
       </div>
-
-      <Note en="Every progressive badge is recorded on two pages: the Core Domains table (Examiner / Date) and, for the three higher badges, the Interest Domains table.">
-        每個進度性獎章以兩頁記錄：核心範疇表（主考人／日期），以及三個較高獎章的興趣範疇表。
-      </Note>
     </Page>
   );
 }
@@ -494,22 +500,10 @@ export function P08() {
   const { isEn } = useLang();
   return (
     <Page id="p08">
-      <H en="PERSONAL PROGRESS RECORD">個人進度紀錄</H>
-      <div className="offtable">
-        <div className="offtable__head offtable__head--two">
-          <span className="offtable__c-name">{isEn ? 'Award / Appointment' : '獎章／職務'}</span>
-          <span className="offtable__c-date">{isEn ? 'Date Completed' : '獲取日期'}</span>
-        </div>
+      <div className="offdotted">
+        <div className="offdotted__head">{isEn ? 'Date Completed' : '獲取日期'}<em>Date Completed</em></div>
         {PROGRESS_ROWS.map((r) => (
-          <div className="offtable__row offtable__row--two" key={r.key}>
-            <span className="offtable__c-name">
-              {isEn ? r.en : r.zh}
-              {!isEn && <em>{r.en}</em>}
-            </span>
-            <span className="offtable__c-date">
-              <Line label={r.zh} en={r.en} path={`personalProgress.${r.key}`} type="date" />
-            </span>
-          </div>
+          <DateRow key={r.key} path={`personalProgress.${r.key}`} zh={r.zh} en={r.en} />
         ))}
       </div>
     </Page>
@@ -530,28 +524,38 @@ export function P09() {
   ];
   return (
     <Page id="p09">
-      <H en="SERVICE STAR">服務年星</H>
-      <div className="offtable">
-        <div className="offtable__head offtable__head--two">
-          <span className="offtable__c-name">{isEn ? 'Service Star' : '服務年星'}</span>
-          <span className="offtable__c-date">{isEn ? 'Date Completed' : '獲取日期'}</span>
-        </div>
-        {years.map(([key, zh, en]) => (
-          <div className="offtable__row offtable__row--two" key={key}>
-            <span className="offtable__c-name">
-              {isEn ? en : zh}
-              {!isEn && <em>{en}</em>}
-            </span>
-            <span className="offtable__c-date">
-              <Line label={zh} en={en} path={`serviceStars.${key}`} type="date" />
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <h3 className="offsub">{isEn ? 'Transfer to Scout Troop' : '晉升童軍團'}</h3>
+      <PageRows title={isEn ? 'Service Star' : '服務年星'} en="Service Star" rows={years.map(([key, zh, en]) => ({ key: `serviceStars.${key}`, zh, en }))} />
+      <div className="offdotted__head offdotted__head--single">{isEn ? 'Transfer to Scout Troop' : '晉升童軍團'}<em>Transfer to Scout Troop</em></div>
       <Line label="日期" en="Date" path="personalProgress.transferToScout" type="date" />
     </Page>
+  );
+}
+
+function PageRows({ title, en, rows }) {
+  const { isEn } = useLang();
+  return (
+    <>
+      <div className="offdotted__head">{isEn ? en : title}<em>{en}</em></div>
+      {rows.map((r) => (
+        <DateRow key={r.key} path={r.key} zh={r.zh} en={r.en} />
+      ))}
+    </>
+  );
+}
+
+function DateRow({ path, zh, en }) {
+  const [value, set] = useField(path, '');
+  const { isEn } = useLang();
+  return (
+    <div className="offdotted__row">
+      <span className="offdotted__name">
+        {isEn ? en : zh}
+        {!isEn && <em>{en}</em>}
+      </span>
+      <span className="offdotted__line">
+        <Write value={value || ''} onChange={set} type="date" compact label={zh} />
+      </span>
+    </div>
   );
 }
 
@@ -561,13 +565,15 @@ export function P10() {
   const { isEn } = useLang();
   return (
     <Page id="p10">
-      <H en="MEMBERSHIP BADGE (a)–(c)">會員章（一）</H>
-      <P en="When completed all the requirements for membership (within 2-3 months after joining the Pack), he/she can become a Cub Scout member and presented with his/her World Membership Badge.">
-        必須在入團後兩至三個月內全部完成以下活動，才可以獲得世界會員章及正式成為幼童軍。
-      </P>
+      <div className="offmembership">
+        <div className="offmembership__emblem" aria-hidden="true">
+          <Crest size={64} />
+        </div>
+        <P en="When completed all the requirements for membership (within 2-3 months after joining the Pack), he/she can become a Cub Scout member and presented with his/her World Membership Badge.">
+          必須在入團後兩至三個月內全部完成以下活動，才可以獲得世界會員章及正式成為幼童軍。
+        </P>
+      </div>
       <AssessTable
-        title={isEn ? 'Membership Badge' : '會員章'}
-        en="Membership Badge"
         items={[
           { id: 'L1-A', no: 'a', zh: '了解童軍運動的起源', en: 'Understand the origin of the Scout Movement' },
           { id: 'L1-B', no: 'b', zh: '認識童軍家庭', en: 'Recognise Scout Family' },
@@ -582,7 +588,6 @@ export function P11() {
   const { isEn } = useLang();
   return (
     <Page id="p11">
-      <H en="MEMBERSHIP BADGE (d)–(i)">會員章（二）</H>
       <AssessTable
         items={[
           { id: 'L1-D', no: 'd', zh: '認識幼童軍徽章', en: 'Recognise Cub Scout Badges' },
@@ -593,57 +598,63 @@ export function P11() {
           { id: 'L1-I', no: 'i', zh: '保護童軍成員免受傷害', en: 'Safe from Harm' },
         ]}
       />
-      <Grid cols={2}>
-        <Line label="宣誓日期" en="Investiture Date" path="member.dateInvestiture" type="date" />
-      </Grid>
+      <Line label="宣誓日期" en="Investiture Date" path="member.dateInvestiture" type="date" />
       <CslSign path="pages.membershipSignature" />
     </Page>
   );
 }
 
-/* ------------------------------------------------------------------ 第 12 頁 體驗章簡介 */
+/* ------------------------------------------------------------------ 第 12 頁 章節扉頁 */
 
 export function P12() {
   const { isEn } = useLang();
   return (
-    <Page id="p12">
-      <H en="C.S. EXPERIENCE BADGE">幼童軍體驗章</H>
-      <P en="This is the first progressive badge for the Cub Scout Section, suitable for Cub Scout members who have reached the age of 6 and have earned the Membership Badge.">
-        此為幼童軍支部第一個進度性獎章，適合年滿六歲而考獲會員章之成員。
-      </P>
-      <Note en="Please tick the ☐ if the member joined late and has only completed the designated syllabus of Core Domains.">
-        如成員為遲加入之成員並只完成「核心範疇」指定課程，請在 ☐ 加上 ✓ 號。
-      </Note>
-      <CheckLine path="lateJoin.L2" zh="只完成核心範疇指定課程" en="Core Domains only (late joiner)" />
-      <div className="offnext">
-        <Link to="/p/p13" className="btn btn--ghost btn--sm">
-          {isEn ? 'Core Domains → page 13' : '核心範疇 → 第 13 頁'}
-        </Link>
+    <Page id="p12" kind="divider">
+      <div className="offdivider">
+        <div className="offdivider__emblems" aria-hidden="true">
+          <span className="offdiamond offdiamond--flower" />
+          <span className="offdiamond offdiamond--mountain1" />
+          <span className="offdiamond offdiamond--mountain2" />
+          <span className="offdiamond offdiamond--wolf"><i>🐺</i></span>
+        </div>
+        <h2>
+          {isEn ? 'Progressive Badges' : '進度性獎章'}
+          <em>Progressive Badges</em>
+        </h2>
       </div>
     </Page>
   );
 }
 
-/* ------------------------------------------------------------------ 第 13／14／16／18 頁 核心範疇 */
+/* ------------------------------------------------------------------ 第 13–18 頁 核心範疇 */
 
-function CorePage({ id, awardId, no, zh, en, level, checkable = true }) {
+function CorePage({ id, awardId, titleZh, titleEn, level, intro, noBanner }) {
   const { isEn } = useLang();
   const rows = CORE_ROWS(awardId);
   return (
-    <Page id={id} dense>
-      <H en={en}>{zh}</H>
+    <Page id={id} dense banner={!noBanner}>
+      {intro && <P en={intro.en}>{intro.zh}</P>}
+      {awardId !== 'OT-GB' && <div className="offlate">
+        <span className="offlate__note">
+          {isEn
+            ? 'Please tick the ☐ if the member joined late and has only completed the designated syllabus of Core Domains.'
+            : '如成員為遲加入之成員並只完成「核心範疇」指定課程，請在 ☐ 加上 ✓ 號。'}
+          <em>Please tick the ☐ if the member joined late and has only completed the designated syllabus of Core Domains.</em>
+        </span>
+        <CheckLine path={`lateJoin.${awardId}`} zh="只完成核心範疇" en="Core Domains only" inline />
+      </div>}
+
       {level && (
-        <p className="pglead">
+        <h3 className="offband offband--green">
           {isEn ? `Core Domains (${level.en})` : `核心範疇（${level.zh}）`}
-          <em>{isEn ? '' : `Core Domains (${level.en})`}</em>
-        </p>
+          <em>{`Core Domains (${level.en})`}</em>
+        </h3>
       )}
-      {checkable && (
-        <CheckLine
-          path={`lateJoin.${awardId}`}
-          zh="如成員為遲加入並只完成核心範疇指定課程，請加上 ✓ 號"
-          en="Tick if the member joined late and has only completed Core Domains"
-        />
+      {!level && (
+        <h3 className="offband offband--green">
+          {isEn ? 'Core Domains' : '核心範疇'}
+          <em>Core Domains</em>
+        </h3>
       )}
       <ExamTable rows={rows} showDigital awardId={awardId} />
       <AwardDate awardId={awardId} label={awardId === 'OT-GB' ? '完成日期' : '頒發／完成日期'} en={awardId === 'OT-GB' ? 'Completed Date' : 'Awarded / Completed Date'} />
@@ -652,55 +663,42 @@ function CorePage({ id, awardId, no, zh, en, level, checkable = true }) {
 }
 
 export function P13() {
-  return <CorePage id="p13" awardId="L2" zh="幼童軍體驗章 — 核心範疇" en="C.S. EXPERIENCE BADGE · CORE DOMAINS" />;
+  const { isEn } = useLang();
+  return (
+    <CorePage
+      id="p13"
+      awardId="L2"
+      titleZh="幼童軍體驗章"
+      titleEn="C.S. Experience Badge"
+      intro={{
+        zh: '此為幼童軍支部第一個進度性獎章，適合年滿六歲而考獲會員章之成員。',
+        en: 'This is the first progressive badge for the Cub Scout Section, suitable for Cub Scout members who have reached the age of 6 and have earned the Membership Badge.',
+      }}
+    />
+  );
 }
 
 export function P14() {
-  return (
-    <CorePage
-      id="p14"
-      awardId="L3"
-      zh="幼童軍歷奇章 — 核心範疇"
-      en="C.S. ADVENTURE AWARD · CORE DOMAINS (ELEMENTARY)"
-      level={{ zh: '初級', en: 'Elementary Level' }}
-    />
-  );
+  return <CorePage id="p14" awardId="L3" titleZh="幼童軍歷奇章" titleEn="C.S. Adventure Award" level={{ zh: '初級', en: 'Elementary Level' }} />;
 }
 
 export function P16() {
-  return (
-    <CorePage
-      id="p16"
-      awardId="L4"
-      zh="幼童軍高級歷奇章 — 核心範疇"
-      en="C.S. ADVENTURE CREST AWARD · CORE DOMAINS (INTERMEDIATE)"
-      level={{ zh: '中級', en: 'Intermediate Level' }}
-    />
-  );
+  return <CorePage id="p16" awardId="L4" titleZh="幼童軍高級歷奇章" titleEn="C.S. Adventure Crest Award" level={{ zh: '中級', en: 'Intermediate Level' }} />;
 }
 
 export function P18() {
-  return (
-    <CorePage
-      id="p18"
-      awardId="OT-GB"
-      zh="金紫荊獎章 — 核心範疇"
-      en="GOLDEN BAUHINIA AWARD · CORE DOMAINS (ADVANCED)"
-      level={{ zh: '高級', en: 'Advanced Level' }}
-      checkable={false}
-    />
-  );
+  return <CorePage id="p18" awardId="OT-GB" titleZh="金紫荊獎章" titleEn="Golden Bauhinia Award" level={{ zh: '高級', en: 'Advanced Level' }} />;
 }
 
 /* ------------------------------------------------------------------ 第 15／17／19 頁 興趣範疇 */
 
 const INTEREST_DOMAINS = [
   { code: 'CREATIVE', no: '5', zh: '多元創藝', en: 'Diverse Creativity', category: 'CREATIVE' },
-  { code: 'NATURE', no: '6', zh: '科學與大自然', en: 'Science and Nature', category: 'NATURE' },
+  { code: 'NATURE', no: '6', zh: '科學與大自然', en: 'Science and Nature', category: 'SCIENCE' },
   { code: 'SPORTS', no: '7', zh: '運動與愛好', en: 'Sports and Hobbies', category: 'SPORTS' },
 ];
 
-function InterestPage({ id, awardId, zh, en }) {
+function InterestPage({ id, awardId }) {
   const { book, update, readOnly } = useBook();
   const { isEn } = useLang();
   const state = book.interest?.[awardId] || { chosen: [], badges: {} };
@@ -709,64 +707,43 @@ function InterestPage({ id, awardId, zh, en }) {
     if (readOnly) return;
     update((b) => ({ ...b, interest: { ...(b.interest || {}), [awardId]: { ...state, ...patch } } }));
   };
-
   const toggle = (code) => {
     if (readOnly) return;
     const chosen = state.chosen || [];
-    const next = chosen.includes(code) ? chosen.filter((c) => c !== code) : [...chosen, code].slice(0, 2);
-    setState({ chosen: next });
+    setState({ chosen: chosen.includes(code) ? chosen.filter((c) => c !== code) : [...chosen, code].slice(0, 2) });
   };
-
-  const setBadge = (code, patch) => {
-    setState({ badges: { ...(state.badges || {}), [code]: { ...(state.badges?.[code] || {}), ...patch } } });
-  };
+  const setBadge = (code, patch) => setState({ badges: { ...(state.badges || {}), [code]: { ...(state.badges?.[code] || {}), ...patch } } });
 
   return (
     <Page id={id} dense>
-      <H en={en}>{zh}</H>
       <P en="Members can elect to complete at least one activity badge from any two of the following three domains.">
         成員可選擇其中兩個範疇，每個範疇必須完成至少一個活動徽章。
       </P>
-      <p className="offhint">
-        {isEn ? `Selected ${state.chosen?.length || 0} / 2` : `已選 ${state.chosen?.length || 0} / 2 個範疇`}
-      </p>
-
-      <div className="offtable">
-        <div className="offtable__head">
-          <span className="offtable__c-no">{isEn ? 'No.' : '項'}</span>
-          <span className="offtable__c-name">{isEn ? 'Domain / Badge' : '範疇／徽章'}</span>
-          <span className="offtable__c-exam">{isEn ? 'Examiner' : '主考人'}</span>
-          <span className="offtable__c-date">{isEn ? 'Date' : '日期'}</span>
+      <div className="offexam">
+        <div className="offexam__head">
+          <span />
+          <span />
+          <span className="offexam__h">{isEn ? 'Examiner' : '主考人'}<em>Examiner</em></span>
+          <span className="offexam__h">{isEn ? 'Date' : '日期'}<em>Date</em></span>
         </div>
         {INTEREST_DOMAINS.map((d) => {
           const picked = state.chosen?.includes(d.code);
           const row = state.badges?.[d.code] || {};
           const options = OTHER_BADGES.filter((b) => b.category === d.category);
           return (
-            <div className={cx('offtable__row', picked && 'is-picked')} key={d.code}>
-              <span className="offtable__c-no">
-                <button
-                  type="button"
-                  className={cx('offtick', picked && 'is-on')}
-                  onClick={() => toggle(d.code)}
-                  aria-pressed={picked}
-                  aria-label={isEn ? `Select ${d.en}` : `選擇${d.zh}`}
-                >
+            <div className={cx('offexam__row', picked && 'is-picked')} key={d.code}>
+              <span className="offexam__no">
+                <button type="button" className={cx('offtick', picked && 'is-on')} onClick={() => toggle(d.code)} aria-pressed={picked} aria-label={d.zh}>
                   {picked ? '✓' : ''}
                 </button>
                 ({d.no})
               </span>
-              <span className="offtable__c-name">
+              <span className="offexam__name">
                 {isEn ? d.en : d.zh}
                 {!isEn && <em>{d.en}</em>}
                 <span className="offselect">
-                  <select
-                    value={row.badgeId || ''}
-                    onChange={(e) => setBadge(d.code, { badgeId: e.target.value })}
-                    disabled={readOnly}
-                    aria-label={`${isEn ? d.en : d.zh} ${isEn ? 'badge' : '徽章'}`}
-                  >
-                    <option value="">{isEn ? '— select badge —' : '— 選擇徽章 —'}</option>
+                  <select value={row.badgeId || ''} onChange={(e) => setBadge(d.code, { badgeId: e.target.value })} disabled={readOnly} aria-label={`${d.zh} 徽章`}>
+                    <option value="">{isEn ? '— Badge —' : '— 章 Badge —'}</option>
                     {options.map((b) => (
                       <option key={b.id} value={b.id}>
                         {isEn ? b.en : b.zh}
@@ -775,53 +752,38 @@ function InterestPage({ id, awardId, zh, en }) {
                   </select>
                 </span>
               </span>
-              <span className="offtable__c-exam">
-                <Write
-                  value={row.examiner || ''}
-                  onChange={(v) => setBadge(d.code, { examiner: v })}
-                  compact
-                  placeholder={isEn ? 'Name' : '姓名'}
-                  label={`${d.zh} 主考人`}
-                />
+              <span className="offexam__cell">
+                <Write value={row.examiner || ''} onChange={(v) => setBadge(d.code, { examiner: v })} compact placeholder={isEn ? 'Name' : '姓名'} label={`${d.zh} 主考人`} />
               </span>
-              <span className="offtable__c-date">
-                <Write
-                  value={row.date || ''}
-                  onChange={(v) => setBadge(d.code, { date: v })}
-                  type="date"
-                  compact
-                  label={`${d.zh} 日期`}
-                />
+              <span className="offexam__cell">
+                <Write value={row.date || ''} onChange={(v) => setBadge(d.code, { date: v })} type="date" compact label={`${d.zh} 日期`} />
               </span>
             </div>
           );
         })}
       </div>
-
       <AwardDate awardId={awardId} />
     </Page>
   );
 }
 
 export function P15() {
-  return <InterestPage id="p15" awardId="L3" zh="幼童軍歷奇章 — 興趣範疇" en="C.S. ADVENTURE AWARD · INTEREST DOMAINS" />;
+  return <InterestPage id="p15" awardId="L3" />;
 }
 
 export function P17() {
-  return <InterestPage id="p17" awardId="L4" zh="幼童軍高級歷奇章 — 興趣範疇" en="C.S. ADVENTURE CREST AWARD · INTEREST DOMAINS" />;
+  return <InterestPage id="p17" awardId="L4" />;
 }
 
 export function P19() {
-  return <InterestPage id="p19" awardId="OT-GB" zh="金紫荊獎章 — 興趣範疇" en="GOLDEN BAUHINIA AWARD · INTEREST DOMAINS" />;
+  return <InterestPage id="p19" awardId="OT-GB" />;
 }
 
 /* ------------------------------------------------------------------ 第 20 頁 童軍先修章 */
 
 export function P20() {
-  const { isEn } = useLang();
   return (
     <Page id="p20">
-      <H en="SCOUT LINK BADGE">童軍先修章</H>
       <ExamTable
         rows={[
           { code: 'SL-1', no: '1', zh: '認知', en: 'Awareness' },
@@ -834,116 +796,99 @@ export function P20() {
   );
 }
 
-/* ------------------------------------------------------------------ 第 21–26 頁 活動徽章 */
+/* ------------------------------------------------------------------ 第 21–27 頁 活動徽章紀錄 */
 
-function BadgeTable({ category, otherBadges = false }) {
+function ActivityPage({ id, plan }) {
   const { book, update, readOnly } = useBook();
   const { isEn } = useLang();
-  const rows = OTHER_BADGES.filter((b) => b.category === category);
-  const setEntry = (id, patch) => {
-    if (readOnly) return;
-    update((b) => ({ ...b, otherBadges: { ...(b.otherBadges || {}), [id]: { ...(b.otherBadges?.[id] || {}), ...patch } } }));
+  const sections = expandActivityPlan(plan);
+
+  const rowState = (row) => {
+    const entry = book.otherBadges?.[row.id] || {};
+    return row.level ? entry.levels?.[row.level] || {} : entry;
   };
-  const list = otherBadges
-    ? [...rows, ...OTHER_BADGES.filter((b) => b.category === 'OTHER')]
-    : rows;
+  const setRow = (row, patch) => {
+    if (readOnly) return;
+    update((b) => {
+      const entry = b.otherBadges?.[row.id] || {};
+      if (!row.level) {
+        return { ...b, otherBadges: { ...(b.otherBadges || {}), [row.id]: { ...entry, ...patch } } };
+      }
+      const levels = { ...(entry.levels || {}), [row.level]: { ...(entry.levels?.[row.level] || {}), ...patch } };
+      const dates = Object.values(levels).map((l) => l.date).filter(Boolean).sort();
+      return {
+        ...b,
+        otherBadges: { ...(b.otherBadges || {}), [row.id]: { ...entry, levels, date: dates[dates.length - 1] || '' } },
+      };
+    });
+  };
+
+  const badge = (idStr) => OTHER_BADGES.find((x) => x.id === idStr) || {};
 
   return (
-    <div className="offtable offtable--badges">
-      <div className="offtable__head offtable__head--badge">
-        <span className="offtable__c-name">{isEn ? 'Activity Badge' : '活動徽章'}</span>
-        <span className="offtable__c-date">{isEn ? 'Completed Date' : '完成日期'}</span>
-        <span className="offtable__c-sig">{isEn ? 'C.S.L. Signature' : '團長簽署'}</span>
+    <Page id={id} dense>
+      <div className="offact">
+        <div className="offact__head">
+          <span>{isEn ? 'Activity Badge' : '活動徽章'}<em>Activity Badge</em></span>
+          <span>{isEn ? 'Completed Date' : '完成日期'}<em>Completed Date</em></span>
+          <span>{isEn ? 'C.S.L. Signature' : '團長簽署'}<em>C.S.L. Signature</em></span>
+        </div>
+        {sections.map((sec, secIndex) => (
+          <React.Fragment key={`${sec.domain}-${sec.rows[0]?.id}`}>
+            <div className={cx('offact__band', `offact__band--${sec.tone}`)}>
+              {isEn ? sec.en : sec.zh}
+              <em>{sec.en}</em>
+            </div>
+            {sec.rows.map((row) => {
+              const b = badge(row.id);
+              const st = rowState(row);
+              const zh = row.zh || b.zh || b.name || '';
+              const en = row.en || b.en || '';
+              const levelLabel = row.level ? LEVEL_LABEL[row.level] : null;
+              const displayZh = levelLabel ? `${zh}（${levelLabel.zh}）` : zh;
+              const displayEn = levelLabel ? `${en} (${levelLabel.en})` : en;
+              return (
+                <div className="offact__row" key={`${row.id}-${row.level || ''}`}>
+                  <span className="offact__name">
+                    {isEn ? displayEn : displayZh}
+                    {!isEn && <em>{displayEn}</em>}
+                  </span>
+                  <span className="offact__date">
+                    <Write value={st.date || ''} onChange={(v) => setRow(row, { date: v })} type="date" compact label={displayZh} />
+                  </span>
+                  <span className="offact__sig">
+                    <MiniSig path={row.level ? `otherBadges.${row.id}.levels.${row.level}.signature` : `otherBadges.${row.id}.signature`} label={`${displayZh} 團長簽署`} />
+                  </span>
+                </div>
+              );
+            })}
+            {secIndex < sections.length - 1 && (
+              <div className="offact__row offact__row--blank" aria-hidden="true">
+                <span className="offact__name" />
+                <span className="offact__date" />
+                <span className="offact__sig" />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
       </div>
-      {list.map((b) => {
-        const st = book.otherBadges?.[b.id] || {};
-        return (
-          <div className="offtable__row offtable__row--badge" key={b.id}>
-            <span className="offtable__c-name">
-              {isEn ? b.en : b.zh}
-              {!isEn && <em>{b.en}</em>}
-            </span>
-            <span className="offtable__c-date">
-              <Write
-                value={st.date || ''}
-                onChange={(v) => setEntry(b.id, { date: v })}
-                type="date"
-                compact
-                label={`${b.zh} 完成日期`}
-              />
-            </span>
-            <span className="offtable__c-sig">
-              <MiniSig path={`otherBadges.${b.id}.signature`} label={`${b.zh} 團長簽署`} />
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-export function P21() {
-  const { isEn } = useLang();
-  return (
-    <Page id="p21" dense>
-      <H en="ACTIVITY BADGES · SCOUTCRAFT">活動徽章 — 童軍技能</H>
-      <BadgeTable category="SCOUT_SKILLS" />
-      {isEn ? null : <Note en="Levels (Elementary / Intermediate / Advanced) are shown where the official catalogue records them.">徽章如設初級／中級／高級，將按官方目錄列出。</Note>}
     </Page>
   );
 }
 
-export function P22() {
-  return (
-    <Page id="p22" dense>
-      <H en="ACTIVITY BADGES · CARING FOR SELF AND OTHERS">活動徽章 — 關己愛人</H>
-      <BadgeTable category="CARING" />
-    </Page>
-  );
-}
+export function P21() { return <ActivityPage id="p21" plan={21} />; }
+export function P22() { return <ActivityPage id="p22" plan={22} />; }
+export function P23() { return <ActivityPage id="p23" plan={23} />; }
+export function P24() { return <ActivityPage id="p24" plan={24} />; }
+export function P25() { return <ActivityPage id="p25" plan={25} />; }
+export function P26() { return <ActivityPage id="p26" plan={26} />; }
+export function P27() { return <ActivityPage id="p27" plan={27} />; }
 
-export function P23() {
-  return (
-    <Page id="p23" dense>
-      <H en="ACTIVITY BADGES · COUNTRY AND COMMUNITY">活動徽章 — 國家與社區</H>
-      <BadgeTable category="COUNTRY" />
-    </Page>
-  );
-}
-
-export function P24() {
-  return (
-    <Page id="p24" dense>
-      <H en="ACTIVITY BADGES · DIVERSE CREATIVITY">活動徽章 — 多元創藝</H>
-      <BadgeTable category="CREATIVE" />
-    </Page>
-  );
-}
-
-export function P25() {
-  return (
-    <Page id="p25" dense>
-      <H en="ACTIVITY BADGES · SCIENCE AND NATURE">活動徽章 — 科學與大自然</H>
-      <BadgeTable category="NATURE" />
-    </Page>
-  );
-}
-
-export function P26() {
-  return (
-    <Page id="p26" dense>
-      <H en="ACTIVITY BADGES · SPORTS AND HOBBIES / OTHER BADGES">活動徽章 — 運動與愛好／其他徽章</H>
-      <BadgeTable category="SPORTS" otherBadges />
-    </Page>
-  );
-}
-
-/* ------------------------------------------------------------------ 第 27–30 頁 活動及服務紀錄 */
+/* ------------------------------------------------------------------ 第 28–31 頁 活動及服務紀錄 */
 
 function ActivityLog({ from, pageId }) {
   const { book, update, readOnly } = useBook();
   const { isEn } = useLang();
-  const rows = Array.from({ length: 10 }, (_, i) => from + i);
   const setCell = (index, key, value) => {
     if (readOnly) return;
     update((b) => {
@@ -954,21 +899,18 @@ function ActivityLog({ from, pageId }) {
     });
   };
   return (
-    <div className="offtable offtable--log">
-      <div className="offtable__head offtable__head--two">
-        <span className="offtable__c-name">{isEn ? 'Events' : '事項'}</span>
-        <span className="offtable__c-date">{isEn ? 'Date' : '日期'}</span>
+    <div className="offlog">
+      <div className="offlog__head">
+        <span>{isEn ? 'Events' : '事項'}<em>Events</em></span>
+        <span>{isEn ? 'Date' : '日期'}<em>Date</em></span>
       </div>
-      {rows.map((index) => {
+      {Array.from({ length: 12 }).map((_, i) => {
+        const index = from + i;
         const row = book.activities?.[index] || {};
         return (
-          <div className="offtable__row offtable__row--two" key={`${pageId}-${index}`}>
-            <span className="offtable__c-name">
-              <Write value={row.text || ''} onChange={(v) => setCell(index, 'text', v)} compact label={`${pageId} 事項 ${index + 1}`} />
-            </span>
-            <span className="offtable__c-date">
-              <Write value={row.date || ''} onChange={(v) => setCell(index, 'date', v)} type="date" compact label={`${pageId} 日期 ${index + 1}`} />
-            </span>
+          <div className="offlog__row" key={`${pageId}-${index}`}>
+            <span><Write value={row.text || ''} onChange={(v) => setCell(index, 'text', v)} compact label={`事項 ${index + 1}`} /></span>
+            <span><Write value={row.date || ''} onChange={(v) => setCell(index, 'date', v)} type="date" compact label={`日期 ${index + 1}`} /></span>
           </div>
         );
       })}
@@ -976,81 +918,31 @@ function ActivityLog({ from, pageId }) {
   );
 }
 
-export function P27() {
-  return (
-    <Page id="p27">
-      <H en="ACTIVITIES & SERVICES RECORD">活動及服務紀錄</H>
-      <ActivityLog from={0} pageId="p27" />
-    </Page>
-  );
-}
+export function P28() { return <Page id="p28"><ActivityLog from={0} pageId="p28" /></Page>; }
+export function P29() { return <Page id="p29"><ActivityLog from={12} pageId="p29" /></Page>; }
+export function P30() { return <Page id="p30"><ActivityLog from={24} pageId="p30" /></Page>; }
+export function P31() { return <Page id="p31"><ActivityLog from={36} pageId="p31" /></Page>; }
 
-export function P28() {
-  return (
-    <Page id="p28">
-      <H en="ACTIVITIES & SERVICES RECORD">活動及服務紀錄</H>
-      <ActivityLog from={10} pageId="p28" />
-    </Page>
-  );
-}
-
-export function P29() {
-  return (
-    <Page id="p29">
-      <H en="ACTIVITIES & SERVICES RECORD">活動及服務紀錄</H>
-      <ActivityLog from={20} pageId="p29" />
-    </Page>
-  );
-}
-
-export function P30() {
-  return (
-    <Page id="p30">
-      <H en="ACTIVITIES & SERVICES RECORD">活動及服務紀錄</H>
-      <ActivityLog from={30} pageId="p30" />
-    </Page>
-  );
-}
-
-/* ------------------------------------------------------------------ 第 31 頁 團呼 */
-
-export function P31() {
-  const { isEn } = useLang();
-  return (
-    <Page id="p31">
-      <H en="THE GRAND HOWL">幼童軍團呼</H>
-      <P en="This is a special way of saying “hello” to Akela, your Cub Scout Leader, and a way of reminding you about your Cub Scout Promise every time you do it. When you have made your Promise and have been invested as a Cub Scout, you will be able to join in the Grand Howl at the beginning and end of a Pack meeting or event to say “hello!” and “thank you!” to Akela.">
-        團呼是幼童軍向亞基拿——你們的團長致敬的儀式。每次團集會開始和完結時，幼童軍都會向團長做一個團呼，以表示向團長打招呼和感謝的意思。當你宣誓加入幼童軍團後，你也需要參加這個儀式。
-      </P>
-      <div className="offhowl">
-        <Crest size={54} />
-        <p>{isEn ? '“Akela! We’ll do our best!”' : '「亞基拿！我們會盡力而為！」'}</p>
-      </div>
-    </Page>
-  );
-}
-
-/* ------------------------------------------------------------------ 第 32 頁 封底 */
+/* ------------------------------------------------------------------ 第 32 頁 團呼 */
 
 export function P32() {
   const { isEn } = useLang();
   return (
-    <Page id="p32" className="offback">
-      <div className="offback__inner">
-        <Crest size={52} />
-        <h2>{isEn ? 'CUB SCOUT RECORD BOOK' : '幼童軍紀錄冊'}</h2>
-        <p>{isEn ? 'Scout Association of Hong Kong' : '香港童軍總會'}</p>
-        <p className="offback__addr">
-          {isEn ? '10/F, Hong Kong Scout Centre, Scout Path, Austin Road, Kowloon' : '九龍柯士甸道童軍徑香港童軍中心 10 樓'}
-        </p>
-        <p className="offback__ed">© 2026 · {isEn ? 'Cub Scout Section' : '幼童軍支部'}</p>
+    <Page id="p32">
+      <P en="This is a special way to saying “hello” to Akela, your Cub Scout Leader, and a way of reminding you about your Cub Scout Promise every time you do it. When you have made your Promise and have been invested as a Cub Scout, you will be able to join in the Grand Howl at the beginning and end of a Pack meeting or event to say “hello!” and “thank you!” to Akela.">
+        團呼是幼童軍向亞基拿——你們的團長致敬的儀式。每次團集會開始和完結時，幼童軍都會向團長做一個團呼，以表示向團長打招呼和感謝的意思。當你宣誓加入幼童軍團後，你也需要參加這個儀式。
+      </P>
+      <div className="offhowl" aria-hidden="true">
+        {Array.from({ length: 14 }).map((_, i) => (
+          <span key={i} style={{ '--i': i }} />
+        ))}
+        <Crest size={34} />
       </div>
     </Page>
   );
 }
 
-
-/* ------------------------------------------------------------------ 目錄（不計入官方頁碼） */
+/* ------------------------------------------------------------------ 目錄（不計官方頁碼） */
 
 export function ContentsPage() {
   const { book } = useBook();
@@ -1059,13 +951,19 @@ export function ContentsPage() {
   const membership = membershipStatus(book);
 
   return (
-    <Page id="contents" dense>
+    <Page id="contents" dense banner={false}>
       <H en="CONTENTS">目錄</H>
       <p className="tocnote">
         {isEn
-          ? '32 pages, in the exact order of the official Cub Scout Record Book (© 2026).'
-          : '全書 32 頁，頁序與官方《幼童軍紀錄冊》（© 2026）完全一致。'}
+          ? 'Cover (unnumbered) + 32 printed pages, in the exact order of the official Cub Scout Record Book (© 2026).'
+          : '封面（不計頁碼）＋ 官方印刷頁 1–32，頁序與《幼童軍紀錄冊》（© 2026）完全一致。'}
       </p>
+
+      <Link to="/p/cover" className="tocrow">
+        <span className="tocrow__no">—</span>
+        <span className="tocrow__title">{isEn ? 'Cover' : '封面'}<em>Cover</em></span>
+        <Icon name="chevron" size={12} />
+      </Link>
 
       {OFFICIAL_GROUPS.map((g) => (
         <section key={g.id} className="tocgroup">
@@ -1128,10 +1026,6 @@ export function ContentsPage() {
           <strong>{stats.activityBadges}</strong>
         </div>
       </Grid>
-
-      <Note en="The 72-item syllabus detail is a digital aid only. The official pages record what the official book records: Examiner, Date, and the C.S.L. signature.">
-        72 項課程細節只是數位輔助；官方頁面只記錄官方紀錄冊所要求的主考人、日期及團長簽署。
-      </Note>
     </Page>
   );
 }

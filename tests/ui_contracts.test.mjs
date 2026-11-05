@@ -53,8 +53,8 @@ function callLeaderApi(method, body, envCode) {
 
 test('官方 32 頁紙本 + 目錄 + 數位附錄全部映射於 App.jsx，並可整本列印', () => {
   assert.equal(PAGE_TOTAL, 32);
-  assert.equal(SECTIONS.filter((s) => !s.digital).length, 32);
-  assert.equal(PRINT_PAGES.length, 32);
+  assert.equal(SECTIONS.filter((s) => !s.digital).length, 33);
+  assert.equal(PRINT_PAGES.length, 33);
 
   const app = read('web/src/App.jsx');
   for (const sec of SECTIONS) {

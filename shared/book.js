@@ -15,7 +15,7 @@ import {
   toBadgeId,
   toBookId,
 } from './syllabus.js';
-import { OFFICIAL_PAGES } from './officialPages.js';
+import { COVER, OFFICIAL_PAGES } from './officialPages.js';
 
 export {
   BADGE_SYLLABUS,
@@ -29,7 +29,7 @@ export {
   toBookId,
 };
 
-export const APP_VERSION = 'v1.2.0';
+export const APP_VERSION = 'v1.2.1';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 
@@ -54,6 +54,7 @@ export function formatDate(value) {
  * 頁碼、頁序、標題一律照官方；數位附錄不計入頁碼。
  */
 export const SECTIONS = [
+  { ...COVER, label: COVER.zh, digital: false, banner: false },
   ...OFFICIAL_PAGES.map((p) => ({
     id: p.id,
     page: p.page,
@@ -62,11 +63,16 @@ export const SECTIONS = [
     group: p.group,
     kind: p.kind,
     badge: p.badge,
+    award: p.award,
+    plan: p.plan,
+    from: p.from,
+    bannerZh: p.bannerZh,
+    banner: p.no === 1 || p.kind === 'static' && p.no === 6 ? false : undefined,
   })),
   { id: 'appendix', page: '—', label: '數位附錄', en: 'Digital Appendix', digital: true, group: 'appendix', kind: 'appendix' },
 ];
 
-export const PAGE_TOTAL = SECTIONS.filter((s) => !s.digital).length;
+export const PAGE_TOTAL = SECTIONS.filter((s) => s.page && s.page !== '—').length;
 
 // ------------------------------------------------------------------ 身分
 /** 紀錄冊編號 ＝ 童軍成員編號 SCOUT ID（與 cubbadge 完全統一）。 */
@@ -622,6 +628,13 @@ export function demoBook() {
     dateJoined: '2023-09-01',
     dateInvestiture: '2023-11-25',
     groupAddress: '沙田新城市中央廣場 1 座 12 樓',
+    hkidPrefix: 'A123456',
+    dateOfIssue: '2023-09-01',
+    addressZh: '沙田禾輋邨康和樓 1203 室',
+    parentName: '陳大文',
+    parentPhone: '9876 5432',
+    emergencyName: '陳大文（父）',
+    emergencyPhone: '9876 5432',
   };
   const seed = [
     ['L1-A', '2023-09-16'],
@@ -644,6 +657,7 @@ export function demoBook() {
   });
   book.otherBadges['OT-A01'] = { date: '2025-03-15', cert: 'ACT/2025/0181', confirmedByBadge: true };
   book.otherBadges['OT-A22'] = { date: '2025-05-10', cert: 'ACT/2025/0244' };
+  book.otherBadges['OT-A26'] = { levels: { E: { date: '2025-03-15' } }, date: '2025-03-15' };
   book.pages.award_L1 = { date: '2023-11-25', certNo: 'MB/2023/0912', presentedBy: '陳團長' };
   book.personalProgress = {
     ...book.personalProgress,
@@ -665,6 +679,12 @@ export function demoBook() {
     { date: '2025-11-15', text: '沙田區幼童軍大會操' },
     { date: '2025-12-20', text: '社區長者中心服務' },
   ];
-  book.renewals = [{ date: '2026-09-01', validUntil: '2027-08-31', memberNo: '0012345678', leaderName: '陳團長' }];
+  book.renewals = [
+    { from: '2024-01-01', validUntil: '2024-12-31', leaderName: '陳團長' },
+    { from: '2025-01-01', validUntil: '2025-12-31', leaderName: '陳團長' },
+    { from: '2026-01-01', validUntil: '2027-12-31', leaderName: '陳團長' },
+  ];
+  book.transfers = [{ date: '2025-08-01', group: '沙田第 15 旅' }];
+  book.addressChanges = [{ date: '2025-08-15', address: '沙田石門安群街 3 號' }];
   return book;
 }

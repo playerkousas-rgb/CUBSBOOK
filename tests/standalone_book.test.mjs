@@ -79,9 +79,9 @@ test('BOOK 核心功能完全不需要 BADGE：無網絡亦能建立、填寫、
   // 本地簽名不等於 cubbadge 已核實，這個欄位永遠不會被離線流程寫成 true
   assert.equal(applied.book.progress['L2-CARING-01'].confirmedByBadge ?? false, false);
 
-  // 6. 整本列印頁序固定 19 頁，附錄不列印
-  assert.equal(PRINT_PAGES.length, 32);
-  assert.deepEqual(PRINT_PAGES.map((p) => p.id).slice(0, 3), ['p01', 'p02', 'p03']);
+  // 6. 整本列印：封面 + 官方 32 頁，附錄不列印
+  assert.equal(PRINT_PAGES.length, 33);
+  assert.deepEqual(PRINT_PAGES.map((p) => p.id).slice(0, 3), ['cover', 'p01', 'p02']);
 
   // 7. 備份／還原（純 JSON，經 localStorage 或檔案）
   const backup = JSON.parse(JSON.stringify(book));
@@ -157,11 +157,14 @@ test('官方 32 頁齊備、頁序與標題照官方，內頁不出現自創「�
   assert.equal(OFFICIAL_PAGES.length, 32);
   assert.deepEqual(OFFICIAL_PAGES.map((p) => p.no), Array.from({ length: 32 }, (_, i) => i + 1));
   assert.deepEqual(OFFICIAL_PAGES.map((p) => p.id), Array.from({ length: 32 }, (_, i) => `p${String(i + 1).padStart(2, '0')}`));
-  assert.equal(OFFICIAL_PAGES[0].zh, '封面');
-  assert.equal(OFFICIAL_PAGES[1].zh, '個人摘要');
+  assert.equal(OFFICIAL_PAGES[0].zh, '個人摘要（一）');
+  assert.equal(OFFICIAL_PAGES[1].zh, '個人摘要（二）');
+  assert.equal(OFFICIAL_PAGES[11].zh, '進度性獎章');
+  assert.equal(OFFICIAL_PAGES[11].kind, 'divider');
   assert.equal(OFFICIAL_PAGES[19].zh, '童軍先修章');
-  assert.equal(OFFICIAL_PAGES[30].zh, '幼童軍團呼');
-  assert.equal(OFFICIAL_PAGES[31].zh, '封底');
+  assert.equal(OFFICIAL_PAGES[30].zh, '活動及服務紀錄');
+  assert.equal(OFFICIAL_PAGES[31].zh, '幼童軍團呼');
+  assert.equal(OFFICIAL_PAGES.some((p) => p.zh === '封底'), false);
 
   const official = read('web/src/pages/Official.jsx');
   for (const bad of ['銅箭章', '銀箭章', '金箭章']) {

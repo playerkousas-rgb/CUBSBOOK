@@ -17,7 +17,7 @@ import CoverPage from './pages/CoverPage.jsx';
 import {
   ContentsPage,
   P01, P02, P03, P04, P05, P06, P07, P08, P09, P10, P11,
-  P12, P13, P14, P15, P16, P17, P18, P19, P20,
+  P12, P13, P14, P15, P16, P17, P18, P19, P20, PCover,
   P21, P22, P23, P24, P25, P26, P27, P28, P29, P30, P31, P32,
 } from './pages/Official.jsx';
 import { AppendixPage, PrintBook } from './pages/Appendix.jsx';
@@ -28,6 +28,7 @@ import { HashSnapshotViewer, Scan, ScanView, Signoff } from './pages/Scan.jsx';
 
 const PAGES = {
   contents: ContentsPage,
+  cover: PCover,
   p01: P01, p02: P02, p03: P03, p04: P04, p05: P05, p06: P06, p07: P07,
   p08: P08, p09: P09, p10: P10, p11: P11, p12: P12, p13: P13, p14: P14,
   p15: P15, p16: P16, p17: P17, p18: P18, p19: P19, p20: P20, p21: P21,
