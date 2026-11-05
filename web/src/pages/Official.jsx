@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { BADGE_SYLLABUS, GOLD_AWARD, OTHER_BADGES, ageFromDob, allStats, membershipStatus } from '@shared/book.js';
 import { OFFICIAL_GROUPS, OFFICIAL_PAGES } from '@shared/officialPages.js';
 import { ACTIVITY_DOMAINS, LEVEL_LABEL, expandActivityPlan } from '@shared/officialActivityBadges.js';
-import { useBook, useField } from '../bookContext.js';
+import { useBook, useField, useReadOnly } from '../bookContext.js';
 import { Area, AssessTable, Grid, H, Line, Note, P, Page, Sig } from '../components/Form.jsx';
 import Write from '../components/Write.jsx';
 import { PhotoPicker } from '../components/PhotoPicker.jsx';
@@ -39,6 +39,8 @@ function CslSign({ path, label = '幼童軍團長簽署', en = 'C.S.L. Signature
         <button type="button" className="offsign__img" onClick={() => setOpen(true)} title={sig.name || ''}>
           <img src={sig.png} alt={isEn ? 'Signature' : '簽署'} />
         </button>
+      ) : readOnly ? (
+        <span className="offsign__blank" aria-label={isEn ? 'Not signed' : '未簽署'} />
       ) : (
         <button type="button" className="offsign__btn no-print" onClick={() => setOpen(true)}>
           <Icon name="pen" size={12} /> {isEn ? 'Sign' : '簽署'}
@@ -133,10 +135,11 @@ function ExamTable({ rows, showDigital = false, awardId = '', withNo = true }) {
 
 function CheckLine({ path, zh, en, inline = false }) {
   const [checked, set] = useField(path, false);
+  const readOnly = useReadOnly();
   const { isEn } = useLang();
   return (
     <label className={cx('offcheck', inline && 'offcheck--inline', checked && 'is-checked')}>
-      <input type="checkbox" checked={Boolean(checked)} onChange={(e) => set(e.target.checked)} />
+      <input type="checkbox" checked={Boolean(checked)} disabled={readOnly} onChange={(e) => set(e.target.checked)} />
       <span aria-hidden="true" className="offcheck__box">{checked ? '✓' : ''}</span>
       <span className="offcheck__text">
         {isEn ? en : zh}
@@ -148,6 +151,7 @@ function CheckLine({ path, zh, en, inline = false }) {
 
 function MiniSig({ path, label = '團長簽署', en = 'C.S.L. Signature' }) {
   const [sig, set] = useField(path, null);
+  const readOnly = useReadOnly();
   const { isEn } = useLang();
   const [open, setOpen] = useState(false);
   return (
@@ -156,6 +160,8 @@ function MiniSig({ path, label = '團長簽署', en = 'C.S.L. Signature' }) {
         <button type="button" className="offsig" onClick={() => setOpen(true)}>
           <img src={sig.png} alt={isEn ? 'Signature' : '簽署'} />
         </button>
+      ) : readOnly ? (
+        <span className="offsig offsig--blank" aria-hidden="true" />
       ) : (
         <button type="button" className="offsig offsig--empty no-print" onClick={() => setOpen(true)} aria-label={isEn ? en : label}>
           <Icon name="pen" size={10} />

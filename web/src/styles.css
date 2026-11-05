@@ -4880,6 +4880,8 @@ html[data-print-preview] .write--multi.is-empty {
   margin-top: 0.7rem;
 }
 .offsign__img img { max-height: 2.6rem; }
+.offsign__blank { display: inline-block; width: 90px; border-bottom: 1px dotted #a89a7c; height: 14px; }
+.offsig--blank { border-bottom: 1px dotted #c7b489; height: 14px; }
 .offsign__btn {
   display: inline-flex;
   align-items: center;
@@ -5476,6 +5478,8 @@ html[data-print-preview] .write--multi.is-empty {
 .offsign { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
 .offsign__label { font-family: var(--serif); font-size: 11px; font-weight: 600; color: #1d1a12; }
 .offsign__label em { display: block; font-style: normal; font-family: var(--sans); font-size: 7px; font-weight: 500; color: #8a7d63; }
+.offsign__blank { display: inline-block; width: 90px; border-bottom: 1px dotted #a89a7c; height: 14px; }
+.offsig--blank { border-bottom: 1px dotted #c7b489; height: 14px; }
 .offsign__btn {
   display: inline-flex; align-items: center; gap: 4px;
   border: 1px dashed #a89a7c; border-radius: 3px;
