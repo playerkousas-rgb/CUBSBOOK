@@ -4,6 +4,7 @@ import { BookCtx } from './bookContext.js';
 import { loadBook, persistBook } from './bookStore.js';
 import { LangProvider, useLang } from './i18n.jsx';
 import { isLeader, leaderAvailable, onLeaderChange } from './leader.js';
+import { exitParentMode, isParent, onParentChange } from './parent.js';
 import { UPDATE_EVENT, applyPwaUpdate } from './pwa.js';
 import { Link, navigate, useFullLocation, useRoute } from './router.jsx';
 import { Crest, Icon, ToastProvider, cx, useToast } from './ui.jsx';
@@ -17,6 +18,7 @@ import { ContentsPage, P01, P02, P03, P04, P05, P06, P07 } from './pages/BookFro
 import { P08, P09, P10, P11, P12 } from './pages/BookTraining.jsx';
 import { P13, P14, P15, P16, P17, P18, P19, AppendixPage, PrintBook } from './pages/BookBack.jsx';
 import { FormDoc, FormsAll, FormsIndex } from './pages/Forms.jsx';
+import ParentView from './pages/ParentView.jsx';
 import { HashSnapshotViewer, Scan, ScanView, Signoff } from './pages/Scan.jsx';
 
 const PAGES = {
@@ -27,7 +29,7 @@ const PAGES = {
   appendix: AppendixPage,
 };
 
-function BookApp({ book, saveIssue, leader, leaderReady }) {
+function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
   const path = useRoute();
   const { push } = useToast();
   const { isEn, toggle } = useLang();
@@ -56,6 +58,7 @@ function BookApp({ book, saveIssue, leader, leaderReady }) {
 
   const printAll = path === '/print';
   const leaderRoute = path === '/leader';
+  const parentRoute = path === '/parent';
   const section = path.startsWith('/p/') ? path.slice(3) : null;
   const formId = path.startsWith('/forms') ? path.split('/').filter(Boolean)[1] || 'index' : null;
   const scanPath = ['/scan', '/scan/view', '/scan/signoff'].includes(path) ? path : null;
@@ -122,7 +125,7 @@ function BookApp({ book, saveIssue, leader, leaderReady }) {
         leader && 'app--leader',
         printAll
           ? 'app--print'
-          : scanPath || leaderRoute
+          : scanPath || leaderRoute || parentRoute
             ? 'app--scan'
             : formId
               ? 'app--forms'
@@ -186,6 +189,18 @@ function BookApp({ book, saveIssue, leader, leaderReady }) {
         )}
 
         <div className="chipbar__actions">
+          {parent && (
+            <button
+              type="button"
+              className="chipbtn chipbtn--parent"
+              onClick={() => navigate('/parent')}
+              title={isEn ? 'Parent Mode (Read-Only) — view your child’s book' : '家長模式（只讀）— 查看孩子的紀錄冊'}
+            >
+              <Icon name="lock" size={13} />{' '}
+              <span>{isEn ? 'Parent · Read-Only' : '家長 · 只讀'}</span>
+            </button>
+          )}
+
           {leader && (
             <button
               type="button"
@@ -248,6 +263,20 @@ function BookApp({ book, saveIssue, leader, leaderReady }) {
         </div>
       )}
 
+      {parent && !printAll && !parentRoute && (
+        <div className="parentbar no-print" role="status">
+          <Icon name="lock" size={13} />
+          <span>
+            {isEn
+              ? 'Parent Mode (Read-Only): you can read everything, but nothing can be edited and you do not need to fill in any particulars.'
+              : '家長模式（只讀）：可查看全部內容，但不會修改任何資料；家長毋須填寫任何個人資料。'}
+          </span>
+          <button type="button" className="btn btn--ghost btn--sm" onClick={() => navigate('/parent')}>
+            {isEn ? 'Overview' : '總覽'}
+          </button>
+        </div>
+      )}
+
       {!online && (
         <div className="offlinebar no-print" role="status">
           <Icon name="lock" size={14} />
@@ -293,12 +322,21 @@ function BookApp({ book, saveIssue, leader, leaderReady }) {
             'stage__inner',
             section && 'stage__inner--page',
             formId && 'stage__inner--forms',
-            (scanPath || leaderRoute) && 'stage__inner--scan',
+            (scanPath || leaderRoute || parentRoute) && 'stage__inner--scan',
           )}
           style={zoom > 1 ? { zoom } : undefined}
         >
           {printAll ? (
             <PrintBook pages={PAGES} />
+          ) : parentRoute ? (
+            <ParentView
+              onShowQr={() => setQrOpen(true)}
+              onExit={() => {
+                exitParentMode();
+                navigate('/');
+                push(isEn ? 'Parent mode closed' : '已退回家長模式');
+              }}
+            />
           ) : leaderRoute ? (
             leader ? (
               <Scan hasBook />
@@ -339,12 +377,13 @@ function BookApp({ book, saveIssue, leader, leaderReady }) {
               last={lastMeta}
               onContinue={() => lastMeta && navigate(`/p/${lastMeta.id}`)}
               onLeader={!leader && leaderReady ? () => navigate('/leader') : null}
+              onParent={!leader && !parent ? () => navigate('/parent') : null}
             />
           )}
         </div>
       </main>
 
-      {section && !printAll && !scanPath && !leaderRoute && (
+      {section && !printAll && !scanPath && !leaderRoute && !parentRoute && (
         <Pager current={section} onOpenIndex={() => setIndexOpen(true)} />
       )}
 
@@ -378,6 +417,7 @@ function BookApp({ book, saveIssue, leader, leaderReady }) {
         }}
         leader={leader}
         leaderReady={leaderReady}
+        parent={parent}
       />
     </div>
   );
@@ -390,8 +430,10 @@ function AppInner() {
   const [saveIssue, setSaveIssue] = useState(null);
   const [leader, setLeader] = useState(isLeader);
   const [leaderReady, setLeaderReady] = useState(null);
+  const [parent, setParent] = useState(isParent);
 
   useEffect(() => onLeaderChange(() => setLeader(isLeader())), []);
+  useEffect(() => onParentChange(() => setParent(isParent())), []);
   useEffect(() => {
     let live = true;
     leaderAvailable().then((v) => live && setLeaderReady(v));
@@ -404,7 +446,7 @@ function AppInner() {
   const hashToken = hashMatch ? decodeURIComponent(hashMatch[1]) : '';
 
   const update = useCallback((updater) => {
-    if (isLeader()) return;
+    if (isLeader() || isParent()) return;
     setBook((prev) => {
       if (!prev) return prev;
       const next = typeof updater === 'function' ? updater(structuredClone(prev)) : { ...prev, ...updater };
@@ -425,7 +467,10 @@ function AppInner() {
     return () => clearTimeout(t);
   }, [book]);
 
-  const ctx = useMemo(() => ({ book, update, replace, readOnly: leader }), [book, update, replace, leader]);
+  const ctx = useMemo(
+    () => ({ book, update, replace, readOnly: leader || parent, parent }),
+    [book, update, replace, leader, parent],
+  );
 
   // 分享連結 #v=... 同樣必須先開啟領袖模式（只讀），普通模式不能讀取他人紀錄冊
   if (hashToken) {
@@ -469,7 +514,7 @@ function AppInner() {
   return (
     <BookCtx.Provider value={ctx}>
       <ToastProvider>
-        <BookApp book={book} saveIssue={saveIssue} leader={leader} leaderReady={leaderReady} />
+        <BookApp book={book} saveIssue={saveIssue} leader={leader} leaderReady={leaderReady} parent={parent} />
       </ToastProvider>
     </BookCtx.Provider>
   );

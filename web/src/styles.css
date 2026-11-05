@@ -4287,3 +4287,352 @@ html[data-print-preview] .write--multi.is-empty {
 @media print {
   .cubsync__offline { display: none; }
 }
+
+/* ==========================================================================
+   v1.0.1 · 幼童軍黃（CUBS YELLOW）主色層
+   幼童軍代表色是黃：封面改為黃布面配深綠燙印（深綠於黃 >= 6.8:1），
+   按鈕、進度條及重點一律以幼童軍黃示人，深綠只作文字與次要底色。
+   ========================================================================== */
+
+:root {
+  --cub-yellow: #f2b705;
+  --cub-yellow-bright: #ffd23f;
+  --cub-yellow-deep: #c99a00;
+  --cub-ink: #123420;
+}
+
+/* 封面：黃布面 × 深綠字（不再用酒紅／深綠布面） */
+.coverart {
+  color: var(--cub-ink);
+  background:
+    radial-gradient(120% 90% at 18% 0%, rgba(255, 241, 176, 0.85), transparent 58%),
+    radial-gradient(100% 80% at 100% 100%, rgba(201, 154, 0, 0.55), transparent 62%),
+    linear-gradient(155deg, #ffd84a 0%, #f2b705 46%, #dca700 100%);
+}
+
+.coverart__grain {
+  opacity: 0.16;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 4px);
+}
+
+.coverart__spine {
+  background: linear-gradient(
+    90deg,
+    rgba(20, 59, 40, 0.3),
+    rgba(20, 59, 40, 0.08) 45%,
+    rgba(255, 255, 255, 0.3) 72%,
+    transparent
+  );
+}
+
+.coverart__frame { border-color: rgba(18, 52, 32, 0.5); }
+.coverart__frame--inner { border-color: rgba(18, 52, 32, 0.26); }
+
+.coverart__top strong { color: var(--cub-ink); }
+.coverart__kicker { color: #5a4700; }
+
+.coverart__title,
+.coverart__title--en {
+  color: #0d2a19;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55),
+    0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 6px 18px rgba(90, 66, 0, 0.22);
+}
+
+.coverart__subtitle { color: #1c4a2f; }
+
+.coverart__plate {
+  border-color: rgba(18, 52, 32, 0.5);
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+.coverart__plate-label { color: rgba(18, 52, 32, 0.72); }
+.coverart__plate strong { color: #0d2a19; }
+.coverart__plate-sub { color: rgba(18, 52, 32, 0.86); }
+.coverart__plate-no { color: rgba(18, 52, 32, 0.78); }
+.coverart__hint { color: rgba(18, 52, 32, 0.92); }
+
+.coverart__medal {
+  color: rgba(18, 52, 32, 0.55);
+  border-color: rgba(18, 52, 32, 0.38);
+}
+.coverart__medal.is-earned {
+  background: radial-gradient(circle at 30% 28%, #2e7a51, #143b28 70%, #0a2415);
+  color: #ffe27a;
+  border-color: #0b2a19;
+  box-shadow: 0 2px 8px rgba(10, 30, 18, 0.35);
+}
+
+.coverart__foot { color: rgba(18, 52, 32, 0.86); }
+
+.coverart__open {
+  background: linear-gradient(180deg, #1e5238, #0d2c1c);
+  border-color: #0a2415;
+  color: #ffe27a;
+}
+
+.coverart__leader,
+.coverart__parent,
+.coverart__resume {
+  border-color: rgba(18, 52, 32, 0.5);
+  background: rgba(255, 255, 255, 0.3);
+  color: var(--cub-ink);
+}
+.coverart__leader:hover,
+.coverart__parent:hover,
+.coverart__resume:hover {
+  border-color: var(--cub-ink);
+  background: rgba(255, 255, 255, 0.5);
+}
+.coverart__resume span { opacity: 0.7; }
+
+.coverart__legal { color: rgba(18, 52, 32, 0.72); }
+.coverart__awardnote { color: rgba(18, 52, 32, 0.42); }
+
+/* 重點按鈕：幼童軍黃底 + 深炭字（絕不白字配黃） */
+.btn--gold,
+.chipbtn--gold {
+  background: linear-gradient(180deg, var(--cub-yellow-bright), var(--cub-yellow));
+  border-color: var(--cub-yellow-deep);
+  color: #1a1206;
+}
+.btn--gold:hover,
+.chipbtn--gold:hover {
+  background: linear-gradient(180deg, #ffdf67, #f7c000);
+  border-color: #b78c00;
+}
+
+/* 進度條：深綠 → 幼童軍黃 */
+.ribbon__bar i,
+.sumrow__bar i {
+  background: linear-gradient(90deg, #1c5236 0%, #8aa300 45%, var(--cub-yellow) 100%);
+}
+
+/* 家長模式：工具列晶片與提示條 */
+.chipbtn--parent {
+  border-color: rgba(242, 183, 5, 0.75);
+  background: rgba(242, 183, 5, 0.16);
+  color: #ffe9a6;
+}
+
+.parentbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: linear-gradient(90deg, #143b28, #1e5238);
+  border-bottom: 1px solid rgba(242, 183, 5, 0.5);
+  color: #ffeab0;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+.parentbar svg { flex: none; color: var(--cub-yellow); }
+.parentbar span { flex: 1; min-width: 0; }
+.parentbar .btn { flex: none; }
+
+/* 家長模式儀表板（只讀） */
+.parent {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: clamp(14px, 2.4vw, 28px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: var(--ink);
+}
+
+.parent__hero {
+  border-radius: 14px;
+  padding: clamp(16px, 3vw, 26px);
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(242, 183, 5, 0.28), transparent 60%),
+    linear-gradient(140deg, #143b28, #0b2417);
+  color: #ffeab0;
+  box-shadow: 0 12px 30px -18px rgba(8, 24, 15, 0.9);
+}
+.parent__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 183, 5, 0.65);
+  background: rgba(242, 183, 5, 0.16);
+  color: #ffe27a;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  font-weight: 700;
+}
+.parent__name {
+  margin: 10px 0 2px;
+  font-family: var(--serif);
+  font-size: clamp(24px, 4.4vw, 34px);
+  letter-spacing: 0.06em;
+  color: #fff3c9;
+}
+.parent__meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: rgba(255, 234, 176, 0.85);
+}
+.parent__dot { margin: 0 6px; opacity: 0.6; }
+.parent__note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 238, 190, 0.9);
+  max-width: 62ch;
+}
+.parent__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.parent__actions .btn--ghost {
+  border-color: rgba(255, 234, 176, 0.45);
+  color: #ffeab0;
+  background: rgba(255, 255, 255, 0.06);
+}
+.parent__actions .btn--ghost:hover { background: rgba(255, 255, 255, 0.14); }
+
+.parent__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.parent__kpi {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--paper-edge);
+  border-top: 3px solid var(--cub-yellow);
+  background: #fffdf7;
+  box-shadow: 0 2px 8px -6px rgba(30, 26, 20, 0.5);
+}
+.parent__kpi > span {
+  display: block;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+.parent__kpi strong {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--serif);
+  font-size: 22px;
+  line-height: 1.15;
+  color: var(--cub-ink);
+}
+.parent__kpi strong em {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-left: 3px;
+}
+.parent__kpi strong.is-ok { color: var(--ok); }
+.parent__kpi strong.is-warn { color: var(--warn); }
+.parent__kpi-sub { display: block; font-size: 10.5px; color: var(--ink-3); font-style: normal; }
+
+.parent__cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.parent__card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--paper-edge);
+  background: #fffdf7;
+}
+.parent__card h2 {
+  margin: 0 0 10px;
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--cub-ink);
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--cub-yellow);
+}
+.parent__card .parent__h2gap { margin-top: 18px; }
+
+.parent__awards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.parent__awards li {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(60px, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.parent__awardname { font-size: 12px; color: var(--ink); }
+.parent__awardname em { display: block; font-style: normal; font-size: 10.5px; color: var(--ok); }
+.parent__bar {
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(28, 82, 54, 0.12);
+  overflow: hidden;
+}
+.parent__bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #1c5236 0%, #8aa300 45%, var(--cub-yellow) 100%);
+}
+.parent__awardstate { font-size: 10.5px; color: var(--ink-3); min-width: 46px; text-align: right; }
+.parent__awardstate.is-ok { color: var(--ok); font-weight: 700; }
+
+.parent__chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.parent__chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(242, 183, 5, 0.18);
+  border: 1px solid rgba(201, 154, 0, 0.5);
+  color: #5a4400;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.parent__uniform { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.parent__uniform li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--ink-2);
+}
+.parent__uniform li.is-on { color: var(--cub-ink); font-weight: 600; }
+.checklist__box.is-static { display: inline-grid; place-items: center; flex: none; }
+
+.parent__recent { list-style: none; margin: 0; padding: 0; }
+.parent__recent li {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--paper-edge);
+  font-size: 11.5px;
+}
+.parent__recent li:last-child { border-bottom: 0; }
+.parent__recentdate { font-family: var(--mono); color: var(--ink-3); font-size: 10.5px; }
+.parent__recentname { color: var(--ink); }
+.parent__recentgroup { font-size: 10px; color: var(--ink-3); }
+.parent__empty { margin: 2px 0; font-size: 11.5px; color: var(--ink-3); }
+.parent__foot { margin: 10px 0 0; font-size: 10.5px; line-height: 1.55; color: var(--ink-3); }
+
+@media (max-width: 760px) {
+  .parent__kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .parent__cols { grid-template-columns: minmax(0, 1fr); }
+  .parent__recent li { grid-template-columns: 76px minmax(0, 1fr); }
+  .parent__recentgroup { display: none; }
+}
+
+@media print {
+  .parent { display: none; }
+  .parentbar { display: none; }
+}

@@ -7,8 +7,9 @@ import { LegalNote } from './Legal.jsx';
 import { navigate } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
 import { exitLeaderMode } from '../leader.js';
+import { enterParentMode, exitParentMode } from '../parent.js';
 
-export default function MenuDialog({ open, onClose, onShowQr, leader = false, leaderReady = null }) {
+export default function MenuDialog({ open, onClose, onShowQr, leader = false, leaderReady = null, parent = false }) {
   const { book, replace } = useBook();
   const { isEn } = useLang();
   const { push } = useToast();
@@ -25,7 +26,7 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
   };
 
   const importBackup = (file) => {
-    if (!file || leader) return;
+    if (!file || leader || parent) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -43,7 +44,7 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
   };
 
   const importBadge = (file) => {
-    if (!file || leader) return;
+    if (!file || leader || parent) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -109,6 +110,50 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
             </p>
           </div>
         )}
+
+        {parent ? (
+          <button
+            type="button"
+            className="menu__item menu__item--accent"
+            onClick={() => {
+              exitParentMode();
+              push(isEn ? 'Parent mode closed — editing restored' : '已退回家長模式，恢復填寫');
+              onClose();
+              navigate('/');
+            }}
+          >
+            <Icon name="unlock" size={18} />
+            <span>
+              <strong>{isEn ? 'Leave Parent Mode' : '退回家長模式'}</strong>
+              <em>
+                {isEn
+                  ? 'Unlock editing again — for the Cub Scout to continue filling in the book'
+                  : '解除只讀鎖定，交回孩子繼續填寫'}
+              </em>
+            </span>
+          </button>
+        ) : !leader ? (
+          <button
+            type="button"
+            className="menu__item menu__item--accent"
+            onClick={() => {
+              enterParentMode();
+              onClose();
+              navigate('/parent');
+              push(isEn ? 'Parent mode — read-only' : '已進入家長模式（只讀）');
+            }}
+          >
+            <Icon name="lock" size={18} />
+            <span>
+              <strong>{isEn ? 'Parent Mode (Read-Only)' : '家長模式（只讀查看）'}</strong>
+              <em>
+                {isEn
+                  ? 'For parents: read your child’s book without editing anything — no particulars to fill in'
+                  : '家長專用：只讀查看孩子的紀錄冊，不會修改資料，亦毋須填寫任何個人資料'}
+              </em>
+            </span>
+          </button>
+        ) : null}
 
         {leader ? (
           <button
@@ -226,7 +271,7 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
           </span>
         </button>
 
-        {!leader && (
+        {!leader && !parent && (
           <>
             <button type="button" className="menu__item" onClick={() => backupRef.current?.click()}>
               <Icon name="upload" size={18} />
@@ -272,7 +317,7 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
           </span>
         </button>
 
-        {!leader && (
+        {!leader && !parent && (
           <button
             type="button"
             className="menu__item"
@@ -317,7 +362,7 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
           </div>
         )}
 
-        {!leader && (
+        {!leader && !parent && (
           <button
             type="button"
             className="menu__item menu__item--danger"

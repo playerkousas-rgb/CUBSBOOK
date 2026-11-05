@@ -8,7 +8,7 @@ import { LegalLine } from '../components/Legal.jsx';
  * 全螢幕幼童軍布面燙金封面（對齊 ROVERBOOK v16 CoverPage）：
  * 整個螢幕就是紀錄冊封面；深森林綠布面 × 幼童軍金黃燙印，避免黃底白字的對比度陷阱。
  */
-export default function CoverPage({ book, onOpen, last, onContinue, onLeader }) {
+export default function CoverPage({ book, onOpen, last, onContinue, onLeader, onParent }) {
   const { isEn } = useLang();
   const m = book?.member || {};
   const stats = allStats(book);
@@ -92,6 +92,11 @@ export default function CoverPage({ book, onOpen, last, onContinue, onLeader }) 
             {onLeader && (
               <button type="button" className="coverart__leader" onClick={onLeader}>
                 {isEn ? 'Leader mode' : '領袖模式'}
+              </button>
+            )}
+            {onParent && (
+              <button type="button" className="coverart__parent" onClick={onParent}>
+                {isEn ? 'Parent view' : '家長查看'}
               </button>
             )}
           </div>

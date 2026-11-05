@@ -295,7 +295,7 @@ export function P16() {
    第 17 頁：制服及徽章位置
    ============================================================ */
 
-const UNIFORM_ITEMS = [
+export const UNIFORM_ITEMS = [
   { key: 'cap', zh: '幼童軍帽（總會指定款式）', en: 'Cub Scout cap (Association pattern)' },
   { key: 'scarf', zh: '幼童軍旅巾及旅巾圈', en: 'Group scarf and woggle' },
   { key: 'shirt', zh: '幼童軍制服上衣（短袖）', en: 'Cub Scout uniform shirt (short sleeves)' },

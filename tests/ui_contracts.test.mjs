@@ -173,8 +173,8 @@ test('api/leader.js 只於伺服器比對 LEADER_CODE（timingSafeEqual），前
 
 test('領袖模式（只讀、可掃描他人）與普通模式（不可讀他人）嚴格分離', () => {
   const app = read('web/src/App.jsx');
-  assert.ok(app.includes('readOnly: leader'));
-  assert.ok(app.includes('if (isLeader()) return;'));
+  assert.ok(app.includes('readOnly: leader || parent'));
+  assert.ok(app.includes('if (isLeader() || isParent()) return;'));
   assert.ok(app.includes('leader ? <HashSnapshotViewer token={hashToken} /> : <LeaderGate mode="gate" />'));
   assert.ok(app.includes('LeaderGate'));
 
@@ -228,7 +228,7 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
   assert.ok(html.includes('href="/favicon-32.png"'));
   assert.ok(html.includes('href="/favicon-48.png"'));
   assert.ok(html.includes('href="/icons/apple-touch-icon.png"'));
-  assert.ok(html.includes('content="#143b28"'));
+  assert.ok(html.includes('content="#f2b705"'), '幼童軍黃 theme-color');
 
   const files = [
     'web/public/favicon.svg',
@@ -252,7 +252,7 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
 
   const manifest = JSON.parse(read('web/public/manifest.webmanifest'));
   assert.equal(manifest.short_name, 'CUBBOOK');
-  assert.equal(manifest.theme_color, '#143b28');
+  assert.equal(manifest.theme_color, '#f2b705');
   assert.equal(manifest.background_color, '#08180f');
   for (const icon of manifest.icons) {
     assert.ok(fs.existsSync(path.join(root, 'web/public', icon.src.replace(/^\//, ''))), `manifest 圖示不存在 ${icon.src}`);
