@@ -109,32 +109,40 @@ test('版權與非官方聲明只出現於封面頁腳、數位附錄、選單�
   }
 });
 
-test('幼童軍綠金配色符合 WCAG AA，且絕無白字配金黃底', () => {
+test('全本幼童軍黃 × 深墨配色：官方版面亦不得殘留森林綠／酒紅／紫', () => {
   const css = read('web/src/styles.css');
 
-  assert.ok(css.includes('--cover-bg: #143b28'));
-  assert.ok(css.includes('--cover-bg-deep: #08180f'));
-  assert.ok(css.includes('--vs-red: #1c5236'));
+  assert.ok(css.includes('--cover-bg: #1a1206'));
+  assert.ok(css.includes('--cover-bg-deep: #0d0904'));
+  assert.ok(css.includes('--vs-red: #8a5a00'));
   assert.ok(css.includes('--foil: #e3c07a'));
   assert.ok(css.includes("html[data-lang='zh']"));
   assert.ok(css.includes('.write__dot'));
   assert.ok(css.includes('env(safe-area-inset-top)'));
 
-  // 舊有深資童軍酒紅殘留必須清零
-  for (const stale of ['#540f1e', '#2a060f', '#7a1426', '#4a0e1b', '#7b1d31', '#5a1321', '#2b0710']) {
-    assert.equal(css.toLowerCase().includes(stale), false, `styles.css 仍有深資酒紅 ${stale}`);
+  // 其他 BOOK 的顏色必須清零：深資酒紅、森林綠、紫
+  const stale = [
+    '#540f1e', '#2a060f', '#7a1426', '#4a0e1b', '#7b1d31', '#5a1321', '#2b0710', '#2e0710',
+    '#143b28', '#1c5236', '#2f6b3a', '#14532d', '#0a2415', '#0b2417', '#1f5c3a', '#1f4d2b',
+    '#563a78', '#4b2e83', '#6b4a92', '#5b3f7a', '#5b6b7a', '#1f5f8b', '#c0392b',
+  ];
+  for (const hex of stale) {
+    assert.equal(css.toLowerCase().includes(hex), false, `styles.css 仍有其他 BOOK 顏色 ${hex}`);
   }
 
-  assert.ok(contrastRatio('#1c5236', '#f7f2e7') >= 7.0, '深森林綠標題於象牙紙 >= 7:1');
+  // 官方頁：金黃標題帶配深墨字，頁碼金黃圓底
+  assert.match(css, /\.sheet__banner h1 \{[^}]*color: #2b1a04/);
+  assert.match(css, /\.sheet__folio \{[^}]*#f2b705/);
+  assert.match(css, /\.sheet__folio \{[^}]*color: #2b1a04/);
+  assert.match(css, /\.offact__head \{[^}]*#241605/);
+
+  assert.ok(contrastRatio('#8a5a00', '#f7f2e7') >= 5.0, '深金標題於象牙紙 >= 5:1');
   assert.ok(contrastRatio('#1e1a14', '#f7f2e7') >= 14.0, '主墨色於象牙紙 >= 14:1');
   assert.ok(contrastRatio('#19386b', '#f7f2e7') >= 8.0, '手寫藍墨於象牙紙 >= 8:1');
-  assert.ok(contrastRatio('#f6e6bb', '#143b28') >= 7.0, '燙金字於深綠布面 >= 7:1');
-  assert.ok(contrastRatio('#1a1206', '#e3c07a') >= 8.0, '深炭字於幼童軍金黃 >= 8:1');
-  assert.ok(contrastRatio('#ffffff', '#1c5236') >= 4.5, '白字於深綠按鈕 >= 4.5:1');
+  assert.ok(contrastRatio('#2b1a04', '#ffd23f') >= 8.0, '深墨字於金黃標題帶 >= 8:1');
+  assert.ok(contrastRatio('#ffffff', '#f2b705') < 3.0, '白字配黃仍然禁止');
 
-  // 反例：白字配幼童軍黃必須低於 AA，證明設計上不可用
-  assert.ok(contrastRatio('#ffffff', '#e6a800') < 3.0);
-  // 因此金黃底按鈕一律使用深炭文字
+  // 按鈕一律深墨字
   assert.match(css, /\.btn--gold\s*\{[^}]*color: #1a1206/);
   assert.match(css, /\.chipbtn--gold\s*\{[^}]*color: #1a1206/);
 });
@@ -220,6 +228,11 @@ test('中英文完全分離：一鍵切換、不以並排方式塞入表格', ()
   assert.ok(!back.includes('誓詞 Promise'));
 });
 
+const OFFICIAL_ASSETS = fs
+  .readdirSync(path.join(root, 'web/public/official'))
+  .filter((f) => !f.startsWith('.'))
+  .sort();
+
 test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一致', () => {
   const html = read('web/index.html');
   assert.ok(html.includes(`content="${APP_VERSION}"`));
@@ -259,7 +272,9 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
   }
 
   const sw = read('web/public/sw.js');
-  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v1'"));
+  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v2'"), '配色改版後需更新快取版本');
+  // 官方 PDF 圖稿必須離線可用，否則露營現場翻開紀錄冊會破圖
+  for (const asset of OFFICIAL_ASSETS) assert.ok(sw.includes(`'/official/${asset}'`), `Service Worker 未預快取 /official/${asset}`);
   assert.ok(!sw.includes('vsbook'));
   // 預快取清單每一項都必須真實存在，否則離線首次載入會破圖
   const shell = sw.match(/const SHELL = \[([\s\S]*?)\];/)[1];
@@ -268,6 +283,7 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
     const rel = url === '/' || url === '/index.html' ? null : path.join(root, 'web/public', url.replace(/^\//, ''));
     if (rel) assert.ok(fs.existsSync(rel), `Service Worker 預快取檔案不存在：${url}`);
   }
+  assert.ok(sw.includes("url.pathname.startsWith('/official/')"), 'Service Worker 需快取 /official/ 圖稿');
   assert.ok(!fs.existsSync(path.join(root, 'web/public/img')), '不應保留深資童軍徽章圖片');
 });
 

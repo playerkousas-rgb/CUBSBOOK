@@ -1,7 +1,7 @@
 {
   "name": "CUBBOOK 幼童軍紀錄冊",
   "short_name": "CUBBOOK",
-  "description": "幼童軍個人隨身離線電子紀錄冊：逐頁對應《幼童軍紀錄冊》第 1–19 頁、自動生成 PT/67・PT/68、純離線二維碼核簽與 cubadge 進度互通。",
+  "description": "幼童軍個人隨身離線電子紀錄冊：逐頁對應《幼童軍紀錄冊》2026 年版 32 頁、自動生成 PT/67・PT/68、純離線二維碼核簽與 cubadge 進度互通。",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
