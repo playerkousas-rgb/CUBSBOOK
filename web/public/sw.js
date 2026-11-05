@@ -1,6 +1,6 @@
 /* CUBBOOK Service Worker — 確保露營、遠足及離線集會現場仍可完整開啟與讀寫紀錄冊。 */
 
-const CACHE_NAME = 'cubbook-cache-v1';
+const CACHE_NAME = 'cubbook-cache-v3';
 const SHELL = [
   '/',
   '/index.html',
@@ -17,6 +17,15 @@ const SHELL = [
   '/icons/icon-512.png',
   '/icons/icon-maskable-192.png',
   '/icons/icon-maskable-512.png',
+  '/official/cover.webp',
+  '/official/divider.webp',
+  '/official/membership-emblem.png',
+  '/official/badge-experience.png',
+  '/official/badge-adventure.png',
+  '/official/badge-crest.png',
+  '/official/badge-golden.png',
+  '/official/hexagons.png',
+  '/official/grand-howl.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -88,6 +97,7 @@ self.addEventListener('fetch', (event) => {
     url.pathname.startsWith('/assets/') ||
     url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/img/') ||
+    url.pathname.startsWith('/official/') ||
     url.pathname.startsWith('/favicon') ||
     url.pathname === '/manifest.webmanifest'
   ) {

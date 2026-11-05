@@ -4,7 +4,6 @@ import { useBook } from '../bookContext.js';
 import { Icon, cx } from '../ui.jsx';
 import { useLang } from '../i18n.jsx';
 import { navigate } from '../router.jsx';
-import { UNIFORM_ITEMS } from './BookBack.jsx';
 
 /**
  * 家長模式（只讀儀表板）
@@ -19,8 +18,7 @@ export default function ParentView({ onShowQr, onExit }) {
   const stats = allStats(book);
   const membership = membershipStatus(book);
   const renewal = latestRenewal(book);
-  const uniform = book?.pages?.p17?.uniform || {};
-  const uniformDone = UNIFORM_ITEMS.filter((i) => uniform[i.key]).length;
+  const synced = book?.meta?.parent || null;
 
   const recent = Object.entries(book?.progress || {})
     .filter(([id, entry]) => entry?.date && ITEM_INDEX[id])
@@ -55,12 +53,24 @@ export default function ParentView({ onShowQr, onExit }) {
         </p>
         <p className="parent__note">
           {isEn
-            ? 'You are viewing your child’s record book in read-only mode. Nothing here can be edited, and you do not need to fill in any personal particulars.'
-            : '你正在以只讀方式查看孩子的紀錄冊。此模式不能修改任何內容，家長亦毋須填寫任何個人資料。'}
+            ? 'You are viewing your child’s record book on your own phone, in read-only mode. Progress came from cubbadge (or their QR) and nothing here can be edited or sent back.'
+            : '你正在自己的手機以只讀方式查看孩子的紀錄冊。進度由 cubbadge（或孩子的二維碼）匯出，這裡不能修改，亦不會回傳任何內容。'}
+        </p>
+        <p className="parent__source">
+          {synced
+            ? isEn
+              ? `Source: ${synced.source === 'qr' ? 'child’s QR' : 'cubbadge export'} · ${synced.imported ?? 0} items · updated ${new Date(synced.syncedAt).toLocaleString('en-HK')}`
+              : `來源：${synced.source === 'qr' ? '孩子二維碼' : 'cubbadge 匯出'} · ${synced.imported ?? 0} 項 · 更新於 ${new Date(synced.syncedAt).toLocaleString('zh-HK')}`
+            : isEn
+              ? 'No sync record yet — export again from cubbadge or scan your child’s QR.'
+              : '尚未有同步紀錄——請由 cubbadge 重新匯出，或掃描孩子的二維碼。'}
         </p>
         <div className="parent__actions">
           <button type="button" className="btn btn--gold btn--sm" onClick={() => navigate('/p/p18')}>
             <Icon name="book" size={14} /> {isEn ? 'Open the book' : '翻開紀錄冊'}
+          </button>
+          <button type="button" className="btn btn--gold btn--sm" onClick={() => navigate('/parent/connect')}>
+            <Icon name="download" size={14} /> {isEn ? 'Update from cubbadge / QR' : '由 cubbadge／QR 更新'}
           </button>
           <button type="button" className="btn btn--ghost btn--sm" onClick={() => navigate('/print')}>
             <Icon name="print" size={14} /> {isEn ? 'Print / Save PDF' : '列印／存 PDF'}
@@ -142,25 +152,6 @@ export default function ParentView({ onShowQr, onExit }) {
             <p className="parent__empty">{isEn ? 'No award recorded yet.' : '暫時未記錄任何已頒發獎章。'}</p>
           )}
 
-          <h2 className="parent__h2gap">{isEn ? 'Uniform checklist' : '制服及徽章清單'}</h2>
-          <div className="ribbon">
-            <span className="ribbon__bar">
-              <i style={{ width: `${(uniformDone / UNIFORM_ITEMS.length) * 100}%` }} />
-            </span>
-            <span className="ribbon__text">
-              {isEn ? `${uniformDone} / ${UNIFORM_ITEMS.length} ready` : `已齊備 ${uniformDone} / ${UNIFORM_ITEMS.length} 項`}
-            </span>
-          </div>
-          <ul className="parent__uniform">
-            {UNIFORM_ITEMS.map((item) => (
-              <li key={item.key} className={cx(uniform[item.key] && 'is-on')}>
-                <span className="checklist__box is-static" aria-hidden="true">
-                  {uniform[item.key] ? '✓' : ''}
-                </span>
-                {isEn ? item.en : item.zh}
-              </li>
-            ))}
-          </ul>
         </section>
       </div>
 

@@ -4,7 +4,7 @@ import { BookCtx } from './bookContext.js';
 import { loadBook, persistBook } from './bookStore.js';
 import { LangProvider, useLang } from './i18n.jsx';
 import { isLeader, leaderAvailable, onLeaderChange } from './leader.js';
-import { exitParentMode, isParent, onParentChange } from './parent.js';
+import { exitParentMode, isParent, loadParentBook, onParentChange, saveParentBook } from './parent.js';
 import { UPDATE_EVENT, applyPwaUpdate } from './pwa.js';
 import { Link, navigate, useFullLocation, useRoute } from './router.jsx';
 import { Crest, Icon, ToastProvider, cx, useToast } from './ui.jsx';
@@ -14,18 +14,26 @@ import MenuDialog from './components/MenuDialog.jsx';
 import LeaderGate from './components/LeaderGate.jsx';
 import Welcome from './pages/Welcome.jsx';
 import CoverPage from './pages/CoverPage.jsx';
-import { ContentsPage, P01, P02, P03, P04, P05, P06, P07 } from './pages/BookFront.jsx';
-import { P08, P09, P10, P11, P12 } from './pages/BookTraining.jsx';
-import { P13, P14, P15, P16, P17, P18, P19, AppendixPage, PrintBook } from './pages/BookBack.jsx';
+import {
+  ContentsPage,
+  P01, P02, P03, P04, P05, P06, P07, P08, P09, P10, P11,
+  P12, P13, P14, P15, P16, P17, P18, P19, P20, PCover,
+  P21, P22, P23, P24, P25, P26, P27, P28, P29, P30, P31, P32,
+} from './pages/Official.jsx';
+import { AppendixPage, PrintBook } from './pages/Appendix.jsx';
 import { FormDoc, FormsAll, FormsIndex } from './pages/Forms.jsx';
 import ParentView from './pages/ParentView.jsx';
+import ParentConnect from './pages/ParentConnect.jsx';
 import { HashSnapshotViewer, Scan, ScanView, Signoff } from './pages/Scan.jsx';
 
 const PAGES = {
   contents: ContentsPage,
+  cover: PCover,
   p01: P01, p02: P02, p03: P03, p04: P04, p05: P05, p06: P06, p07: P07,
-  p08: P08, p09: P09, p10: P10, p11: P11, p12: P12,
-  p13: P13, p14: P14, p15: P15, p16: P16, p17: P17, p18: P18, p19: P19,
+  p08: P08, p09: P09, p10: P10, p11: P11, p12: P12, p13: P13, p14: P14,
+  p15: P15, p16: P16, p17: P17, p18: P18, p19: P19, p20: P20, p21: P21,
+  p22: P22, p23: P23, p24: P24, p25: P25, p26: P26, p27: P27, p28: P28,
+  p29: P29, p30: P30, p31: P31, p32: P32,
   appendix: AppendixPage,
 };
 
@@ -59,6 +67,7 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
   const printAll = path === '/print';
   const leaderRoute = path === '/leader';
   const parentRoute = path === '/parent';
+  const parentConnectRoute = path === '/parent/connect';
   const section = path.startsWith('/p/') ? path.slice(3) : null;
   const formId = path.startsWith('/forms') ? path.split('/').filter(Boolean)[1] || 'index' : null;
   const scanPath = ['/scan', '/scan/view', '/scan/signoff'].includes(path) ? path : null;
@@ -88,7 +97,7 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
   useEffect(() => {
     const t = setTimeout(() => setSavedAt(new Date()), 350);
     return () => clearTimeout(t);
-  }, [book]);
+  }, [book, parent]);
 
   const lastMeta = SECTIONS.find((s) => s.id === lastSection && !s.digital);
   const meta = SECTIONS.find((s) => s.id === section);
@@ -125,7 +134,7 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
         leader && 'app--leader',
         printAll
           ? 'app--print'
-          : scanPath || leaderRoute || parentRoute
+          : scanPath || leaderRoute || parentRoute || parentConnectRoute
             ? 'app--scan'
             : formId
               ? 'app--forms'
@@ -263,7 +272,7 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
         </div>
       )}
 
-      {parent && !printAll && !parentRoute && (
+      {parent && !printAll && !parentRoute && !parentConnectRoute && (
         <div className="parentbar no-print" role="status">
           <Icon name="lock" size={13} />
           <span>
@@ -322,12 +331,14 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
             'stage__inner',
             section && 'stage__inner--page',
             formId && 'stage__inner--forms',
-            (scanPath || leaderRoute || parentRoute) && 'stage__inner--scan',
+            (scanPath || leaderRoute || parentRoute || parentConnectRoute) && 'stage__inner--scan',
           )}
           style={zoom > 1 ? { zoom } : undefined}
         >
           {printAll ? (
             <PrintBook pages={PAGES} />
+          ) : parentConnectRoute ? (
+            <ParentConnect />
           ) : parentRoute ? (
             <ParentView
               onShowQr={() => setQrOpen(true)}
@@ -345,15 +356,15 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
             )
           ) : scanPath ? (
             scanPath === '/scan/signoff' && !leader ? (
-              <Signoff />
-            ) : !leader ? (
+              parent ? <ParentConnect /> : <Signoff />
+            ) : !leader && !parent ? (
               <LeaderGate mode="gate" />
             ) : scanPath === '/scan/view' ? (
-              <ScanView />
+              <ScanView parentMode={parent && !leader} />
             ) : scanPath === '/scan/signoff' ? (
               <Signoff />
             ) : (
-              <Scan hasBook />
+              <Scan hasBook parentMode={parent && !leader} />
             )
           ) : formId ? (
             formId === 'index' ? (
@@ -377,13 +388,13 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
               last={lastMeta}
               onContinue={() => lastMeta && navigate(`/p/${lastMeta.id}`)}
               onLeader={!leader && leaderReady ? () => navigate('/leader') : null}
-              onParent={!leader && !parent ? () => navigate('/parent') : null}
+              onParent={!leader && !parent ? () => navigate('/parent/connect') : null}
             />
           )}
         </div>
       </main>
 
-      {section && !printAll && !scanPath && !leaderRoute && !parentRoute && (
+      {section && !printAll && !scanPath && !leaderRoute && !parentRoute && !parentConnectRoute && (
         <Pager current={section} onOpenIndex={() => setIndexOpen(true)} />
       )}
 
@@ -426,7 +437,7 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
 function AppInner() {
   const fullLoc = useFullLocation();
   const path = useRoute();
-  const [book, setBook] = useState(() => loadBook());
+  const [book, setBook] = useState(() => (isParent() ? loadParentBook() : loadBook()));
   const [saveIssue, setSaveIssue] = useState(null);
   const [leader, setLeader] = useState(isLeader);
   const [leaderReady, setLeaderReady] = useState(null);
@@ -434,6 +445,10 @@ function AppInner() {
 
   useEffect(() => onLeaderChange(() => setLeader(isLeader())), []);
   useEffect(() => onParentChange(() => setParent(isParent())), []);
+  useEffect(() => {
+    // 家長模式讀寫獨立鏡像；退出後即回到這部手機原本的成員紀錄冊。
+    setBook(parent ? loadParentBook() : loadBook());
+  }, [parent]);
   useEffect(() => {
     let live = true;
     leaderAvailable().then((v) => live && setLeaderReady(v));
@@ -456,16 +471,22 @@ function AppInner() {
     });
   }, []);
 
-  const replace = useCallback((next) => setBook(next), []);
+  const replace = useCallback(
+    (next) => {
+      if (isParent()) saveParentBook(next);
+      setBook(next);
+    },
+    [],
+  );
 
   useEffect(() => {
-    if (!book) return;
+    if (!book || parent) return;
     const t = setTimeout(() => {
       const err = persistBook(book);
       setSaveIssue(err ? (err.name === 'QuotaExceededError' ? 'quota' : 'error') : null);
     }, 220);
     return () => clearTimeout(t);
-  }, [book]);
+  }, [book, parent]);
 
   const ctx = useMemo(
     () => ({ book, update, replace, readOnly: leader || parent, parent }),
@@ -478,6 +499,23 @@ function AppInner() {
       <ToastProvider>
         <div className="app app--scan">
           {leader ? <HashSnapshotViewer token={hashToken} /> : <LeaderGate mode="gate" />}
+        </div>
+      </ToastProvider>
+    );
+  }
+
+  // 家長模式尚未有鏡像：可先掃描孩子二維碼，或顯示連線頁（連接 BADGE）。
+  if (!book && (parent || path === '/parent/connect')) {
+    return (
+      <ToastProvider>
+        <div className="app app--scan">
+          {path === '/scan/view' ? (
+            <ScanView parentMode />
+          ) : path === '/scan' ? (
+            <Scan parentMode />
+          ) : (
+            <ParentConnect />
+          )}
         </div>
       </ToastProvider>
     );
@@ -506,6 +544,7 @@ function AppInner() {
         <Welcome
           onReady={(next) => replace(next)}
           onLeader={leaderReady ? () => navigate('/leader') : null}
+          onParent={() => navigate('/parent/connect')}
         />
       </ToastProvider>
     );

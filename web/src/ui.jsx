@@ -26,6 +26,7 @@ const PATHS = {
   download: 'M12 4v11 M7.5 10.5 12 15l4.5-4.5 M5 19h14',
   upload: 'M12 20V9 M7.5 13.5 12 9l4.5 4.5 M5 4h14',
   menu: 'M4 7h16 M4 12h16 M4 17h16',
+  users: 'M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z M3 20c0-3 2.7-5 6-5s6 2 6 5 M17 5.4a3.4 3.4 0 0 1 0 6.4 M17.6 20c0-2.1-.8-3.8-2.2-4.8',
   verified: 'M12 3l2.3 1.7 2.8-.3 1 2.7 2.4 1.5-.9 2.7.9 2.7-2.4 1.5-1 2.7-2.8-.3L12 21l-2.3-1.7-2.8.3-1-2.7L3.5 15.4l.9-2.7-.9-2.7 2.4-1.5 1-2.7 2.8.3L12 3Z M8.8 12.2l2.1 2.1 4.3-4.5',
   camera: 'M4 8h3l1.5-2h7L17 8h3v11H4V8Z M12 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
   info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 11v5 M12 8h.01',
@@ -60,9 +61,9 @@ export function Crest({ size = 40, className = '' }) {
     <svg className={cx('crest', className)} width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
       <defs>
         <linearGradient id="vsfoil" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#f6e3b6" />
-          <stop offset="48%" stopColor="#d8b871" />
-          <stop offset="100%" stopColor="#9f7933" />
+          <stop offset="0%" stopColor="#f0dda0" />
+          <stop offset="48%" stopColor="#c9ab55" />
+          <stop offset="100%" stopColor="#8f6f22" />
         </linearGradient>
       </defs>
       <circle cx="32" cy="32" r="26" fill="none" stroke="url(#vsfoil)" strokeWidth="1.2" opacity="0.45" />

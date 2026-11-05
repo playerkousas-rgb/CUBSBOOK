@@ -58,7 +58,7 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
                 result.skippedPending ? `（已略過 ${result.skippedPending} 項未核實項目）` : ''
               }`,
         );
-        navigate('/p/p09');
+        navigate('/p/contents');
         onClose();
       } catch (e) {
         push(e.message || (isEn ? 'Cannot read cubbadge file' : '無法讀取 cubbadge 檔案'), 'error');
@@ -139,8 +139,12 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
             onClick={() => {
               enterParentMode();
               onClose();
-              navigate('/parent');
-              push(isEn ? 'Parent mode — read-only' : '已進入家長模式（只讀）');
+              navigate('/parent/connect');
+              push(
+                isEn
+                  ? 'Parent mode — read-only. Your own record book stays safe on this device; leave parent mode to return.'
+                  : '已進入家長模式（只讀）。你自己的紀錄冊仍安全保存在本機，退出家長模式即會返回。',
+              );
             }}
           >
             <Icon name="lock" size={18} />
@@ -258,7 +262,7 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
             <em>
               {isEn
                 ? '19 pages, one per record-book page; A4 portrait with the official page mapping in the print checklist.'
-                : '19 頁一次過，每頁對應紙本一節；A4 直向，頁碼及紙本對照見列印檢查清單。'}
+                : '封面＋官方 32 頁一次過，頁碼及頁序與紙本完全一致；A4 直向。'}
             </em>
           </span>
         </button>

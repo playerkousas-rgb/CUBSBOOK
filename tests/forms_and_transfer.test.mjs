@@ -54,7 +54,7 @@ test('官方表格 PT/67・PT/68 齊備，2026 新制只提供清晰標示的非
   assert.equal(PT67_CHECKLIST.length >= 4, true);
   assert.equal(PT68_CHECKLIST.length >= 5, true);
   assert.ok(PT67_CHECKLIST.some((line) => line.includes('1 至 3、5、10 至 13')));
-  assert.ok(PT68_CHECKLIST.some((line) => line.includes('1 至 3、5、12 至 15')));
+  assert.ok(PT68_CHECKLIST.some((line) => line.includes('2–4、10–11、13–19')));
   assert.ok(PT68_CHECKLIST.some((line) => line.includes('PT/67')));
   assert.equal(PRINT_CHECKLIST.length, 5);
   assert.equal(PRINT_CHECKLIST[0].items.includes('個人資料（含近照及持有人簽署）'), true);

@@ -19,7 +19,7 @@ export const SYLLABUS_META = {
   "note": "BOOK 內部鍵為 L1-*／L2-*／L3-*／L4-*／OT-*；每個項目同時保留 cubsbadge 官方 badgeId，同步時以 badgeId 對照，零改名、零重打。官方中文原文為準，英文為工作譯本。"
 };
 
-/** 進度性獎章：會員章 → 銅箭章（體驗章）→ 銀箭章（歷奇章）→ 金箭章（高級歷奇章） */
+/** 進度性獎章（官方名稱）：會員章 → 幼童軍體驗章 → 幼童軍歷奇章 → 幼童軍高級歷奇章 → 金紫荊獎章 */
 export const BADGE_SYLLABUS = [
   {
     "id": "L1",
@@ -168,8 +168,8 @@ export const BADGE_SYLLABUS = [
     "icon": "🌱",
     "name": "幼童軍體驗章",
     "en": "Cub Scout Experience Badge",
-    "legacyZh": "銅箭章",
-    "legacyEn": "Bronze Arrow",
+    "legacyZh": "幼童軍體驗章",
+    "legacyEn": "C.S. Experience Badge",
     "color": "#8a5a00",
     "purpose": "第一個進度性獎章，適合年滿六歲而考獲會員章的成員；如已獲小童軍「小草蜢章」，完成會員章後可直接獲得此章。",
     "description": "第一個進度性獎章，適合年滿六歲而考獲會員章的成員；如已獲小童軍「小草蜢章」，完成會員章後可直接獲得此章。",
@@ -311,8 +311,8 @@ export const BADGE_SYLLABUS = [
     "icon": "🧭",
     "name": "幼童軍歷奇章",
     "en": "Cub Scout Adventure Badge",
-    "legacyZh": "銀箭章",
-    "legacyEn": "Silver Arrow",
+    "legacyZh": "幼童軍歷奇章",
+    "legacyEn": "C.S. Adventure Award",
     "color": "#41597a",
     "purpose": "第二個進度性獎章。完成甲部核心範疇，並在乙部三個興趣範疇中選兩個，各完成至少一個指定活動徽章。",
     "description": "第二個進度性獎章。完成甲部核心範疇，並在乙部三個興趣範疇中選兩個，各完成至少一個指定活動徽章。",
@@ -545,8 +545,8 @@ export const BADGE_SYLLABUS = [
     "icon": "🏕️",
     "name": "幼童軍高級歷奇章",
     "en": "Cub Scout Advanced Adventure Badge",
-    "legacyZh": "金箭章",
-    "legacyEn": "Gold Arrow",
+    "legacyZh": "幼童軍高級歷奇章",
+    "legacyEn": "C.S. Adventure Crest Award",
     "color": "#7a3410",
     "purpose": "第三個進度性獎章。完成甲部核心範疇及乙部興趣範疇；較早階段已使用的徽章不得重複，三級制章可用更高級別。",
     "description": "第三個進度性獎章。完成甲部核心範疇及乙部興趣範疇；較早階段已使用的徽章不得重複，三級制章可用更高級別。",

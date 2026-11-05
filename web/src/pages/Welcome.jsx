@@ -5,7 +5,7 @@ import { persistBook } from '../bookStore.js';
 import { navigate } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
 
-export default function Welcome({ onReady, onLeader }) {
+export default function Welcome({ onReady, onLeader, onParent }) {
   const { push } = useToast();
   const { isEn, toggle } = useLang();
   const [form, setForm] = useState({
@@ -193,6 +193,11 @@ export default function Welcome({ onReady, onLeader }) {
             {onLeader && (
               <button type="button" className="btn btn--onpaper" onClick={onLeader}>
                 <Icon name="lock" size={14} /> {isEn ? 'Leader Mode' : '領袖模式'}
+              </button>
+            )}
+            {onParent && (
+              <button type="button" className="btn btn--onpaper" onClick={onParent}>
+                <Icon name="users" size={14} /> {isEn ? 'Parent Mode (read-only)' : '家長模式（只讀）'}
               </button>
             )}
           </div>

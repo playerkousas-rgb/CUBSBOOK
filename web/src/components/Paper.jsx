@@ -5,43 +5,27 @@ import { Link } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
 
 /** 單頁紙本內頁（對齊 ROVERBOOK v15 紙張質感與頁眉頁腳） */
-export function Sheet({ id, no, title, en, children, className = '', dense = false, badge }) {
+export function Sheet({ id, no, title, en, children, className = '', dense = false, badge, kind = '', banner = true }) {
   const { isEn } = useLang();
+  const officialBanner = banner && kind !== 'cover' && kind !== 'divider';
   return (
-    <article className={cx('sheet', dense && 'sheet--dense', className)} data-page={id} data-badge={badge || undefined}>
-      <span className="sheet__gutter" aria-hidden="true" />
-      <span className="sheet__watermark" aria-hidden="true">
-        <Crest size={130} />
-      </span>
-      <span className="sheet__corner" aria-hidden="true" />
-      <header className="sheet__head">
-        <span className="sheet__run">
-          {isEn ? (
-            'CUB SCOUT RECORD BOOK'
-          ) : (
-            <>
-              幼童軍紀錄冊 <em>CUB SCOUT RECORD BOOK</em>
-            </>
-          )}
-        </span>
-        {no && no !== '—' && (
-          <span className="sheet__pageno">
-            {isEn ? `PAGE ${no} / ${PAGE_TOTAL}` : `第 ${no} 頁 · 共 ${PAGE_TOTAL} 頁`}
-          </span>
-        )}
-      </header>
-      <div className="sheet__titlebar">
-        <h1>
-          {isEn && en ? en : title}
-          {!isEn && en && <em>{en}</em>}
-        </h1>
-        <span className="sheet__rule" aria-hidden="true" />
-      </div>
+    <article
+      className={cx('sheet', dense && 'sheet--dense', kind === 'cover' && 'sheet--cover', kind === 'divider' && 'sheet--divider', className)}
+      data-page={id}
+      data-badge={badge || undefined}
+    >
+      {officialBanner && (
+        <header className="sheet__banner">
+          <span className="sheet__banner-fleur" aria-hidden="true" />
+          <h1>
+            {isEn && en ? en : title}
+            {!isEn && en && <em>{en}</em>}
+          </h1>
+          <span className="sheet__banner-fleur" aria-hidden="true" />
+        </header>
+      )}
       <div className="sheet__body">{children}</div>
-      <footer className="sheet__foot">
-        <span>{isEn ? 'SCOUT ASSOCIATION OF HONG KONG' : '香港童軍總會'}</span>
-        <span>{isEn ? (en || 'CONTENTS').toUpperCase() : title || '目錄'}</span>
-      </footer>
+      {no && no !== '—' && kind !== 'divider' && <span className="sheet__folio">{no}</span>}
     </article>
   );
 }
@@ -52,11 +36,13 @@ export function Spread({ section, right, className = '', dense = false }) {
     <Sheet
       id={section}
       no={meta.page}
-      title={meta.label || ''}
-      en={meta.en || ''}
+      title={meta.bannerZh || meta.label || ''}
+      en={meta.bannerEn || meta.en || ''}
       className={className}
       dense={dense}
       badge={meta.badge}
+      kind={meta.kind}
+      banner={Boolean(meta.label) && meta.banner !== false}
     >
       {right}
     </Sheet>
@@ -88,11 +74,15 @@ export function Pager({ current, onOpenIndex }) {
       )}
 
       <button type="button" className="pager__count" onClick={onOpenIndex} title={isEn ? 'Contents' : '打開目錄'}>
-        {!cur?.page || cur.page === '—'
+        {cur?.id === 'cover'
           ? isEn
-            ? 'CONTENTS'
-            : '目錄'
-          : `${cur.page} / ${PAGE_TOTAL}`}
+            ? 'COVER'
+            : '封面'
+          : !cur?.page || cur.page === '—'
+            ? isEn
+              ? 'CONTENTS'
+              : '目錄'
+            : `${cur.page} / ${PAGE_TOTAL}`}
       </button>
 
       {next ? (
@@ -119,11 +109,11 @@ export function IndexSheet({ open, onClose, current }) {
       onClose={onClose}
       eyebrow="CONTENTS"
       title={isEn ? 'Contents' : '目錄'}
-      subtitle={isEn ? '19 printed pages, one to one; plus a digital appendix.' : '紙本 19 頁，逐頁對應；另設數位附錄。'}
+      subtitle={isEn ? 'Cover + 32 official pages, one to one; plus a digital appendix.' : '封面＋官方 32 頁逐頁對應；另設數位附錄。'}
       wide
     >
       <div className="indexlist">
-        <Link to="/" className="indexrow indexrow--cover" onClick={onClose}>
+        <Link to="/p/cover" className="indexrow indexrow--cover" onClick={onClose}>
           <span className="indexrow__no">{isEn ? 'Cover' : '封面'}</span>
           <span className="indexrow__title">{isEn ? 'Cub Scout Record Book' : '幼童軍紀錄冊'}</span>
           <Icon name="book" size={14} />
@@ -133,7 +123,7 @@ export function IndexSheet({ open, onClose, current }) {
           <span className="indexrow__title">{isEn ? 'How to use & progress summary' : '使用說明及進度摘要'}</span>
           <Icon name="info" size={14} />
         </Link>
-        {list.map((s) => (
+        {list.filter((s) => s.id !== 'cover').map((s) => (
           <Link
             key={s.id}
             to={`/p/${s.id}`}

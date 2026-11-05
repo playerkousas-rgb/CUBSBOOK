@@ -9,7 +9,7 @@ npm test
 ## 測試範圍
 
 - `tests/book_and_syllabus.test.mjs`
-  - 紙本 19 頁頁碼映射（`PRINT_PAGES` 共 19 頁、無缺頁重覆、附錄不列印）；
+  - 官方 32 頁頁碼映射（`PRINT_PAGES` 共 32 頁、無缺頁重覆、附錄不列印）；
   - 2026 年第十版綱要與 `cubbadge/data/items.json` **逐個 ID 相同**（72 個細項、49 個活動徽章、fixture sha256）；BOOK 鍵 ⇄ 官方 `badgeId` 雙向可逆；
   - 五階獎章（會員章／銅箭／銀箭／金箭／金紫荊）項目數 `9／12／16／18／17`；興趣範疇「兩個不同類別、每類一個」；
   - `SCOUT ID` 前導零容錯、移除舊 `ymis`、身份證只保留首四碼；
@@ -27,13 +27,13 @@ npm test
   - `sanitizePendingSubmissions` 剝除 PII、轉官方編號、去重、日期合法性、200 項上限；
   - 端到端：空白冊同步、只匯入已核實、申報永不自我核實。
 - `tests/parent_mode.test.mjs`
-  - 家長模式只讀：旗標開關與事件、全域 `readOnly` 鎖、零輸入欄位、三個入口與退出、與領袖模式變數分離、幼童軍黃對比公式。
+  - 家長模式（第二部手機）：鏡像獨立儲存與退出清除、由 QR 與 cubbadge 匯出、pending 不入冊、家長模組零 `fetch`、只寫家長 store、零輸入欄位、圖示改黃且不含森林綠。
 - `tests/standalone_book.test.mjs`
-  - 完全離線的端到端流程：建立空白冊 → 填寫 → 統計 → `PT/67`/`PT/68` → `CB1` 出示 → `CB1S` 核簽 → 19 頁列印 → JSON 備份；
+  - 完全離線的端到端流程：建立空白冊 → 填寫 → 統計 → `PT/67`/`PT/68` → `CB1` 出示 → `CB1S` 核簽 → 32 頁列印 → JSON 備份；
   - `probeCubBadgeBridge` 對靜態主機 HTML fallback、404、壞 payload、離線、逾時、無 fetch 一律安全降級；
   - 只有可選同步卡可觸及 `/api`；第 17 頁制服清單可剔選並持久化。
 - `tests/ui_contracts.test.mjs`
-  - 19 頁 + 目錄 + 附錄路由映射；版權聲明只出現三處；
+  - 32 頁 + 目錄 + 附錄路由映射；版權聲明只出現三處；
   - 幼童軍綠金 WCAG AA 與「禁止白字配黃」；`api/leader.js` 的 `timingSafeEqual` 與零前端密碼；
   - 領袖模式（只讀）與普通模式分離；中英分離；
   - 九件套圖示、manifest 與 Service Worker 預快取檔案全部存在；

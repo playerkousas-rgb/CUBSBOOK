@@ -40,17 +40,20 @@ import { BOOK_TO_BADGE_ID, BADGE_ID_TO_BOOK, isKnownItem, awardOfItem } from '..
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/cubbadge-ids.json', import.meta.url), 'utf8'));
 const pkgVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 
-test('《幼童軍紀錄冊》19 頁逐頁映射完整、無缺漏與重覆，數位附錄不列印', () => {
+test('《幼童軍紀錄冊》官方 32 頁逐頁映射完整、無缺漏與重覆，數位附錄不列印', () => {
   // 版本單一真相：APP_VERSION 必須等於 package.json 版號（`v` + semver）
   assert.match(APP_VERSION, /^v\d+\.\d+\.\d+$/);
   assert.equal(APP_VERSION, `v${pkgVersion}`);
-  assert.equal(PAGE_TOTAL, 19);
-  assert.equal(PRINT_PAGES.length, 19);
+  assert.equal(PAGE_TOTAL, 32);
+  // 封面（不計頁碼）＋ 官方印刷頁 1–32 ＝ 33 張紙
+  assert.equal(PRINT_PAGES.length, 33);
+  assert.equal(PRINT_PAGES[0].id, 'cover');
+  assert.equal(PRINT_PAGES[0].page, '—');
   assert.deepEqual(
-    PRINT_PAGES.map((s) => Number(s.page)),
-    Array.from({ length: 19 }, (_, i) => i + 1),
+    PRINT_PAGES.filter((s) => s.page !== '—').map((s) => Number(s.page)),
+    Array.from({ length: 32 }, (_, i) => i + 1),
   );
-  assert.equal(SECTIONS.length, 20);
+  assert.equal(SECTIONS.length, 34);
   const appendix = SECTIONS.find((s) => s.id === 'appendix');
   assert.ok(appendix);
   assert.equal(PRINT_PAGES.some((s) => s.id === 'appendix'), false);
@@ -90,7 +93,7 @@ test('項目 ID 單一真相：shared/syllabus.js 與 cubbadge data/items.json �
   }
 });
 
-test('五個獎章階級齊備：會員章 → 銅箭章 → 銀箭章 → 金箭章 → 金紫荊獎章', () => {
+test('五個獎章階級齊備：會員章 → 幼童軍體驗章 → 幼童軍歷奇章 → 幼童軍高級歷奇章 → 金紫荊獎章', () => {
   assert.deepEqual(
     ALL_AWARDS.map((a) => a.id),
     ['L1', 'L2', 'L3', 'L4', 'OT-GB'],
@@ -110,16 +113,19 @@ test('五個獎章階級齊備：會員章 → 銅箭章 → 銀箭章 → 金�
     72,
   );
 
-  // 官方名稱與常用箭章名稱並存，方便對照紙本舊稱及旅團溝通
+  // 一律使用官方名稱；自創「銅／銀／金箭章」不得再出現
   assert.deepEqual(
     ALL_AWARDS.slice(1).map((a) => [a.name, a.legacyZh]),
     [
-      ['幼童軍體驗章', '銅箭章'],
-      ['幼童軍歷奇章', '銀箭章'],
-      ['幼童軍高級歷奇章', '金箭章'],
+      ['幼童軍體驗章', '幼童軍體驗章'],
+      ['幼童軍歷奇章', '幼童軍歷奇章'],
+      ['幼童軍高級歷奇章', '幼童軍高級歷奇章'],
       ['金紫荊獎章', '金紫荊獎章'],
     ],
   );
+  for (const a of ALL_AWARDS) {
+    assert.equal(/箭章/.test(`${a.name}${a.legacyZh}${a.en}${a.legacyEn}`), false, `${a.id} 仍含自創箭章名稱`);
+  }
 
   // 每個細項都能追溯所屬獎章，供紀錄冊頁面與 PT/67・PT/68 自動填表使用
   assert.equal(awardOfItem('L1-A')?.id, 'L1');
@@ -206,13 +212,13 @@ test('示範紀錄冊只示範版面：統計與會員續期狀態準確', () =>
   assert.equal(stats.percent, 19);
   assert.equal(stats.earned, 1);
   assert.equal(stats.nextAward.award.id, 'L2');
-  assert.equal(stats.activityBadges, 2);
+  assert.equal(stats.activityBadges, 3);
   assert.equal(badgeStats(demo, 'L1').complete, true);
   assert.equal(badgeStats(demo, 'L1').awardedDate, '2023-11-25');
 
   const ms = membershipStatus(demo, new Date('2026-11-05'));
   assert.equal(ms.active, true);
-  assert.equal(ms.validUntil, '2027-08-31');
+  assert.equal(ms.validUntil, '2027-12-31');
   assert.equal(membershipStatus(newBook(), new Date('2026-11-05')).active, false);
   assert.equal(Object.keys(demo.pages).some((k) => k === 'award_OT_GB'), false);
 });
@@ -239,7 +245,8 @@ test('BOOK → BADGE：匯出一律 pending、零個人資料，只保留 SCOUT 
   }
 
   // 已在 cubbadge 核實的項目不重複送交；自填而未有領袖核實的項目才需送交
-  assert.equal(out.pendingRequests.length, 1);
+  assert.equal(out.pendingRequests.length, 2);
+  assert.deepEqual(out.pendingRequests.map((r) => r.item_id), ['A22', 'A26']);
   const req = out.pendingRequests[0];
   assert.equal(req.ymis, '0012345678');
   assert.equal(req.item_id, 'A22');

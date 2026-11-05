@@ -34,7 +34,7 @@ export const TRANSFER_OPTIONS = [
     key: 'progress',
     label: '進度性獎章進度',
     en: 'Badge Progress',
-    hint: '會員章、銅箭章、銀箭章、金箭章及金紫荊獎章細項日期',
+    hint: '會員章、體驗章、歷奇章、高級歷奇章及金紫荊獎章細項日期',
   },
   {
     key: 'otherBadges',
@@ -52,7 +52,7 @@ export const TRANSFER_OPTIONS = [
     key: 'investiture',
     label: '宣誓及頒發紀錄',
     en: 'Investiture & Awards',
-    hint: '宣誓日期、會員章及各箭章頒發日期及證書編號',
+    hint: '宣誓日期、會員章及各進度性獎章頒發日期及證書編號',
   },
   {
     key: 'signatures',

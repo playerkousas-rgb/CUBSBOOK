@@ -5,7 +5,7 @@ import { today } from '@shared/book.js';
 import { useLang } from '../i18n.jsx';
 import { useReadOnly } from '../bookContext.js';
 
-const INK_COLOR = '#24161c';
+const INK_COLOR = '#241605';
 
 function trimCanvas(canvas) {
   const ctx = canvas.getContext('2d');

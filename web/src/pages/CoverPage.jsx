@@ -25,9 +25,9 @@ export default function CoverPage({ book, onOpen, last, onContinue, onLeader, on
 
   const medals = [
     { id: 'L1', label: isEn ? 'Membership Badge' : '會員章', short: isEn ? 'MB' : '會', earned: Boolean(book?.pages?.award_L1?.date) || stats.awards[0]?.complete },
-    { id: 'L2', label: isEn ? 'Bronze Arrow' : '銅箭章', short: isEn ? 'BR' : '銅', earned: Boolean(book?.pages?.award_L2?.date) || stats.awards[1]?.complete },
-    { id: 'L3', label: isEn ? 'Silver Arrow' : '銀箭章', short: isEn ? 'SV' : '銀', earned: Boolean(book?.pages?.award_L3?.date) || stats.awards[2]?.complete },
-    { id: 'L4', label: isEn ? 'Gold Arrow' : '金箭章', short: isEn ? 'GD' : '金', earned: Boolean(book?.pages?.award_L4?.date) || stats.awards[3]?.complete },
+    { id: 'L2', label: isEn ? 'C.S. Experience Badge' : '幼童軍體驗章', short: isEn ? 'EX' : '體', earned: Boolean(book?.pages?.award_L2?.date) || stats.awards[1]?.complete },
+    { id: 'L3', label: isEn ? 'C.S. Adventure Award' : '幼童軍歷奇章', short: isEn ? 'AD' : '歷', earned: Boolean(book?.pages?.award_L3?.date) || stats.awards[2]?.complete },
+    { id: 'L4', label: isEn ? 'C.S. Adventure Crest Award' : '幼童軍高級歷奇章', short: isEn ? 'AC' : '高', earned: Boolean(book?.pages?.award_L4?.date) || stats.awards[3]?.complete },
     { id: 'OT-GB', label: isEn ? 'Golden Bauhinia' : '金紫荊', short: isEn ? 'GB' : '紫', earned: Boolean(book?.pages?.award_OT_GB?.date) || stats.awards[4]?.complete },
   ];
 
