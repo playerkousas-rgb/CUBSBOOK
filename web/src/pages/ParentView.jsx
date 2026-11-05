@@ -4,7 +4,6 @@ import { useBook } from '../bookContext.js';
 import { Icon, cx } from '../ui.jsx';
 import { useLang } from '../i18n.jsx';
 import { navigate } from '../router.jsx';
-import { UNIFORM_ITEMS } from './BookBack.jsx';
 
 /**
  * 家長模式（只讀儀表板）
@@ -20,8 +19,6 @@ export default function ParentView({ onShowQr, onExit }) {
   const membership = membershipStatus(book);
   const renewal = latestRenewal(book);
   const synced = book?.meta?.parent || null;
-  const uniform = book?.pages?.p17?.uniform || {};
-  const uniformDone = UNIFORM_ITEMS.filter((i) => uniform[i.key]).length;
 
   const recent = Object.entries(book?.progress || {})
     .filter(([id, entry]) => entry?.date && ITEM_INDEX[id])
@@ -155,25 +152,6 @@ export default function ParentView({ onShowQr, onExit }) {
             <p className="parent__empty">{isEn ? 'No award recorded yet.' : '暫時未記錄任何已頒發獎章。'}</p>
           )}
 
-          <h2 className="parent__h2gap">{isEn ? 'Uniform checklist' : '制服及徽章清單'}</h2>
-          <div className="ribbon">
-            <span className="ribbon__bar">
-              <i style={{ width: `${(uniformDone / UNIFORM_ITEMS.length) * 100}%` }} />
-            </span>
-            <span className="ribbon__text">
-              {isEn ? `${uniformDone} / ${UNIFORM_ITEMS.length} ready` : `已齊備 ${uniformDone} / ${UNIFORM_ITEMS.length} 項`}
-            </span>
-          </div>
-          <ul className="parent__uniform">
-            {UNIFORM_ITEMS.map((item) => (
-              <li key={item.key} className={cx(uniform[item.key] && 'is-on')}>
-                <span className="checklist__box is-static" aria-hidden="true">
-                  {uniform[item.key] ? '✓' : ''}
-                </span>
-                {isEn ? item.en : item.zh}
-              </li>
-            ))}
-          </ul>
         </section>
       </div>
 

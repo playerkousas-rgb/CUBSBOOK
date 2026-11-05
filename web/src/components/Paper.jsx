@@ -119,7 +119,7 @@ export function IndexSheet({ open, onClose, current }) {
       onClose={onClose}
       eyebrow="CONTENTS"
       title={isEn ? 'Contents' : '目錄'}
-      subtitle={isEn ? '19 printed pages, one to one; plus a digital appendix.' : '紙本 19 頁，逐頁對應；另設數位附錄。'}
+      subtitle={isEn ? '32 official pages, one to one; plus a digital appendix.' : '官方 32 頁，逐頁對應；另設數位附錄。'}
       wide
     >
       <div className="indexlist">

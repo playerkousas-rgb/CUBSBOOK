@@ -147,7 +147,7 @@ export function FormsIndex() {
           </p>
         </div>
         <div className="formsindex__btns">
-          <Link to="/p/p12" className="btn btn--ghost btn--sm">
+          <Link to="/p/contents" className="btn btn--ghost btn--sm">
             <Icon name="back" size={14} /> {isEn ? 'Back to Book' : '返回紀錄冊'}
           </Link>
           <Link to="/forms/all" className="btn btn--gold btn--sm">
@@ -262,8 +262,8 @@ function FormPT67() {
       </div>
       <p className="ptnotes">
         {isEn
-          ? 'Eligibility: at least 9 years 6 months old and the Cub Scout Adventure Badge (Silver Arrow) completed.'
-          : '參加資格：年滿九歲半或以上，並已完成幼童軍歷奇章（銀箭章）。'}
+          ? 'Eligibility: at least 9 years 6 months old and the Cub Scout Adventure Award completed.'
+          : '參加資格：年滿九歲半或以上，並已完成幼童軍歷奇章。'}
       </p>
       <p className={cx('ptnotes', gb.halfPastTen ? 'is-ok' : '')}>
         {isEn
@@ -338,7 +338,7 @@ function FormPT68() {
 
         <SectionTitle en="(2) Items Completed">（2）完成之項目</SectionTitle>
         <div className="ptgrid">
-          <FCell label="考獲金箭章日期" en="Gold Arrow Date" k="l4Date" values={v} set={set} type="date" span={2} />
+          <FCell label="考獲高級歷奇章日期" en="Adventure Crest Award Date" k="l4Date" values={v} set={set} type="date" span={2} />
           <FCell label="證書號碼" en="Certificate No." k="l4CertNo" values={v} set={set} span={2} />
           <FCell label="露營日期" en="Camp Dates" k="campDates" values={v} set={set} span={2} />
           <FCell label="服務日期" en="Service Dates" k="serviceDates" values={v} set={set} span={2} />

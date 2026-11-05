@@ -4823,3 +4823,183 @@ html[data-print-preview] .write--multi.is-empty {
 @media print {
   .pconnect, .parentsave { display: none; }
 }
+
+/* ============================================================
+   官方 32 頁（v1.2）— 依《幼童軍紀錄冊》2026 年版表格排列
+   ============================================================ */
+
+.offtable { border: 1px solid rgba(26, 18, 6, 0.28); margin: 0.6rem 0 0.9rem; }
+.offtable__head,
+.offtable__row {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr) 7rem 8.4rem;
+  align-items: stretch;
+  border-bottom: 1px solid rgba(26, 18, 6, 0.18);
+}
+.offtable__head {
+  background: rgba(26, 18, 6, 0.055);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+.offtable__head > span,
+.offtable__row > span {
+  padding: 0.3rem 0.45rem;
+  border-right: 1px solid rgba(26, 18, 6, 0.14);
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.offtable__head > span:last-child,
+.offtable__row > span:last-child { border-right: 0; }
+.offtable__head--two,
+.offtable__row--two { grid-template-columns: minmax(0, 1fr) 9rem; }
+.offtable__head--badge,
+.offtable__row--badge { grid-template-columns: minmax(0, 1fr) 8.4rem 7rem; }
+.offtable__row:nth-child(even) { background: rgba(26, 18, 6, 0.022); }
+.offtable__row.is-picked { background: rgba(242, 183, 5, 0.12); }
+.offtable__c-no {
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+}
+.offtable__c-name { flex-direction: column; align-items: flex-start; gap: 0.1rem; font-size: 0.82rem; }
+.offtable__c-name em { font-style: normal; font-size: 0.66rem; opacity: 0.6; }
+.offtable__hint { font-size: 0.62rem; opacity: 0.55; }
+.offtable__c-exam, .offtable__c-date, .offtable__c-sig { padding: 0.15rem 0.3rem !important; }
+.offtable__foot { font-size: 0.7rem; opacity: 0.7; padding: 0.35rem 0.45rem; margin: 0; }
+.offtable--log .offtable__c-name { font-size: 0.8rem; }
+.offtable--log .offtable__row { min-height: 2.1rem; }
+
+.offsign {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-top: 1px dashed rgba(26, 18, 6, 0.25);
+  padding-top: 0.55rem;
+  margin-top: 0.7rem;
+}
+.offsign__img img { max-height: 2.6rem; }
+.offsign__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid rgba(26, 18, 6, 0.35);
+  background: transparent;
+  border-radius: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+.offaward { margin-top: 0.9rem; padding-top: 0.4rem; border-top: 1px solid rgba(26, 18, 6, 0.2); }
+.offcheck {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.76rem;
+  margin: 0.5rem 0 0.7rem;
+  cursor: pointer;
+}
+.offcheck input { position: absolute; opacity: 0; pointer-events: none; }
+.offcheck > span {
+  width: 1rem; height: 1rem;
+  border: 1px solid rgba(26, 18, 6, 0.5);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; line-height: 1;
+}
+.offcheck.is-checked > span { background: #f2b705; border-color: #8a6a00; color: #1a1206; }
+.offsig { background: none; border: 0; padding: 0; cursor: pointer; }
+.offsig img { max-height: 1.7rem; }
+.offsig--empty {
+  width: 1.5rem; height: 1.5rem;
+  border: 1px dashed rgba(26, 18, 6, 0.4);
+  border-radius: 0.25rem;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.offtick {
+  width: 1.1rem; height: 1.1rem;
+  border: 1px solid rgba(26, 18, 6, 0.5);
+  background: transparent;
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+.offtick.is-on { background: #f2b705; border-color: #8a6a00; }
+.offselect { display: block; width: 100%; margin-top: 0.15rem; }
+.offselect select {
+  width: 100%;
+  max-width: 13rem;
+  font: inherit;
+  font-size: 0.72rem;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px dotted rgba(26, 18, 6, 0.45);
+  padding: 0.1rem 0;
+}
+.offhint { font-size: 0.72rem; opacity: 0.65; margin: 0 0 0.3rem; }
+.offsub {
+  font-size: 0.82rem;
+  margin: 1rem 0 0.4rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid rgba(26, 18, 6, 0.25);
+}
+.offawards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; margin: 0.8rem 0; }
+.offawards__card {
+  display: flex; flex-direction: column; gap: 0.15rem;
+  border: 1px solid rgba(26, 18, 6, 0.3);
+  background: rgba(255, 255, 255, 0.35);
+  padding: 0.55rem 0.7rem;
+  text-decoration: none; color: inherit;
+  font-size: 0.84rem;
+}
+.offawards__card em { font-style: normal; font-size: 0.66rem; opacity: 0.6; }
+.offawards__card span { font-size: 0.66rem; opacity: 0.7; }
+.offcreed { border-top: 1px solid rgba(26, 18, 6, 0.2); padding: 0.7rem 0; }
+.offcreed:first-of-type { border-top: 0; }
+.offcreed h3 { font-size: 0.95rem; margin: 0 0 0.4rem; }
+.offcreed h3 em { font-style: normal; font-size: 0.7rem; opacity: 0.6; margin-left: 0.4rem; }
+.offcreed p { margin: 0; line-height: 1.95; font-size: 1rem; }
+.offcreed__motto { font-size: 1.2rem; letter-spacing: 0.15em; }
+.offnext { margin-top: 1rem; }
+.offhowl { border: 1px solid rgba(26, 18, 6, 0.25); padding: 1.2rem; text-align: center; margin-top: 1rem; }
+.offhowl p { font-size: 1.05rem; letter-spacing: 0.05em; margin: 0.6rem 0 0; }
+
+/* 封面／封底（書內第 1、32 頁） */
+.offcover, .offback { background: linear-gradient(160deg, #ffd23f, #f2b705 55%, #dca700); }
+.offcover__inner, .offback__inner {
+  min-height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.55rem; text-align: center; color: #1a1206;
+}
+.offcover__org { font-size: 0.72rem; letter-spacing: 0.22em; margin: 0; }
+.offcover__title { font-size: 2.4rem; margin: 0.4rem 0 0; line-height: 1.15; letter-spacing: 0.12em; }
+.offcover__title em { display: block; font-style: normal; font-size: 1.05rem; letter-spacing: 0.4em; margin-top: 0.3rem; }
+.offcover__edition { font-size: 0.72rem; opacity: 0.75; margin: 0; }
+.offcover__fields { width: min(22rem, 88%); margin-top: 1.4rem; }
+.offcover__foot { font-size: 0.62rem; opacity: 0.6; margin-top: 1.4rem; }
+.offback__inner h2 { font-size: 1.3rem; margin: 0.5rem 0 0; letter-spacing: 0.18em; }
+.offback__inner p { margin: 0; font-size: 0.8rem; }
+.offback__addr { font-size: 0.7rem !important; opacity: 0.75; max-width: 20rem; }
+.offback__ed { font-size: 0.64rem !important; opacity: 0.6; margin-top: 1rem !important; }
+.tocnote { font-size: 0.74rem; opacity: 0.65; margin: 0 0 0.6rem; }
+
+@media (max-width: 640px) {
+  .offtable__head { display: none; }
+  .offtable__row,
+  .offtable__row--two,
+  .offtable__row--badge {
+    grid-template-columns: 1fr;
+    padding: 0.35rem 0.4rem;
+  }
+  .offtable__row > span { border-right: 0; padding: 0.15rem 0.2rem !important; }
+  .offtable__c-no { justify-content: flex-start; }
+  .offtable__c-name::before { content: attr(data-label); }
+  .offawards { grid-template-columns: 1fr; }
+  .offcover__title { font-size: 1.9rem; }
+}
+
+@media print {
+  .offsig--empty, .offsign__btn, .offtick { display: none; }
+  .offselect select { border-bottom: 0; }
+}

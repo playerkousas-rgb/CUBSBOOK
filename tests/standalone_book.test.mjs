@@ -80,7 +80,7 @@ test('BOOK 核心功能完全不需要 BADGE：無網絡亦能建立、填寫、
   assert.equal(applied.book.progress['L2-CARING-01'].confirmedByBadge ?? false, false);
 
   // 6. 整本列印頁序固定 19 頁，附錄不列印
-  assert.equal(PRINT_PAGES.length, 19);
+  assert.equal(PRINT_PAGES.length, 32);
   assert.deepEqual(PRINT_PAGES.map((p) => p.id).slice(0, 3), ['p01', 'p02', 'p03']);
 
   // 7. 備份／還原（純 JSON，經 localStorage 或檔案）
@@ -145,25 +145,34 @@ test('數位附錄把 cubbadge 標示為「可選」，未接駁時提供獨立�
   assert.ok(bridge.includes('not-json'), '必須識破 SPA fallback 的 HTML 回應');
 
   // 只有可選同步卡會呼叫 /api；其餘紀錄冊功能不得依賴後端
-  const webFiles = ['web/src/App.jsx', 'web/src/pages/BookFront.jsx', 'web/src/pages/BookTraining.jsx', 'web/src/pages/BookBack.jsx', 'web/src/pages/Forms.jsx', 'web/src/components/AwardBlock.jsx', 'web/src/components/Write.jsx', 'web/src/components/Ink.jsx', 'shared/book.js', 'shared/forms.js', 'shared/transfer.js'];
+  const webFiles = ['web/src/App.jsx', 'web/src/pages/Official.jsx', 'web/src/pages/Appendix.jsx', 'web/src/pages/Forms.jsx', 'web/src/components/AwardBlock.jsx', 'web/src/components/Write.jsx', 'web/src/components/Ink.jsx', 'shared/book.js', 'shared/forms.js', 'shared/transfer.js'];
   for (const rel of webFiles) {
     const src = read(rel);
     assert.equal(/fetch\(\s*['"`]\/api/.test(src), false, `${rel} 不得直接依賴後端 API`);
   }
 });
 
-test('第 17 頁制服清單可剔選並存入 pages.p17.uniform，重整後仍在', () => {
-  const src = read('web/src/pages/BookBack.jsx');
-  assert.ok(src.includes('uniformChecked'));
-  assert.ok(src.includes('pages: { ...b.pages, p17'));
-  assert.ok(src.includes("role={readOnly ? undefined : 'checkbox'}"), '正常模式可剔選、領袖模式只讀');
-  // 七個項目各有穩定 key，避免改字後勾選狀態對錯位
-  for (const key of ['cap', 'scarf', 'shirt', 'trousers', 'shoes', 'badges', 'groupName']) {
-    assert.ok(src.includes(`key: '${key}'`), `缺少制服項目 ${key}`);
+test('官方 32 頁齊備、頁序與標題照官方，內頁不出現自創「銅／銀／金箭章」', async () => {
+  const { OFFICIAL_PAGES } = await import('../shared/officialPages.js');
+  assert.equal(OFFICIAL_PAGES.length, 32);
+  assert.deepEqual(OFFICIAL_PAGES.map((p) => p.no), Array.from({ length: 32 }, (_, i) => i + 1));
+  assert.deepEqual(OFFICIAL_PAGES.map((p) => p.id), Array.from({ length: 32 }, (_, i) => `p${String(i + 1).padStart(2, '0')}`));
+  assert.equal(OFFICIAL_PAGES[0].zh, '封面');
+  assert.equal(OFFICIAL_PAGES[1].zh, '個人摘要');
+  assert.equal(OFFICIAL_PAGES[19].zh, '童軍先修章');
+  assert.equal(OFFICIAL_PAGES[30].zh, '幼童軍團呼');
+  assert.equal(OFFICIAL_PAGES[31].zh, '封底');
+
+  const official = read('web/src/pages/Official.jsx');
+  for (const bad of ['銅箭章', '銀箭章', '金箭章']) {
+    assert.equal(official.includes(bad), false, `官方頁不應出現自創名稱「${bad}」`);
   }
-  const css = read('web/src/styles.css');
-  assert.ok(css.includes('.checklist__box.is-on'));
-  assert.ok(css.includes('.checklist li.is-interactive'));
+  // 官方獎章名稱必須存在
+  for (const good of ['幼童軍體驗章', '幼童軍歷奇章', '幼童軍高級歷奇章', '金紫荊獎章', '童軍先修章']) {
+    assert.ok(official.includes(good), `缺少官方名稱「${good}」`);
+  }
+  // 官方頁不得再出現逐項勾選表（AssessTable 只用於會員章 a–i）
+  assert.equal((official.match(/<AssessTable/g) || []).length, 2);
 });
 
 test('示範資料只示範版面，不冒充任何領袖核實或簽名', () => {

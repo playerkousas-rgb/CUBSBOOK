@@ -40,17 +40,17 @@ import { BOOK_TO_BADGE_ID, BADGE_ID_TO_BOOK, isKnownItem, awardOfItem } from '..
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/cubbadge-ids.json', import.meta.url), 'utf8'));
 const pkgVersion = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 
-test('《幼童軍紀錄冊》19 頁逐頁映射完整、無缺漏與重覆，數位附錄不列印', () => {
+test('《幼童軍紀錄冊》官方 32 頁逐頁映射完整、無缺漏與重覆，數位附錄不列印', () => {
   // 版本單一真相：APP_VERSION 必須等於 package.json 版號（`v` + semver）
   assert.match(APP_VERSION, /^v\d+\.\d+\.\d+$/);
   assert.equal(APP_VERSION, `v${pkgVersion}`);
-  assert.equal(PAGE_TOTAL, 19);
-  assert.equal(PRINT_PAGES.length, 19);
+  assert.equal(PAGE_TOTAL, 32);
+  assert.equal(PRINT_PAGES.length, 32);
   assert.deepEqual(
     PRINT_PAGES.map((s) => Number(s.page)),
-    Array.from({ length: 19 }, (_, i) => i + 1),
+    Array.from({ length: 32 }, (_, i) => i + 1),
   );
-  assert.equal(SECTIONS.length, 20);
+  assert.equal(SECTIONS.length, 33);
   const appendix = SECTIONS.find((s) => s.id === 'appendix');
   assert.ok(appendix);
   assert.equal(PRINT_PAGES.some((s) => s.id === 'appendix'), false);
@@ -90,7 +90,7 @@ test('項目 ID 單一真相：shared/syllabus.js 與 cubbadge data/items.json �
   }
 });
 
-test('五個獎章階級齊備：會員章 → 銅箭章 → 銀箭章 → 金箭章 → 金紫荊獎章', () => {
+test('五個獎章階級齊備：會員章 → 幼童軍體驗章 → 幼童軍歷奇章 → 幼童軍高級歷奇章 → 金紫荊獎章', () => {
   assert.deepEqual(
     ALL_AWARDS.map((a) => a.id),
     ['L1', 'L2', 'L3', 'L4', 'OT-GB'],
@@ -110,16 +110,19 @@ test('五個獎章階級齊備：會員章 → 銅箭章 → 銀箭章 → 金�
     72,
   );
 
-  // 官方名稱與常用箭章名稱並存，方便對照紙本舊稱及旅團溝通
+  // 一律使用官方名稱；自創「銅／銀／金箭章」不得再出現
   assert.deepEqual(
     ALL_AWARDS.slice(1).map((a) => [a.name, a.legacyZh]),
     [
-      ['幼童軍體驗章', '銅箭章'],
-      ['幼童軍歷奇章', '銀箭章'],
-      ['幼童軍高級歷奇章', '金箭章'],
+      ['幼童軍體驗章', '幼童軍體驗章'],
+      ['幼童軍歷奇章', '幼童軍歷奇章'],
+      ['幼童軍高級歷奇章', '幼童軍高級歷奇章'],
       ['金紫荊獎章', '金紫荊獎章'],
     ],
   );
+  for (const a of ALL_AWARDS) {
+    assert.equal(/箭章/.test(`${a.name}${a.legacyZh}${a.en}${a.legacyEn}`), false, `${a.id} 仍含自創箭章名稱`);
+  }
 
   // 每個細項都能追溯所屬獎章，供紀錄冊頁面與 PT/67・PT/68 自動填表使用
   assert.equal(awardOfItem('L1-A')?.id, 'L1');

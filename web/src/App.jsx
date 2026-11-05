@@ -14,9 +14,13 @@ import MenuDialog from './components/MenuDialog.jsx';
 import LeaderGate from './components/LeaderGate.jsx';
 import Welcome from './pages/Welcome.jsx';
 import CoverPage from './pages/CoverPage.jsx';
-import { ContentsPage, P01, P02, P03, P04, P05, P06, P07 } from './pages/BookFront.jsx';
-import { P08, P09, P10, P11, P12 } from './pages/BookTraining.jsx';
-import { P13, P14, P15, P16, P17, P18, P19, AppendixPage, PrintBook } from './pages/BookBack.jsx';
+import {
+  ContentsPage,
+  P01, P02, P03, P04, P05, P06, P07, P08, P09, P10, P11,
+  P12, P13, P14, P15, P16, P17, P18, P19, P20,
+  P21, P22, P23, P24, P25, P26, P27, P28, P29, P30, P31, P32,
+} from './pages/Official.jsx';
+import { AppendixPage, PrintBook } from './pages/Appendix.jsx';
 import { FormDoc, FormsAll, FormsIndex } from './pages/Forms.jsx';
 import ParentView from './pages/ParentView.jsx';
 import ParentConnect from './pages/ParentConnect.jsx';
@@ -25,8 +29,10 @@ import { HashSnapshotViewer, Scan, ScanView, Signoff } from './pages/Scan.jsx';
 const PAGES = {
   contents: ContentsPage,
   p01: P01, p02: P02, p03: P03, p04: P04, p05: P05, p06: P06, p07: P07,
-  p08: P08, p09: P09, p10: P10, p11: P11, p12: P12,
-  p13: P13, p14: P14, p15: P15, p16: P16, p17: P17, p18: P18, p19: P19,
+  p08: P08, p09: P09, p10: P10, p11: P11, p12: P12, p13: P13, p14: P14,
+  p15: P15, p16: P16, p17: P17, p18: P18, p19: P19, p20: P20, p21: P21,
+  p22: P22, p23: P23, p24: P24, p25: P25, p26: P26, p27: P27, p28: P28,
+  p29: P29, p30: P30, p31: P31, p32: P32,
   appendix: AppendixPage,
 };
 

@@ -4,7 +4,7 @@
 
 | 繁體中文（標準名稱） | English (Canonical) | 程式碼鍵名／常數 | 定義與備註 |
 | :--- | :--- | :--- | :--- |
-| **幼童軍紀錄冊** | Cub Scout Record Book | `CUBBOOK` | 香港童軍總會幼童軍支部個人紀錄冊（紙本共 19 頁，第 1–19 頁），另設數位附錄。 |
+| **幼童軍紀錄冊** | Cub Scout Record Book | `CUBBOOK` | 香港童軍總會幼童軍支部個人紀錄冊（官方 2026 年版共 32 頁，第 1–32 頁），逐頁照官方排列，另設數位附錄。 |
 | **童軍成員編號** | Scout ID | `scoutId`（同步 `memberNo`） | 成員唯一編號，與 `cubbadge` 統一；容忍前導零（`0012345678` ≡ `12345678`）。 |
 | **幼童軍團** | Cub Scout Unit / Pack | `pack` / `unit` / `group` | 成員所屬幼童軍單位（隸屬地域 `region`、區 `district`、旅 `group`）。 |
 | **幼童軍團長** | Cub Scout Leader (CSL) | `csl` | 負責領導幼童軍團、按年簽署續期及核實進度之成人領袖。 |

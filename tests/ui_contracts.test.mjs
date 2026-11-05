@@ -51,10 +51,10 @@ function callLeaderApi(method, body, envCode) {
   return { status, payload };
 }
 
-test('19 頁紙本 + 目錄 + 數位附錄全部映射於 App.jsx，並可整本列印', () => {
-  assert.equal(PAGE_TOTAL, 19);
-  assert.equal(SECTIONS.filter((s) => !s.digital).length, 19);
-  assert.equal(PRINT_PAGES.length, 19);
+test('官方 32 頁紙本 + 目錄 + 數位附錄全部映射於 App.jsx，並可整本列印', () => {
+  assert.equal(PAGE_TOTAL, 32);
+  assert.equal(SECTIONS.filter((s) => !s.digital).length, 32);
+  assert.equal(PRINT_PAGES.length, 32);
 
   const app = read('web/src/App.jsx');
   for (const sec of SECTIONS) {
@@ -73,10 +73,10 @@ test('19 頁紙本 + 目錄 + 數位附錄全部映射於 App.jsx，並可整本
     assert.ok(formsPage.includes(`'${formId}'`) || formsPage.includes(`"${formId}"`), `Forms.jsx 缺少 ${formId}`);
   }
 
-  // 三個頁面模組齊備，合共 19 個 Page 匯出
-  const modules = ['BookFront', 'BookTraining', 'BookBack'].map((m) => read(`web/src/pages/${m}.jsx`));
-  const exported = modules.join('\n').match(/export function P\d\d\b/g) || [];
-  assert.equal(exported.length, 19);
+  // 官方 32 頁全部由官方頁面模組匯出
+  const official = read('web/src/pages/Official.jsx');
+  const exported = official.match(/export function P\d\d\b/g) || [];
+  assert.equal(exported.length, 32);
 });
 
 test('版權與非官方聲明只出現於封面頁腳、數位附錄、選單「關於」三處', () => {
@@ -99,12 +99,12 @@ test('版權與非官方聲明只出現於封面頁腳、數位附錄、選單�
   walk(path.join(root, 'web/src'));
   assert.deepEqual(usages.sort(), [
     'web/src/components/MenuDialog.jsx',
-    'web/src/pages/BookBack.jsx',
+    'web/src/pages/Appendix.jsx',
     'web/src/pages/CoverPage.jsx',
   ]);
 
   // 內頁、目錄、列印及表格不得重複版權聲明
-  for (const rel of ['web/src/pages/Welcome.jsx', 'web/src/components/Paper.jsx', 'web/src/pages/BookFront.jsx', 'web/src/pages/BookTraining.jsx', 'web/src/pages/Forms.jsx', 'web/src/pages/Scan.jsx']) {
+  for (const rel of ['web/src/pages/Welcome.jsx', 'web/src/components/Paper.jsx', 'web/src/pages/Official.jsx', 'web/src/pages/Forms.jsx', 'web/src/pages/Scan.jsx']) {
     assert.ok(!/Legal(Line|Note)/.test(read(rel)), `${rel} 不得重複版權聲明`);
   }
 });
@@ -202,20 +202,20 @@ test('中英文完全分離：一鍵切換、不以並排方式塞入表格', ()
   assert.ok(css.includes("data-lang"), 'styles.css 需按語言切換排版');
 
   // 內頁不得把中英並列寫死於同一字串（例如「日期 Date」）
-  for (const rel of ['web/src/pages/BookFront.jsx', 'web/src/pages/BookTraining.jsx', 'web/src/pages/BookBack.jsx', 'web/src/pages/CoverPage.jsx']) {
+  for (const rel of ['web/src/pages/Official.jsx', 'web/src/pages/Appendix.jsx', 'web/src/pages/CoverPage.jsx']) {
     const src = read(rel);
     for (const bad of ['日期 Date', '由 From', '或 OR', '所選項目 Selected Item', '姓名 Name']) {
       assert.equal(src.includes(bad), false, `${rel} 出現中英並列字串「${bad}」`);
     }
   }
 
-  // 誓詞與規律中英分開呈現（第 16 頁）
-  const back = read('web/src/pages/BookBack.jsx');
-  assert.ok(back.includes('PROMISE_ZH') && back.includes('LAW_ZH'));
+  // 誓詞與規律中英分開呈現（官方第 6 頁）
+  const back = read('web/src/pages/Official.jsx');
   assert.ok(back.includes('我願盡所能'));
   assert.ok(back.includes('幼童軍，盡所能'));
   assert.ok(back.includes('日行一善'));
-  assert.ok(back.includes('I promise that I will do my best to do my duty to God'));
+  assert.ok(back.includes('I promise that I will do my best'));
+  assert.ok(back.includes('to do my duty to God and to my Country'));
   // 同一頁不可把中英文串接成一行
   assert.ok(!back.includes('誓詞 Promise'));
 });

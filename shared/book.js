@@ -15,6 +15,7 @@ import {
   toBadgeId,
   toBookId,
 } from './syllabus.js';
+import { OFFICIAL_PAGES } from './officialPages.js';
 
 export {
   BADGE_SYLLABUS,
@@ -28,7 +29,7 @@ export {
   toBookId,
 };
 
-export const APP_VERSION = 'v1.1.0';
+export const APP_VERSION = 'v1.2.0';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 
@@ -48,27 +49,21 @@ export function formatDate(value) {
 // ------------------------------------------------------------------ 頁序
 // 紙本《幼童軍紀錄冊》章節次序 → CUBBOOK 頁碼（逐一對應，另加數位附錄）。
 // 紙本官方頁碼（PT/67、PT/68 要求附上第 1–3、5、10–15 頁）另在列印檢查清單列明。
+/**
+ * 官方 32 頁（香港童軍總會《幼童軍紀錄冊》2026 年版）
+ * 頁碼、頁序、標題一律照官方；數位附錄不計入頁碼。
+ */
 export const SECTIONS = [
-  { id: 'p01', page: '1', label: '個人資料', en: 'Personal Particulars', badge: 'front' },
-  { id: 'p02', page: '2', label: '聯絡及家長／監護人', en: 'Contact & Guardian', badge: 'front' },
-  { id: 'p03', page: '3', label: '旅團資料', en: 'Pack & Group', badge: 'front' },
-  { id: 'p04', page: '4', label: '童軍紀錄', en: 'Scouting Record', badge: 'front' },
-  { id: 'p05', page: '5', label: '轉旅・遷移・更改', en: 'Transfer & Changes', badge: 'front' },
-  { id: 'p06', page: '6', label: '會員資格續期', en: 'Membership Renewal', badge: 'front' },
-  { id: 'p07', page: '7', label: '服務及獎勵紀錄', en: 'Service & Awards', badge: 'front' },
-  { id: 'p08', page: '8', label: '會員章', en: 'Membership Badge', badge: 'L1' },
-  { id: 'p09', page: '9', label: '銅箭章（體驗章）', en: 'Bronze Arrow', badge: 'L2' },
-  { id: 'p10', page: '10', label: '銀箭章（歷奇章）', en: 'Silver Arrow', badge: 'L3' },
-  { id: 'p11', page: '11', label: '金箭章（高級歷奇章）', en: 'Gold Arrow', badge: 'L4' },
-  { id: 'p12', page: '12', label: '金紫荊獎章', en: 'Golden Bauhinia Award', badge: 'OT-GB' },
-  { id: 'p13', page: '13', label: '活動徽章（一）', en: 'Activity Badges I', badge: 'OT' },
-  { id: 'p14', page: '14', label: '活動徽章（二）', en: 'Activity Badges II', badge: 'OT' },
-  { id: 'p15', page: '15', label: '頒發及宣誓紀錄', en: 'Investiture & Awards', badge: 'front' },
-  { id: 'p16', page: '16', label: '幼童軍誓詞與規律', en: 'Promise & Law', badge: 'front' },
-  { id: 'p17', page: '17', label: '制服及徽章位置', en: 'Uniform & Badges', badge: 'front' },
-  { id: 'p18', page: '18', label: '進度總覽', en: 'Progress Summary', badge: 'front' },
-  { id: 'p19', page: '19', label: '使用說明', en: 'How to Use', badge: 'front' },
-  { id: 'appendix', page: '—', label: '數位附錄', en: 'Digital Appendix', digital: true },
+  ...OFFICIAL_PAGES.map((p) => ({
+    id: p.id,
+    page: p.page,
+    label: p.zh,
+    en: p.en,
+    group: p.group,
+    kind: p.kind,
+    badge: p.badge,
+  })),
+  { id: 'appendix', page: '—', label: '數位附錄', en: 'Digital Appendix', digital: true, group: 'appendix', kind: 'appendix' },
 ];
 
 export const PAGE_TOTAL = SECTIONS.filter((s) => !s.digital).length;
@@ -134,6 +129,7 @@ export function newBook(partial = {}) {
       nameZh: '',
       nameEn: '',
       scoutId: '',
+      six: '',
       memberNo: '',
       hkidPrefix: '',
       gender: '',
@@ -146,6 +142,8 @@ export function newBook(partial = {}) {
       email: '',
       addressZh: '',
       addressEn: '',
+      pob: '',
+      dateOfIssue: '',
       parentName: '',
       parentRelation: '',
       parentPhone: '',
@@ -176,6 +174,28 @@ export function newBook(partial = {}) {
     addressChanges: [],
     detailChanges: [],
     renewals: [],
+    /** 官方第 8 頁：個人進度紀錄（各獎章獲取日期） */
+    personalProgress: {
+      membership: '',
+      experience: '',
+      adventure: '',
+      crest: '',
+      goldenBauhinia: '',
+      scoutLink: '',
+      second: '',
+      sixer: '',
+      transferToScout: '',
+    },
+    /** 官方第 9 頁：服務年星（一至六年） */
+    serviceStars: { y1: '', y2: '', y3: '', y4: '', y5: '', y6: '' },
+    /** 官方第 10–20 頁：核心／興趣範疇的主考人、日期、簽署（鍵＝範疇代碼） */
+    domains: {},
+    /** 官方第 15、17、19 頁：興趣範疇（三選二） */
+    interest: {},
+    /** 官方第 12–18 頁：遲加入者只完成核心範疇的 ☐ */
+    lateJoin: {},
+    /** 官方第 27–30 頁：活動及服務紀錄 */
+    activities: [],
     service: [],
     awardsLog: [],
     progress: {},
@@ -596,7 +616,12 @@ export function demoBook() {
     group: '沙田第 12 旅',
     pack: '沙田第 12 旅幼童軍團',
     csl: '陳團長',
+    cslPhone: '9123 4567',
+    six: '棕狼隊',
+    pob: '香港',
     dateJoined: '2023-09-01',
+    dateInvestiture: '2023-11-25',
+    groupAddress: '沙田新城市中央廣場 1 座 12 樓',
   };
   const seed = [
     ['L1-A', '2023-09-16'],
@@ -620,6 +645,26 @@ export function demoBook() {
   book.otherBadges['OT-A01'] = { date: '2025-03-15', cert: 'ACT/2025/0181', confirmedByBadge: true };
   book.otherBadges['OT-A22'] = { date: '2025-05-10', cert: 'ACT/2025/0244' };
   book.pages.award_L1 = { date: '2023-11-25', certNo: 'MB/2023/0912', presentedBy: '陳團長' };
+  book.personalProgress = {
+    ...book.personalProgress,
+    membership: '2023-11-25',
+    experience: '2024-06-15',
+  };
+  book.serviceStars = { ...book.serviceStars, y1: '2024-09-01', y2: '2025-09-01' };
+  book.domains = {
+    'L2-SKILLS': { examiner: '陳團長', date: '2024-03-09' },
+    'L2-CARING': { examiner: '陳團長', date: '2024-04-13' },
+    'L2-COUNTRY': { examiner: '陳團長', date: '2024-05-11' },
+    'L2-FAMILY': { examiner: '陳團長', date: '2024-06-08' },
+    'L3-SKILLS': { examiner: '陳團長', date: '2025-01-11' },
+    'SL-1': { examiner: '陳團長', date: '2025-06-14' },
+  };
+  book.interest = { L3: { chosen: ['CREATIVE', 'SPORTS'], badges: { CREATIVE: { badgeId: 'OT-A12', examiner: '陳團長', date: '2025-02-08' }, SPORTS: { badgeId: 'OT-A28', examiner: '陳團長', date: '2025-03-08' } } } };
+  book.activities = [
+    { date: '2025-10-04', text: '旅團大會操' },
+    { date: '2025-11-15', text: '沙田區幼童軍大會操' },
+    { date: '2025-12-20', text: '社區長者中心服務' },
+  ];
   book.renewals = [{ date: '2026-09-01', validUntil: '2027-08-31', memberNo: '0012345678', leaderName: '陳團長' }];
   return book;
 }

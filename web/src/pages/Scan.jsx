@@ -573,7 +573,7 @@ export function Signoff() {
         <div className="signoffdone">
           <Crest size={30} />
           <p>{isEn ? `Updated ${done.length} items in your book!` : `已成功寫入 ${done.length} 項核簽！`}</p>
-          <button type="button" className="btn btn--primary" onClick={() => navigate('/p/p09')}>
+          <button type="button" className="btn btn--primary" onClick={() => navigate('/p/contents')}>
             {isEn ? 'View Record Book' : '查看紀錄冊內頁'}
           </button>
         </div>
