@@ -80,7 +80,12 @@ export default function CubBadgeSyncCard({ readOnly = false }) {
       Object.values(book?.progress || {}).filter(
         (p) => p?.date && (p.confirmedByBadge || p.signature?.png || p.signedAt),
       ).length +
-      Object.values(book?.otherBadges || {}).filter((p) => p?.date && p.confirmedByBadge).length,
+      Object.values(book?.otherBadges || {}).reduce((n, p) => {
+        if (!p) return n;
+        const levelHits = Object.values(p.levels || {}).filter((row) => row?.date && row.confirmedByBadge).length;
+        if (levelHits) return n + levelHits;
+        return n + (p.date && p.confirmedByBadge ? 1 : 0);
+      }, 0),
     [book],
   );
 
@@ -236,7 +241,11 @@ export default function CubBadgeSyncCard({ readOnly = false }) {
         throw new Error(json?.error || (isEn ? 'Submission failed' : '送交失敗'));
       }
       setRemotePendingIds((prev) => [
-        ...new Set([...prev, ...pendingToSubmit.map((x) => x.itemId)]),
+        ...new Set([
+          ...prev,
+          // 分級徽章以 `A26-E` 記住「哪一級已送交」，否則第二級會被當成重複而漏送
+          ...pendingToSubmit.map((x) => (x.level ? `${x.itemId}-${x.level}` : x.itemId)),
+        ]),
       ]);
       push(
         isEn

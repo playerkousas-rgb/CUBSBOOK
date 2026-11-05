@@ -1,4 +1,4 @@
-# `cubbadge` 後端修正指引（鐵律 5 ①②③）
+# `cubbadge` 後端修正指引（鐵律 5 ①②③ ＋ v1.2.5 級別）
 
 `CUBBOOK` 已完成 BOOK 一側的所有配套（項目 ID 對照、`requestComplete` 送交、零個人資料清洗）。以下三項必須在**姊妹專案 `cubbadge`** 的 Apps Script `apps-script/Code.gs` 內套用，屬 BOOK 端無法代勞的部分。三項改動均向後兼容（舊前端照樣可用），可一次過部署。
 
@@ -142,6 +142,46 @@ function handleReviewRequest(reqId,decision,note,reviewer,confirmed_date){
 
 ---
 
+---
+
+## ④ 活動徽章的初／中／高級（v1.2.5 新增）
+
+官方第 21–27 頁有 7 枚活動徽章分初、中、高三行：
+
+| 官方編號 | 徽章 |
+| :-: | :--- |
+| `A18` | 音樂章 |
+| `A26` | 射箭章 |
+| `A27` | 田徑章 |
+| `A29` | 獨木舟章 |
+| `A33` | 公園定向章 |
+| `A35` | 體適能章 |
+| `A39` | 游泳章 |
+
+CUBBOOK 由 v1.2.5 起**逐級申報**：同一枚 `A26` 的初級與中級是兩項獨立的 `requestComplete`，
+payload 額外帶 `level: 'E' | 'I' | 'A'`（`E` 初級、`I` 中級、`A` 高級）。
+
+### 需要的改動
+
+1. **「其他獎章」工作表加一欄 `級別`**（建議 col8，值 `E`/`I`/`A`；舊列留空 = 整個徽章）。
+2. `handleRequestComplete`：讀 `body.level`，冪等鍵改為 `(ymis, itemId, level)`。
+3. `handleReviewRequest`：批准的 upsert 鍵同樣改為 `(ymis, itemId, level)`；寫入時一併寫 `級別`。
+4. `handleGetOtherBadges`（或 `/api/proxy?action=load`）：回傳
+   `otherBadges[ymis]['A26-E'] = { date, cert }` **或** `otherBadges[ymis]['A26'] = { date, cert, level: 'E' }`，
+   兩者 CUBBOOK 都認；同一枚徽章多級時請用**後綴鍵**（物件只有一個 `A26` 鍵，會覆蓋）。
+5. BADGE 的活動徽章頁對這 7 枚顯示初／中／高三個子行。
+
+> 向後兼容：未帶 `level` 的舊資料、舊前端完全照舊；CUBBOOK 收到沒有級別的已核實紀錄時，
+> 會當作整個徽章核實（不再逐級申報）。
+
+### 後綴編號只作傳輸用
+
+`A26-E` 這類寫法**只出現在同步 payload／HTTPS 回應**，`data/items.json` 毋須新增 21 個編號；
+CUBBOOK 內部的單一真相仍是 `A26` + `level`。若你在 `items.json` 加編號，請通知 CUBBOOK 重跑
+`npm run syllabus`（fixture 以 sha256 鎖死）。
+
+---
+
 ## 驗收清單（部署後逐項確認）
 
 | # | 動作 | 預期 |
@@ -153,5 +193,30 @@ function handleReviewRequest(reqId,decision,note,reviewer,confirmed_date){
 | 5 | 再次批准同一 `A22` | 「其他獎章」仍只有一列（日期更新，不重複） |
 | 6 | `GET /api/proxy?action=load`（BOOK 經 `/api/cubbadge`） | 回傳的 `pendingRequests` 不含已批准項目；已批准 `A22` 出現在 `otherBadges` |
 | 7 | BOOK 端按「重新整理已核實進度」 | 該 `A22` 顯示「cubbadge · 已核實」印章，日期與 BADGE 一致 |
+| 8 | 批准 `A09-CHILD-PROTECTION` | 寫入「其他獎章」，**不是**「進度追蹤」（見下方正則修正） |
+| 9 | 批准 `A26` 初級，再送中級 | 「其他獎章」兩列（`級別` 分別為 E、I），日期各自正確 |
+| 10 | 同一 `(ymis, A26, E)` 重複送交 | 回 `{success:true, duplicate:true}`，待批只有一列 |
+| 11 | BOOK 匯入後 | 射箭章初級與中級同時顯示，互不覆蓋（`levels.E`／`levels.I`） |
+| 12 | 舊資料（無 `級別`） | 照舊顯示為單一徽章，不報錯 |
+
+---
+
+## ⑤ 正則修正：6 枚 `A09-*` 徽章會被錯誤分流
+
+第③項的 `/^A\d{2}(-[A-Z]+)?$/` 認不到連字符內嵌的官方編號，會令以下 6 枚批准後誤寫入「進度追蹤」
+（BADGE 活動徽章頁看不到、`handleGetOtherBadges` 讀不到，形成「批准完但消失」）：
+
+`A09-ANTI-DECEPTION`、`A09-ANTI-DRUG`、`A09-CHILD-PROTECTION`、`A09-COMMUNITY-EMERGENCY`、
+`A09-GREEN-PIONEER`、`A09-EM-PIONEER`
+
+改用：
+
+```javascript
+function isActivityBadgeId_(id){
+  return /^A\d{2}(-[A-Z0-9]+)*$/.test(String(id || '').trim());
+}
+```
+
+（`A25-PLASTIC`／`A25-NATURE`／`A25-SOLAR` 及 `A01`–`A42` 本來已通過。）
 
 > 注意：`tbl()` 有 `_sheetCache` 快取；同一次執行內新增工作表不會被看到。上述測試請用新的請求（每次 `doPost` 都是獨立執行），毋須手動清快取。

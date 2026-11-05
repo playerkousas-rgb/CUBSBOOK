@@ -6,6 +6,7 @@
 // ==========================================================================
 
 import { ITEM_INDEX, GOLD_AWARD, OTHER_BADGES, ageFromDob, ageInMonths, sanitizeHkidPrefix } from './book.js';
+import { levelsOf, levelSummary } from './badgeLevels.js';
 
 export const FORM_META = {
   pt67: {
@@ -141,6 +142,8 @@ export function activityBadgeRows(book, category = '') {
       catalogueNo: b.catalogueNo,
       date: entry.date || '',
       cert: entry.cert || '',
+      levels: levelsOf(entry),
+      levelSummary: levelSummary(entry),
     };
   });
 }

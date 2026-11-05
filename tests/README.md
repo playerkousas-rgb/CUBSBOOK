@@ -32,9 +32,15 @@ npm test
   - 完全離線的端到端流程：建立空白冊 → 填寫 → 統計 → `PT/67`/`PT/68` → `CB1` 出示 → `CB1S` 核簽 → 32 頁列印 → JSON 備份；
   - `probeCubBadgeBridge` 對靜態主機 HTML fallback、404、壞 payload、離線、逾時、無 fetch 一律安全降級；
   - 只有可選同步卡可觸及 `/api`；第 17 頁制服清單可剔選並持久化。
+- `tests/activity_levels.test.mjs`
+  - 官方 7 枚分級活動徽章（A18／A26／A27／A29／A33／A35／A39 × 初／中／高）逐級同步契約；
+  - BOOK → cubbadge 逐級申報（`level` 欄位、`A26-E` pending 鍵）、已核實一級不再重送；
+  - cubbadge → BOOK 三種寫法（`level` 欄位／後綴鍵／`levels` 物件）均寫回正確一級且互不覆蓋；
+  - `CB1` 二維碼、`CB1S` 領袖核簽碼、家長只讀鏡像同樣保留各級日期；
+  - `api/cubbadge` 送交逐級去重、載入統一成「官方編號 + level」；`A25-NATURE`／`A09-CHILD-PROTECTION` 不得被誤拆成級別。
 - `tests/ui_contracts.test.mjs`
   - 32 頁 + 目錄 + 附錄路由映射；版權聲明只出現三處；
-  - 幼童軍綠金 WCAG AA 與「禁止白字配黃」；`api/leader.js` 的 `timingSafeEqual` 與零前端密碼；
+  - 幼童軍黃 `#ead040` × 深墨 WCAG AA 與「禁止白字配黃」；`api/leader.js` 的 `timingSafeEqual` 與零前端密碼；
   - 領袖模式（只讀）與普通模式分離；中英分離；
   - 九件套圖示、manifest 與 Service Worker 預快取檔案全部存在；
   - `package.json`／`vite.config.js` 已完全改用 `/api/cubbadge`。
