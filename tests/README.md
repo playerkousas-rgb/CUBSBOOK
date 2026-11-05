@@ -37,7 +37,8 @@ npm test
   - BOOK → cubbadge 逐級申報（`level` 欄位、`A26-E` pending 鍵）、已核實一級不再重送；
   - cubbadge → BOOK 三種寫法（`level` 欄位／後綴鍵／`levels` 物件）均寫回正確一級且互不覆蓋；
   - `CB1` 二維碼、`CB1S` 領袖核簽碼、家長只讀鏡像同樣保留各級日期；
-  - `api/cubbadge` 送交逐級去重、載入統一成「官方編號 + level」；`A25-NATURE`／`A09-CHILD-PROTECTION` 不得被誤拆成級別。
+  - `api/cubbadge` 送交逐級去重、載入統一成「官方編號 + level」；`A25-NATURE`／`A09-CHILD-PROTECTION` 不得被誤拆成級別；
+  - 領袖核簽介面（`SignoffPanel`）逐級列出活動徽章並交予核簽回傳碼；成員端 `Scan` 逐級回顧舊／新日期。
 - `tests/ui_contracts.test.mjs`
   - 32 頁 + 目錄 + 附錄路由映射；版權聲明只出現三處；
   - 幼童軍黃 `#ead040` × 深墨 WCAG AA 與「禁止白字配黃」；`api/leader.js` 的 `timingSafeEqual` 與零前端密碼；

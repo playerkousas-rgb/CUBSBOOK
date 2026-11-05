@@ -16,6 +16,7 @@
  */
 
 import { LEVELED, LEVEL_LABEL } from './officialActivityBadges.js';
+import { OTHER_BADGES, toBadgeId, toBookId } from './syllabus.js';
 
 /** 官方級別次序：初 → 中 → 高。 */
 export const LEVEL_KEYS = ['E', 'I', 'A'];
@@ -102,4 +103,66 @@ export function withLevel(entry, level, patch = {}) {
   const levels = { ...levelsOf(current), [key]: { ...(levelsOf(current)[key] || {}), ...patch } };
   const date = latestLevelDate(levels);
   return { entry: { ...current, levels, ...(date ? { date } : {}) }, levels };
+}
+
+
+/**
+ * 把「活動徽章」的各種來源寫法（`A26`／`A26-E`／`{level}`／`{levels}`）攤平成逐級一行，
+ * 供領袖核簽、掃碼回顧等介面共用。
+ *
+ * 回傳：`{ key, bookId, badgeId, level, levelLabel, name, nameZh, nameEn, date, cert }`
+ * `key` 以 `bookId#level` 組成，可直接當 React key 及勾選狀態的識別。
+ */
+export function otherBadgeRows(source, { lang = 'zh' } = {}) {
+  if (!source || typeof source !== 'object') return [];
+  const rows = [];
+  const push = (meta, bookId, level, row) => {
+    const date = String(typeof row === 'string' ? row : row?.date || '').slice(0, 10);
+    if (!date) return;
+    const levelLabel = level ? levelText(level, lang) : '';
+    rows.push({
+      key: `${bookId}#${level || ''}`,
+      bookId,
+      badgeId: meta.badgeId,
+      level: level || '',
+      levelLabel,
+      nameZh: levelLabel ? `${meta.name}（${levelLabel}）` : meta.name,
+      nameEn: levelLabel ? `${meta.en} (${LEVEL_LABEL[level].en})` : meta.en,
+      name: levelLabel && lang === 'zh' ? `${meta.name}（${levelLabel}）` : levelLabel ? `${meta.en} (${LEVEL_LABEL[level].en})` : lang === 'en' ? meta.en : meta.name,
+      date,
+      cert: (typeof row === 'object' && row?.cert) || '',
+      order: OTHER_BADGES.findIndex((b) => b.id === bookId),
+    });
+  };
+
+  for (const [rawId, val] of Object.entries(source)) {
+    if (!val) continue;
+    const split = splitLevelRef(rawId);
+    const bookId = toBookId(split.id);
+    const meta = OTHER_BADGES.find((b) => b.id === bookId);
+    if (!meta) continue;
+
+    const ownLevel = String(val.level || split.level || '').trim().toUpperCase();
+    if (isLevelKey(ownLevel) && isLeveledRef(bookId)) {
+      push(meta, bookId, ownLevel, val);
+      continue;
+    }
+    const nested = levelsOf(val);
+    if (Object.keys(nested).length && isLeveledRef(bookId)) {
+      for (const level of LEVEL_KEYS) if (nested[level]) push(meta, bookId, level, nested[level]);
+      continue;
+    }
+    push(meta, bookId, '', val);
+  }
+  // 依官方目錄次序排列，同一枚徽章內按初 → 中 → 高
+  return rows.sort(
+    (a, b) =>
+      a.order - b.order ||
+      (a.level ? LEVEL_RANK[a.level] ?? 9 : -1) - (b.level ? LEVEL_RANK[b.level] ?? 9 : -1),
+  );
+}
+
+/** 由 `book.otherBadges` 直接產生逐級行（供本機預覽／列印用）。 */
+export function bookOtherBadgeRows(book, options) {
+  return otherBadgeRows(book?.otherBadges, options);
 }

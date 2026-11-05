@@ -2129,6 +2129,16 @@ textarea.write__input { min-height: calc(var(--rows, 2) * 24px - 4px); line-heig
   flex-direction: column;
   gap: 4px;
 }
+.signpanel__subhead {
+  margin: 6px 0 2px;
+  font-family: var(--serif);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--cub-ink, #241605);
+  padding: 2px 4px;
+  border-left: 3px solid var(--cub-yellow-bright, #ead040);
+}
 .signpanel__item { display: flex; align-items: center; gap: 8px; padding: 5px 6px; border-radius: 5px; font-size: 12.5px; cursor: pointer; }
 .signpanel__item:hover { background: var(--paper-warm); }
 .signpanel__code { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border-radius: 10px; background: var(--paper); }

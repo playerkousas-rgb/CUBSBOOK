@@ -11,6 +11,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   newBook,
   collectPendingForBadge,
@@ -19,8 +20,16 @@ import {
   splitLevelRef,
   levelsOf,
   withLevel,
+  otherBadgeRows,
 } from '../shared/book.js';
-import { buildPayload, applySignoff, KIND_MEMBER, KIND_SIGNOFF } from '../shared/transfer.js';
+import {
+  buildPayload,
+  applySignoff,
+  encodeSignoff,
+  decodePayload,
+  KIND_MEMBER,
+  KIND_SIGNOFF,
+} from '../shared/transfer.js';
 import { mirrorFromTransfer } from '../web/src/parent.js';
 import { filterPersonalConfirmedLoad, sanitizePendingSubmissions } from '../api/cubbadge.js';
 
@@ -36,6 +45,7 @@ if (!globalThis.localStorage) {
 }
 
 const YMIS = '0012345678';
+const read = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
 
 function makeBook() {
   const book = newBook();
@@ -231,4 +241,54 @@ test('api/cubbadge：載入時把三種級別寫法統一成「官方編號 + le
   assert.equal(book.otherBadges['OT-A26'].levels.I.date, '2025-05-01');
   assert.equal(book.otherBadges['OT-A27'].levels.A.date, '2026-02-02');
   assert.equal(book.otherBadges['OT-A39'].levels.E.date, '2024-01-01');
+});
+
+test('領袖核簽流程：CB1 只帶級別 → 領袖逐級勾選 → CB1S 回傳碼 → 逐級寫入', async () => {
+  const book = makeBook();
+  book.progress['L1-A'] = { date: '2024-01-01' };
+  book.otherBadges['OT-A33'] = {
+    levels: { E: { date: '2024-03-01' }, I: { date: '2025-05-01' } },
+    date: '2025-05-01',
+  };
+
+  // 1. 成員出示 CB1（剔選訓練綱要進度 + 活動徽章）
+  const payCB1 = buildPayload(book, ['progress', 'otherBadges']);
+  assert.deepEqual(Object.keys(payCB1.otherBadges['OT-A33'].levels).sort(), ['E', 'I']);
+
+  // 2. 領袖端把 payload 攤平成逐級一行（SignoffPanel 用同一個 helper）
+  const rows = otherBadgeRows(payCB1.otherBadges);
+  assert.deepEqual(rows.map((r) => r.level), ['E', 'I']);
+  assert.equal(rows[0].badgeId, 'A33');
+
+  // 3. 領袖只勾「中級」並簽名
+  const signed = await encodeSignoff({
+    member: payCB1.member,
+    leader: { name: '陳團長', title: '幼童軍團長 CSL', at: '2026-01-10', png: null },
+    items: [{ id: 'L1-A', date: '2024-01-01', assessor: '陳團長' }],
+    otherBadges: rows.filter((r) => r.level === 'I').map((r) => ({
+      id: r.badgeId,
+      level: r.level,
+      date: '2026-01-10',
+      cert: r.cert,
+    })),
+    note: '測試',
+  });
+
+  // 4. 成員掃回
+  const back = await decodePayload(signed.value);
+  assert.equal(back.otherBadges[0].level, 'I');
+  const { book: next, changes } = applySignoff(book, back);
+  assert.equal(next.otherBadges['OT-A33'].levels.I.date, '2026-01-10');
+  assert.equal(next.otherBadges['OT-A33'].levels.E.date, '2024-03-01'); // 初級不被覆蓋
+  assert.equal(next.progress['L1-A'].assessor, '陳團長');
+  assert.equal(changes.filter((c) => c.level === 'I').length, 1);
+});
+
+test('SignoffPanel 會把活動徽章逐級交予核簽回傳碼（原始碼契約）', () => {
+  const src = read('web/src/components/SignoffPanel.jsx');
+  assert.match(src, /otherBadgeRows\(payload\?\.otherBadges/);
+  assert.match(src, /otherBadges:\s*chosenBadges\.map/);
+  assert.match(src, /level:\s*b\.level/);
+  // 只剔選活動徽章亦可核簽（不再要求必須有綱要進度）
+  assert.match(src, /chosenTotal/);
 });
