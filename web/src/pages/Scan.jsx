@@ -8,6 +8,7 @@ import {
   decodePayload,
 } from '@shared/transfer.js';
 import { syllabusItem } from '@shared/forms.js';
+import { otherBadgeRows } from '@shared/book.js';
 import { useBook } from '../bookContext.js';
 import SignoffPanel from '../components/SignoffPanel.jsx';
 import { Crest, Icon, useToast } from '../ui.jsx';
@@ -509,6 +510,14 @@ export function Signoff() {
     };
   });
 
+  // 領袖核簽單內的活動徽章（含分級徽章逐級一行），令成員寫入前睇得到會改邊一級
+  const badgeRows = otherBadgeRows(payload.otherBadges, { lang: isEn ? 'en' : 'zh' }).map((r) => {
+    const cur = book.otherBadges?.[r.bookId] || {};
+    const beforeDate = r.level ? cur.levels?.[r.level]?.date || '' : cur.date || '';
+    return { ...r, beforeDate };
+  });
+  const totalRows = rows.length + badgeRows.length;
+
   const apply = () => {
     try {
       const { book: next, changes } = applySignoff(book, payload);
@@ -536,7 +545,7 @@ export function Signoff() {
             {isEn ? 'LEADER SIGN-OFF SLIP' : '領袖當面核簽回傳單'}
           </span>
           <h1>
-            {payload.leader?.name || (isEn ? 'Leader' : '領袖')} · {rows.length} {isEn ? 'items' : '項核簽'}
+            {payload.leader?.name || (isEn ? 'Leader' : '領袖')} · {totalRows} {isEn ? 'items' : '項核簽'}
           </h1>
           <p>
             {already
@@ -559,11 +568,20 @@ export function Signoff() {
 
       <ul className="signofflist">
         {rows.map((r) => (
-          <li key={r.id}>
+          <li key={`item:${r.id}`}>
             <strong>{r.name}</strong>
             <span className="signofflist__dates">
               <em>{r.beforeDate || (isEn ? 'Unset' : '未填')}</em> → <b>{r.date}</b> ·{' '}
               <em>{r.beforeAssessor || (isEn ? 'Unsigned' : '未簽')}</em> → <b>{r.assessor}</b>
+            </span>
+          </li>
+        ))}
+        {badgeRows.map((r) => (
+          <li key={`badge:${r.key}`}>
+            <strong>{r.name}</strong>
+            <span className="signofflist__dates">
+              <em>{r.beforeDate || (isEn ? 'Unset' : '未填')}</em> → <b>{r.date}</b>
+              {r.cert ? ` · ${isEn ? 'Cert' : '證書'} ${r.cert}` : ''}
             </span>
           </li>
         ))}

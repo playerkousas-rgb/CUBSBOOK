@@ -2,6 +2,27 @@
 
 本專案採用語義化版本（Semantic Versioning），每次更新同步對齊 `package.json`、`shared/book.js` 及 `web/index.html`。
 
+## [v1.2.5] — 2026-11-05
+
+### 新增（Added · 分級活動徽章全鏈路同步）
+- 官方 7 枚活動徽章（`A18` 音樂、`A26` 射箭、`A27` 田徑、`A29` 獨木舟、`A33` 公園定向、`A35` 體適能、`A39` 游泳）的**初／中／高**三級，現已貫通所有資料路徑：
+  - **BOOK → cubbadge**：`collectPendingForBadge` 逐級申報，payload 帶 `level: 'E'|'I'|'A'`；已核實／已待批的一級不再重送，另一級照送。`exportForBadge` 的 `pendingRequests` 逐級列出，`pendingProgress` 以 `A26-E` 分鍵避免覆蓋。
+  - **cubbadge → BOOK**：`importFromBadge` 同時接受 `level` 欄位、`A26-E` 後綴鍵、`levels` 物件三種寫法，只寫入該級並重算「最新一級日期」。
+  - **CB1 二維碼**：payload 保留 `levels`，家長／領袖掃碼時看得到各級日期。
+  - **CB1S 核簽回傳碼協定**：`encodeSignoff`／`applySignoff` 支援 `otherBadges[].level`，只簽某一級不會覆蓋其他級別。
+  - **領袖核簽介面**：`SignoffPanel` 新增「活動徽章」分組，官方 7 枚分級徽章逐級一行（`公園定向章（初級）`／`（中級）`），可逐級勾選、全選／全不選；只剔選活動徽章亦可核簽（不再要求必須有綱要進度）。成員掃回時 `Scan` 的核簽回顧同樣逐級列出「原日期 → 新日期」。
+  - **家長只讀鏡像**：`mirrorFromTransfer` 保留各級日期（之前只會顯示最高一級）。
+  - **`/api/cubbadge`**：`sanitizePendingSubmissions` 保留合法級別並逐級去重；`filterPersonalConfirmedLoad` 把三種寫法統一成「官方編號 + level」。
+- 新模組 `shared/badgeLevels.js` 集中處理級別：`splitLevelRef` 只拆真正的分級徽章（`A25-NATURE`、`A09-CHILD-PROTECTION` 不會被誤拆）、`levelsOf`、`withLevel`、`latestLevelDate`、`levelSummary`。
+- PT/67・PT/68 及非官方金紫荊清單的活動徽章一列，分級徽章改為列出各級日期（`初級 2024-03-01・中級 2025-05-01`）。
+- 同步卡「已核實」統計改為逐級計算；送交後以 `A26-E` 記錄哪一級已送，避免第二級被當作重複。
+
+### 文件（Docs）
+- `docs/cubbadge-patch.md` 新增第④節（`其他獎章` 加 `級別` 欄、逐級冪等與 upsert）及第⑤節（`isActivityBadgeId_` 正則修正：6 枚 `A09-*` 徽章原本會被誤寫入「進度追蹤」而消失）。
+
+### 測試（Tests）
+- 新增 `tests/activity_levels.test.mjs` 9 項：拆級別、逐級申報與跳過、三種載入寫法、CB1、核簽、家長鏡像、API 去重；全套 **54/54**。
+
 ## [v1.2.4] — 2026-11-05
 
 ### 更改（Changed · 用回總會那隻黃）

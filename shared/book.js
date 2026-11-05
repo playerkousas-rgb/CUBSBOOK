@@ -16,6 +16,18 @@ import {
   toBookId,
 } from './syllabus.js';
 import { COVER, OFFICIAL_PAGES } from './officialPages.js';
+import {
+  LEVEL_KEYS,
+  isLevelKey,
+  levelSummary,
+  otherBadgeRows,
+  isLeveledRef,
+  latestLevelDate,
+  levelText,
+  levelsOf,
+  splitLevelRef,
+  withLevel,
+} from './badgeLevels.js';
 
 export {
   BADGE_SYLLABUS,
@@ -29,7 +41,20 @@ export {
   toBookId,
 };
 
-export const APP_VERSION = 'v1.2.4';
+export {
+  LEVEL_KEYS,
+  isLevelKey,
+  isLeveledRef,
+  levelSummary,
+  otherBadgeRows,
+  levelText,
+  levelsOf,
+  latestLevelDate,
+  splitLevelRef,
+  withLevel,
+};
+
+export const APP_VERSION = 'v1.2.5';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 
@@ -374,19 +399,49 @@ function itemLabel(bookId) {
 }
 
 /**
+ * 把任何來源的項目鍵拆成 `{ bookId, level }`：
+ * 同時接受 BOOK 鍵（`OT-A26`）、cubbadge 編號（`A26`）及後綴寫法（`A26-E`／`A26_E`）。
+ */
+export function toBookRef(rawKey) {
+  const { id, level } = splitLevelRef(rawKey);
+  const bookId = toBookId(id);
+  return { bookId, level: level && isLeveledRef(bookId) ? level : '' };
+}
+
+/** 把一批遠端鍵整理成「整個徽章」與「某一級」兩組，方便逐級比對。 */
+function refSets(keys) {
+  const all = new Set();
+  const levels = new Set();
+  for (const key of keys || []) {
+    const { bookId, level } = toBookRef(key);
+    if (!bookId) continue;
+    if (level) levels.add(`${bookId}#${level}`);
+    else all.add(bookId);
+  }
+  return { all, levels };
+}
+
+/**
  * 收集本機已填寫、但 cubbadge 尚未核實／未在待批清單的項目。
  * 回傳一律使用 cubbadge 官方編號（badgeId），令 BADGE 毋須認識 BOOK 內部鍵。
+ *
+ * 分級徽章（官方 7 枚初／中／高）逐級送出，並附 `level` 欄位：
+ * 同一枚 A26 的初級與中級是兩個獨立申報，日期與核實狀態互不覆蓋。
  */
 export function collectPendingForBadge(book, remoteConfirmed = {}, remotePendingIds = []) {
-  const confirmedKeys = new Set(Object.keys(remoteConfirmed || {}).map((k) => toBookId(k)));
-  const pendingSet = new Set((remotePendingIds || []).map((k) => toBookId(k)));
+  const confirmed = refSets(Object.keys(remoteConfirmed || {}));
+  const pending = refSets(remotePendingIds || []);
+  const skip = (bookId, level) =>
+    confirmed.all.has(bookId) ||
+    (level ? confirmed.levels.has(`${bookId}#${level}`) : false) ||
+    pending.all.has(bookId) ||
+    (level ? pending.levels.has(`${bookId}#${level}`) : false);
   const out = [];
 
   for (const [bookId, entry] of Object.entries(book?.progress || {})) {
     if (!ITEM_INDEX[bookId] || !entry?.date) continue;
     if (entry.confirmedByBadge) continue;
-    if (confirmedKeys.has(bookId)) continue;
-    if (pendingSet.has(bookId)) continue;
+    if (skip(bookId, '')) continue;
     out.push({
       kind: 'item',
       itemId: toBadgeId(bookId),
@@ -400,10 +455,35 @@ export function collectPendingForBadge(book, remoteConfirmed = {}, remotePending
   }
 
   for (const [bookId, entry] of Object.entries(book?.otherBadges || {})) {
-    if (!entry?.date) continue;
+    if (!entry) continue;
+    const levels = levelsOf(entry);
+
+    // 分級徽章：逐級各自申報，領袖可就每一級獨立核實
+    if (Object.keys(levels).length) {
+      for (const level of LEVEL_KEYS) {
+        const row = levels[level];
+        if (!row?.date) continue;
+        if (row.confirmedByBadge) continue;
+        if (skip(bookId, level)) continue;
+        const levelzh = levelText(level);
+        out.push({
+          kind: 'other',
+          itemId: toBadgeId(bookId),
+          bookId,
+          level,
+          itemName: `${itemLabel(bookId)}（${levelzh}）`,
+          date: String(row.date).slice(0, 10),
+          evidence: row.cert
+            ? `CUBBOOK 活動徽章申報（${levelzh}・證書：${row.cert}）`
+            : `由 CUBBOOK 個人電子紀錄冊申報活動徽章（${levelzh}）（待領袖核實）`,
+        });
+      }
+      continue;
+    }
+
+    if (!entry.date) continue;
     if (entry.confirmedByBadge) continue;
-    if (confirmedKeys.has(bookId)) continue;
-    if (pendingSet.has(bookId)) continue;
+    if (skip(bookId, '')) continue;
     out.push({
       kind: 'other',
       itemId: toBadgeId(bookId),
@@ -419,20 +499,28 @@ export function collectPendingForBadge(book, remoteConfirmed = {}, remotePending
   return out;
 }
 
-/** 匯出供 cubbadge 錄入的申報檔：只有身分編號、項目、日期；全部 pending、confirmed:false。 */
+/**
+ * 匯出供 cubbadge 錄入的申報檔：只有身分編號、項目、日期（分級徽章另附 `level`）；
+ * 全部 pending、confirmed:false。
+ */
 export function exportForBadge(book, troopId = '') {
   const sid = scoutId(book?.member);
   const items = collectPendingForBadge(book);
   const pendingProgress = {};
   const pendingRequests = items.map((it) => {
-    pendingProgress[it.itemId] = {
+    // 分級徽章以 `A26-E` 作 pendingProgress 的鍵（同一徽章可同時有多級待批）；
+    // pendingRequests 則保留官方 `A26` 並另附 `level`，方便 BADGE 決定寫入哪一格。
+    const key = it.level ? `${it.itemId}-${it.level}` : it.itemId;
+    pendingProgress[key] = {
       date: it.date,
+      ...(it.level ? { level: it.level } : {}),
       status: 'pending',
       confirmed: false,
     };
     return {
       ymis: sid,
       item_id: it.itemId,
+      ...(it.level ? { level: it.level } : {}),
       item_name: it.itemName,
       requested_date: it.date,
       evidence: it.evidence,
@@ -499,7 +587,7 @@ export function importFromBadge(json, srcBook, { expectedScoutId = '' } = {}) {
       if (!container || typeof container !== 'object') continue;
       for (const key of Object.keys(container)) {
         if (key === '說明') continue;
-        const bookKey = toBookId(key);
+        const bookKey = toBookRef(key).bookId;
         if (ITEM_INDEX[bookKey] || OTHER_BADGES.some((b) => b.id === bookKey)) continue;
         if (/^[0-9A-Za-z_-]{4,32}$/.test(key)) candidateIds.add(key);
       }
@@ -513,7 +601,7 @@ export function importFromBadge(json, srcBook, { expectedScoutId = '' } = {}) {
     if (!container || typeof container !== 'object') return null;
     const keys = Object.keys(container).filter((k) => k !== '說明');
     if (!keys.length) return null;
-    if (keys.some((k) => Boolean(ITEM_INDEX[toBookId(k)]) || OTHER_BADGES.some((b) => b.id === toBookId(k)))) {
+    if (keys.some((k) => Boolean(ITEM_INDEX[toBookRef(k).bookId]) || OTHER_BADGES.some((b) => b.id === toBookRef(k).bookId))) {
       matchedBy = matchedBy || '直接已核實進度表';
       return container;
     }
@@ -562,25 +650,68 @@ export function importFromBadge(json, srcBook, { expectedScoutId = '' } = {}) {
   if (json.otherBadges && typeof json.otherBadges === 'object') {
     const map = extractMemberMap(json.otherBadges);
     if (map) {
-      for (const [rawId, val] of Object.entries(map)) {
-        const bookId = toBookId(rawId);
-        if (!OTHER_BADGES.some((b) => b.id === bookId)) continue;
+      const writeBadge = (rawId, val) => {
+        const { bookId, level } = toBookRef(rawId);
+        if (!OTHER_BADGES.some((b) => b.id === bookId)) return;
         if (!isConfirmedEntry(val)) {
           skippedPending += 1;
-          continue;
+          return;
         }
         const date = String(typeof val === 'string' ? val : val.date).slice(0, 10);
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
         const prev = next.otherBadges[bookId] || {};
         const cert = typeof val === 'object' ? String(val.cert || '').slice(0, 60) : '';
+        const confirmedAt = new Date().toISOString();
+
+        // 分級徽章：只寫入有核實的那一級，其餘級別保留本機原有狀態
+        if (level && isLeveledRef(bookId)) {
+          const { entry } = withLevel(prev, level, {
+            date,
+            ...(cert ? { cert } : {}),
+            confirmedByBadge: true,
+            confirmedAt,
+          });
+          next.otherBadges[bookId] = entry;
+          imported += 1;
+          return;
+        }
+
         next.otherBadges[bookId] = {
           ...prev,
           date,
           ...(cert ? { cert } : {}),
           confirmedByBadge: true,
-          confirmedAt: new Date().toISOString(),
+          confirmedAt,
         };
         imported += 1;
+      };
+
+      for (const [rawId, val] of Object.entries(map)) {
+        if (!val || typeof val !== 'object') {
+          writeBadge(rawId, val);
+          continue;
+        }
+
+        // 形式②：`{ date, cert, level }`
+        const baseKey = splitLevelRef(rawId).id;
+        const ownLevel = String(val.level || '').trim().toUpperCase();
+        if (isLevelKey(ownLevel) && isLeveledRef(toBookRef(rawId).bookId)) {
+          writeBadge(`${baseKey}-${ownLevel}`, { ...val, level: undefined });
+          continue;
+        }
+
+        // 形式③：`{ levels: { E:{date}, I:{date} } }`
+        const nested = levelsOf(val);
+        if (Object.keys(nested).length && isLeveledRef(toBookRef(rawId).bookId)) {
+          for (const [level, row] of Object.entries(nested)) {
+            if (!row?.date) continue;
+            writeBadge(`${baseKey}-${level}`, row);
+          }
+          continue;
+        }
+
+        // 形式①／舊資料：整個徽章一個日期
+        writeBadge(rawId, val);
       }
     }
   }

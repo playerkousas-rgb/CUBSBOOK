@@ -279,7 +279,7 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
   }
 
   const sw = read('web/public/sw.js');
-  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v3'"), '配色改版後需更新快取版本');
+  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v4'"), '配色改版後需更新快取版本');
   // 官方 PDF 圖稿必須離線可用，否則露營現場翻開紀錄冊會破圖
   for (const asset of OFFICIAL_ASSETS) assert.ok(sw.includes(`'/official/${asset}'`), `Service Worker 未預快取 /official/${asset}`);
   assert.ok(!sw.includes('vsbook'));

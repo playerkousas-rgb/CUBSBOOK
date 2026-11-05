@@ -5,7 +5,19 @@
  * 全程零伺服器、零雲端上傳。
  */
 
-import { normalizeScoutId, sameScoutId, ITEM_INDEX, OTHER_BADGES, toBookId } from './book.js';
+import {
+  normalizeScoutId,
+  sameScoutId,
+  ITEM_INDEX,
+  OTHER_BADGES,
+  toBookId,
+  isLevelKey,
+  isLeveledRef,
+  levelsOf,
+  splitLevelRef,
+  toBookRef,
+  withLevel,
+} from './book.js';
 
 export const TRANSFER_PREFIX = 'CB1';
 export const TRANSFER_VERSION = 1;
@@ -145,6 +157,16 @@ export function buildPayload(book, selection = []) {
     Object.entries(book?.otherBadges || {}).forEach(([id, entry]) => {
       if (!entry) return;
       const row = pick(entry, ['date', 'cert', 'note']);
+      // 分級徽章：逐級保留日期，否則家長／領袖只會見到「最高一級」
+      const levels = levelsOf(entry);
+      if (Object.keys(levels).length) {
+        const picked = {};
+        for (const [level, val] of Object.entries(levels)) {
+          const line = pick(val, ['date', 'cert', 'note']);
+          if (Object.keys(line).length) picked[level] = line;
+        }
+        if (Object.keys(picked).length) row.levels = picked;
+      }
       if (Object.keys(row).length) other[id] = row;
     });
     payload.otherBadges = other;
@@ -297,12 +319,16 @@ export async function encodeSignoff({ member, leader, items, otherBadges, note }
       assessor: it.assessor || who.name || '',
       verified: true,
     })),
-    otherBadges: (otherBadges || []).map((it) => ({
-      id: it.id,
-      date: it.date || new Date().toISOString().slice(0, 10),
-      cert: it.cert || '',
-      verified: true,
-    })),
+    otherBadges: (otherBadges || []).map((it) => {
+      const level = String(it.level || '').trim().toUpperCase();
+      return {
+        id: it.id,
+        ...(isLevelKey(level) ? { level } : {}),
+        date: it.date || new Date().toISOString().slice(0, 10),
+        cert: it.cert || '',
+        verified: true,
+      };
+    }),
     note: note || '',
   };
   return encodePayload(payload, { signoff: true });
@@ -391,27 +417,45 @@ export function applySignoff(book, payload) {
 
   (payload.otherBadges || []).forEach((item) => {
     if (!item?.id || !item.verified) return;
-    const bookId = toBookId(item.id);
+    // 分級徽章：`item.level`（或後綴 `A26-E`）指明核簽哪一級
+    const split = splitLevelRef(item.id);
+    const bookId = toBookId(split.id);
     if (!OTHER_BADGES.some((b) => b.id === bookId)) return;
+    const level = String(item.level || split.level || '').trim().toUpperCase();
+    const stamp = payload.leader?.png
+      ? {
+          signature: {
+            png: payload.leader.png,
+            name: payload.leader.name,
+            title: payload.leader.title,
+            at: payload.leader.at,
+          },
+        }
+      : {};
     const current = next.otherBadges[bookId] || {};
-    const before = { date: current.date || '', cert: current.cert || '' };
     const finalDate = item.date || current.date || new Date().toISOString().slice(0, 10);
-    next.otherBadges[bookId] = {
-      ...current,
+    const row = {
       date: finalDate,
       ...(item.cert ? { cert: String(item.cert).slice(0, 60) } : {}),
       signedAt: payload.at,
-      ...(payload.leader?.png
-        ? {
-            signature: {
-              png: payload.leader.png,
-              name: payload.leader.name,
-              title: payload.leader.title,
-              at: payload.leader.at,
-            },
-          }
-        : {}),
+      ...stamp,
     };
+
+    if (level && isLevelKey(level) && isLeveledRef(bookId)) {
+      const before = { date: current.levels?.[level]?.date || '', cert: current.levels?.[level]?.cert || '' };
+      next.otherBadges[bookId] = withLevel(current, level, row).entry;
+      changes.push({
+        id: bookId,
+        level,
+        before,
+        after: { date: next.otherBadges[bookId].levels?.[level]?.date || finalDate, cert: item.cert || '' },
+        stamped: Boolean(payload.leader?.png),
+      });
+      return;
+    }
+
+    const before = { date: current.date || '', cert: current.cert || '' };
+    next.otherBadges[bookId] = { ...current, ...row };
     changes.push({
       id: bookId,
       before,

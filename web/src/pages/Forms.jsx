@@ -9,7 +9,7 @@ import {
   formReadiness,
   itemRowsForAward,
 } from '@shared/forms.js';
-import { GOLD_AWARD, OTHER_BADGES, goldenBauhiniaEligibility } from '@shared/book.js';
+import { GOLD_AWARD, OTHER_BADGES, goldenBauhiniaEligibility, levelSummary } from '@shared/book.js';
 import { useBook } from '../bookContext.js';
 import Write from '../components/Write.jsx';
 import { Icon, cx } from '../ui.jsx';
@@ -520,7 +520,11 @@ function FormGbac() {
                 {isEn ? b.en : b.name} <small className="pttable__code">{b.badgeId}</small>
               </td>
               <td>{isEn ? b.categoryNameEn : b.categoryName}</td>
-              <td>{book.otherBadges[b.id].date}</td>
+              <td>
+                {book.otherBadges[b.id].levels
+                  ? levelSummary(book.otherBadges[b.id], isEn ? 'en' : 'zh')
+                  : book.otherBadges[b.id].date}
+              </td>
             </tr>
           ))}
           {interest.length === 0 && (

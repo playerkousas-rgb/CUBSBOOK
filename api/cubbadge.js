@@ -15,6 +15,7 @@
    ========================================================================== */
 
 import { toBadgeId, ITEM_INDEX, toBookId } from '../shared/syllabus.js';
+import { LEVEL_KEYS, isLevelKey, isLeveledRef, levelsOf, splitLevelRef } from '../shared/badgeLevels.js';
 
 const DEFAULT_BADGE_ORIGIN = 'https://cubbadge.vercel.app';
 const EXEC_URL_RE = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec\/?$/i;
@@ -174,12 +175,51 @@ export function filterPersonalConfirmedLoad(raw, targetYmis) {
   if (raw.otherBadges && typeof raw.otherBadges === 'object') {
     for (const [ymis, map] of Object.entries(raw.otherBadges)) {
       if (!sameId(ymis, cleanTarget) || !map || typeof map !== 'object') continue;
-      for (const [badgeId, val] of Object.entries(map)) {
-        const date = typeof val === 'string' ? val : val?.date || '';
-        const cert = typeof val === 'object' ? String(val?.cert || '').trim() : '';
+      for (const [rawBadgeId, val] of Object.entries(map)) {
+        if (!val || typeof val !== 'object') {
+          const date = typeof val === 'string' ? val : '';
+          if (!date) continue;
+          confirmedOther[rawBadgeId] = { date: String(date).slice(0, 10) };
+          continue;
+        }
+        // 分級徽章：cubadge 可能回傳 `{level}`、`A26-E` 鍵或 `{levels:{...}}`，一律整理成
+        // 「官方編號 + level」，令 BOOK 可以把每一級寫回正確的一行。
+        const split = splitLevelRef(rawBadgeId);
+        const baseId = split.id;
+        const cert = String(val.cert || '').trim();
+        const ownLevel = String(val.level || split.level || '').trim().toUpperCase();
+        const nested = levelsOf(val);
+
+        if (Object.keys(nested).length && isLeveledRef(toBookId(baseId))) {
+          confirmedOther[baseId] = {
+            ...(confirmedOther[baseId] || {}),
+            levels: Object.fromEntries(
+              Object.entries(nested)
+                .filter(([, row]) => row?.date)
+                .map(([level, row]) => [
+                  level,
+                  {
+                    date: String(row.date).slice(0, 10),
+                    ...(row.cert ? { cert: String(row.cert).slice(0, 60) } : {}),
+                  },
+                ]),
+            ),
+          };
+          continue;
+        }
+
+        const date = String(val.date || '').slice(0, 10);
         if (!date) continue;
-        confirmedOther[badgeId] = {
-          date: String(date).slice(0, 10),
+        if (isLevelKey(ownLevel) && isLeveledRef(toBookId(baseId))) {
+          const levelKey = `${baseId}-${ownLevel}`;
+          confirmedOther[levelKey] = {
+            date,
+            ...(cert ? { cert: cert.slice(0, 60) } : {}),
+          };
+          continue;
+        }
+        confirmedOther[baseId] = {
+          date,
           ...(cert ? { cert: cert.slice(0, 60) } : {}),
         };
       }
@@ -229,15 +269,20 @@ export function sanitizePendingSubmissions(items) {
   for (const it of items) {
     if (!it || typeof it !== 'object') continue;
     const rawId = String(it.itemId || it.item_id || it.id || '').trim().slice(0, 64);
-    const itemId = toBadgeId(rawId);
+    // 分級徽章：接受 `{ itemId:'A26', level:'E' }` 或後綴 `A26-E`
+    const split = splitLevelRef(rawId);
+    const itemId = toBadgeId(split.id);
+    const levelRaw = String(it.level || split.level || '').trim().toUpperCase();
+    const level = isLevelKey(levelRaw) && isLeveledRef(toBookId(itemId)) ? levelRaw : '';
     const date = String(it.date || it.requested_date || '').trim().slice(0, 10);
     if (!itemId || !isIsoDate(date)) continue;
-    const key = `${itemId}@${date}`;
+    const key = `${itemId}@${level}@${date}`;
     if (seen.has(key)) continue;
     seen.add(key);
     const official = ITEM_INDEX[toBookId(itemId)];
     out.push({
       itemId,
+      ...(level ? { level } : {}),
       itemName:
         String(it.itemName || it.item_name || official?.name || itemId)
           .replace(/\s+/g, ' ')
@@ -423,6 +468,7 @@ export default async function handler(req, res) {
             token,
             ymis,
             itemId: item.itemId,
+            ...(item.level ? { level: item.level } : {}),
             itemName: item.itemName,
             requested_date: item.requested_date,
             evidence: item.evidence,

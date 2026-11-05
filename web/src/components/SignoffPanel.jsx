@@ -4,6 +4,7 @@ import { SignModal } from './Ink.jsx';
 import { qrSvg } from '../qr.js';
 import { shrinkSignature } from '../signature.js';
 import { syllabusItem } from '@shared/forms.js';
+import { otherBadgeRows } from '@shared/book.js';
 import { QR_LIMIT, encodeSignoff } from '@shared/transfer.js';
 import { useLang } from '../i18n.jsx';
 
@@ -39,15 +40,30 @@ export default function SignoffPanel({ payload }) {
       .sort((a, b) => String(a.date).localeCompare(String(b.date)));
   }, [payload, isEn]);
 
+  // 活動徽章：官方 7 枚分級徽章逐級一行（A26 初級與中級是兩個獨立核簽）
+  const badgeEntries = useMemo(
+    () => otherBadgeRows(payload?.otherBadges, { lang: isEn ? 'en' : 'zh' }),
+    [payload, isEn],
+  );
+
+  const [selectedBadges, setSelectedBadges] = useState(() => new Set());
+
   useEffect(() => {
     setSelected(new Set(entries.filter((e) => !e.signed).map((e) => e.id)));
   }, [entries]);
 
+  useEffect(() => {
+    setSelectedBadges(new Set(badgeEntries.map((b) => b.key)));
+  }, [badgeEntries]);
+
   const chosen = entries.filter((e) => selected.has(e.id));
+  const chosenBadges = badgeEntries.filter((b) => selectedBadges.has(b.key));
+  const chosenTotal = chosen.length + chosenBadges.length;
+  const hasAny = entries.length + badgeEntries.length > 0;
 
   useEffect(() => {
     let alive = true;
-    if (!leader || chosen.length === 0) {
+    if (!leader || chosen.length + chosenBadges.length === 0) {
       setResult(null);
       setSvg('');
       return () => {
@@ -62,6 +78,12 @@ export default function SignoffPanel({ payload }) {
         member: payload.member,
         leader: { ...leader, png },
         items: chosen.map((e) => ({ id: e.id, date: e.date, assessor: leader.name })),
+        otherBadges: chosenBadges.map((b) => ({
+          id: b.badgeId,
+          ...(b.level ? { level: b.level } : {}),
+          date: b.date,
+          cert: b.cert,
+        })),
         note: 'CUBBOOK 領袖當面核簽',
       });
       if (!alive) return;
@@ -77,7 +99,7 @@ export default function SignoffPanel({ payload }) {
     return () => {
       alive = false;
     };
-  }, [leader, selected, withSig, entries, payload]);
+  }, [leader, selected, selectedBadges, withSig, entries, badgeEntries, payload]);
 
   const toggle = (id) =>
     setSelected((prev) => {
@@ -87,7 +109,15 @@ export default function SignoffPanel({ payload }) {
       return next;
     });
 
-  if (!payload?.progress || entries.length === 0) {
+  const toggleBadge = (key) =>
+    setSelectedBadges((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+  if (!hasAny) {
     return (
       <section className="signpanel">
         <h2>
@@ -95,8 +125,8 @@ export default function SignoffPanel({ payload }) {
         </h2>
         <p className="signpanel__hint">
           {isEn
-            ? 'Member did not include Training Progress in this QR. Ask the member to tick Training Progress and present again.'
-            : '成員今次未剔選「訓練綱要進度」，如要核簽，請成員剔選「訓練綱要進度」後再出示二維碼。'}
+            ? 'Member did not include Training Progress or Activity Badges in this QR. Ask the member to tick those groups and present again.'
+            : '成員今次未剔選「訓練綱要進度」或「活動徽章」，如要核簽，請成員剔選後再出示二維碼。'}
         </p>
       </section>
     );
@@ -132,37 +162,85 @@ export default function SignoffPanel({ payload }) {
       <div className="signpanel__list">
         <div className="signpanel__listhead">
           <span>
-            {isEn ? 'Items' : '核簽項目'}（{chosen.length} / {entries.length}）
+            {isEn ? 'Items selected' : '已勾選'}（{chosenTotal} / {entries.length + badgeEntries.length}）
           </span>
           <div>
-            <button type="button" className="linkbtn" onClick={() => setSelected(new Set(entries.map((e) => e.id)))}>
+            <button
+              type="button"
+              className="linkbtn"
+              onClick={() => {
+                setSelected(new Set(entries.map((e) => e.id)));
+                setSelectedBadges(new Set(badgeEntries.map((b) => b.key)));
+              }}
+            >
               {isEn ? 'Select All' : '全選'}
             </button>{' '}
             ·{' '}
-            <button type="button" className="linkbtn" onClick={() => setSelected(new Set())}>
+            <button
+              type="button"
+              className="linkbtn"
+              onClick={() => {
+                setSelected(new Set());
+                setSelectedBadges(new Set());
+              }}
+            >
               {isEn ? 'None' : '全不選'}
             </button>
           </div>
         </div>
-        <ul>
-          {entries.map((entry) => (
-            <li key={entry.id} className={selected.has(entry.id) ? 'is-on' : ''}>
-              <label>
-                <input type="checkbox" checked={selected.has(entry.id)} onChange={() => toggle(entry.id)} />
-                <span className="signpanel__item">
-                  <strong>{entry.name}</strong>
-                  <em>
-                    {entry.date}
-                    {entry.assessor ? ` · 已簽：${entry.assessor}` : ' · 待核簽'}
-                  </em>
-                </span>
-              </label>
-            </li>
-          ))}
-        </ul>
+        {entries.length > 0 && (
+          <>
+            <div className="signpanel__subhead">
+              {isEn ? 'Training progress' : '訓練綱要進度'}（{chosen.length} / {entries.length}）
+            </div>
+            <ul>
+              {entries.map((entry) => (
+                <li key={entry.id} className={selected.has(entry.id) ? 'is-on' : ''}>
+                  <label>
+                    <input type="checkbox" checked={selected.has(entry.id)} onChange={() => toggle(entry.id)} />
+                    <span className="signpanel__item">
+                      <strong>{entry.name}</strong>
+                      <em>
+                        {entry.date}
+                        {entry.assessor ? ` · 已簽：${entry.assessor}` : ' · 待核簽'}
+                      </em>
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {badgeEntries.length > 0 && (
+          <>
+            <div className="signpanel__subhead">
+              {isEn ? 'Activity badges' : '活動徽章'}（{chosenBadges.length} / {badgeEntries.length}）
+            </div>
+            <ul>
+              {badgeEntries.map((badge) => (
+                <li key={badge.key} className={selectedBadges.has(badge.key) ? 'is-on' : ''}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedBadges.has(badge.key)}
+                      onChange={() => toggleBadge(badge.key)}
+                    />
+                    <span className="signpanel__item">
+                      <strong>{badge.name}</strong>
+                      <em>
+                        {badge.date}
+                        {badge.cert ? ` · 證書：${badge.cert}` : ''}
+                      </em>
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
 
-      {leader && chosen.length > 0 && (
+      {leader && chosenTotal > 0 && (
         <div className="signpanel__code">
           {busy && !result && <p className="qrstatus">{isEn ? 'Generating Return QR…' : '正在產生核簽回傳碼…'}</p>}
           {svg && <div className="qrpanel__code" dangerouslySetInnerHTML={{ __html: svg }} />}

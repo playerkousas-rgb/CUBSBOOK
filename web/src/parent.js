@@ -17,7 +17,18 @@
    ========================================================================== */
 
 // 相對路徑匯入：讓 Node 測試可直接載入本模組，毋須額外 alias。
-import { newBook, toBookId, ITEM_INDEX, OTHER_BADGES, importFromBadge } from '../../shared/book.js';
+import {
+  newBook,
+  toBookId,
+  ITEM_INDEX,
+  OTHER_BADGES,
+  importFromBadge,
+  isLevelKey,
+  isLeveledRef,
+  levelsOf,
+  splitLevelRef,
+  withLevel,
+} from '../../shared/book.js';
 import { KIND_MEMBER } from '../../shared/transfer.js';
 
 export const PARENT_FLAG_KEY = 'cubbook.parent.v1';
@@ -164,10 +175,39 @@ export function mirrorFromTransfer(payload) {
   });
 
   Object.entries(payload.otherBadges || {}).forEach(([rawId, entry]) => {
-    const id = toBookId(rawId);
-    if (!OTHER_BADGES.some((b) => b.id === id) || !entry?.date) return;
+    if (!entry) return;
+    const split = splitLevelRef(rawId);
+    const id = toBookId(split.id);
+    if (!OTHER_BADGES.some((b) => b.id === id)) return;
+    const base = book.otherBadges[id] || {};
+
+    // 分級徽章：鏡像亦要保留每一級的日期，否則家長只見到最高一級
+    const writeLevel = (level, row) => {
+      if (!row?.date) return;
+      const current = book.otherBadges[id] || base;
+      book.otherBadges[id] = withLevel(current, level, {
+        date: row.date,
+        ...(row.cert ? { cert: row.cert } : {}),
+        verified: true,
+      }).entry;
+      imported += 1;
+    };
+
+    const ownLevel = String(entry.level || split.level || '').trim().toUpperCase();
+    if (isLevelKey(ownLevel) && isLeveledRef(id)) {
+      writeLevel(ownLevel, entry);
+      return;
+    }
+
+    const nested = levelsOf(entry);
+    if (Object.keys(nested).length && isLeveledRef(id)) {
+      for (const [level, row] of Object.entries(nested)) writeLevel(level, row);
+      return;
+    }
+
+    if (!entry.date) return;
     book.otherBadges[id] = {
-      ...book.otherBadges[id],
+      ...base,
       date: entry.date,
       cert: entry.cert || '',
       verified: true,
