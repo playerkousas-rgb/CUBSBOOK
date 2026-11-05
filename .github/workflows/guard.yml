@@ -1,0 +1,40 @@
+name: guard
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  schedule:
+    - cron: '17 3 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci --include=dev
+      - name: Unit & brain guard tests (F14)
+        run: npm test
+      - name: Build production bundle
+        run: npm run build
+      - name: Clean build output (dist 是建置產物，唔入版控)
+        run: rm -rf dist
+      - name: Guard (docs / secrets / size / links)
+        run: node scripts/guard.mjs
+      - name: Final check (six-angle gate)
+        run: node scripts/final_check_v1.0.mjs --json
+      - name: Repo health & preflight
+        run: |
+          node scripts/repo_health_v1.0.mjs . --json
+          node scripts/preflight_v1.0.mjs . --json
+      - name: Dependency audit (A16)
+        run: npm audit --audit-level=high

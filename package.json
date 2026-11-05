@@ -1,0 +1,28 @@
+{
+  "name": "cubbook",
+  "version": "1.0.2",
+  "private": true,
+  "description": "CUBBOOK — 幼童軍個人隨身離線電子紀錄冊 / Cub Scout Digital Record Book",
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.mjs",
+    "icons": "node scripts/generate_icons.mjs",
+    "syllabus": "node scripts/build_syllabus.mjs",
+    "guard": "node scripts/guard.mjs",
+    "preflight": "node scripts/preflight_v1.0.mjs ."
+  },
+  "dependencies": {
+    "jsqr": "^1.4.0",
+    "qrcode-generator": "^2.0.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.4.1",
+    "vite": "^6.2.6"
+  }
+}
