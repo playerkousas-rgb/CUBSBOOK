@@ -176,7 +176,7 @@ export function FormsIndex() {
               </div>
               <h2>{isEn ? meta.en : meta.title}</h2>
               <p className="formcard__when">{meta.when}</p>
-              <p className="tiny">{meta.note}</p>
+              <p className="tiny">{isEn && meta.noteEn ? meta.noteEn : meta.note}</p>
               {!check.ready && (
                 <p className="formcard__missing">
                   <strong>{isEn ? 'Pending: ' : '待補填：'}</strong>
@@ -563,7 +563,7 @@ export function FormDoc({ id }) {
         <div className="formdoc__tabs">
           {FORM_ORDER.map((fid) => (
             <Link key={fid} to={`/forms/${fid}`} className={cx('formtab', fid === id && 'is-on')}>
-              {FORM_META[fid].short}
+              {isEn && FORM_META[fid].shortEn ? FORM_META[fid].shortEn : FORM_META[fid].short}
             </Link>
           ))}
         </div>
@@ -578,7 +578,7 @@ export function FormDoc({ id }) {
       </div>
 
       <p className="formdoc__hint no-print">
-        <Icon name="info" size={14} /> <span>{meta.note}</span>
+        <Icon name="info" size={14} /> <span>{isEn && meta.noteEn ? meta.noteEn : meta.note}</span>
       </p>
 
       {id === 'pt67' ? <FormPT67 /> : id === 'pt68' ? <FormPT68 /> : <FormGbac />}
