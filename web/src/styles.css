@@ -4964,7 +4964,6 @@ html[data-print-preview] .write--multi.is-empty {
 .offcreed p { margin: 0; line-height: 1.95; font-size: 1rem; }
 .offcreed__motto { font-size: 1.2rem; letter-spacing: 0.15em; }
 .offnext { margin-top: 1rem; }
-.offhowl { border: 1px solid rgba(26, 18, 6, 0.25); padding: 1.2rem; text-align: center; margin-top: 1rem; }
 .offhowl p { font-size: 1.05rem; letter-spacing: 0.05em; margin: 0.6rem 0 0; }
 
 /* 封面／封底（書內第 1、32 頁） */
@@ -4974,12 +4973,7 @@ html[data-print-preview] .write--multi.is-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 0.55rem; text-align: center; color: #1a1206;
 }
-.offcover__org { font-size: 0.72rem; letter-spacing: 0.22em; margin: 0; }
-.offcover__title { font-size: 2.4rem; margin: 0.4rem 0 0; line-height: 1.15; letter-spacing: 0.12em; }
-.offcover__title em { display: block; font-style: normal; font-size: 1.05rem; letter-spacing: 0.4em; margin-top: 0.3rem; }
 .offcover__edition { font-size: 0.72rem; opacity: 0.75; margin: 0; }
-.offcover__fields { width: min(22rem, 88%); margin-top: 1.4rem; }
-.offcover__foot { font-size: 0.62rem; opacity: 0.6; margin-top: 1.4rem; }
 .offback__inner h2 { font-size: 1.3rem; margin: 0.5rem 0 0; letter-spacing: 0.18em; }
 .offback__inner p { margin: 0; font-size: 0.8rem; }
 .offback__addr { font-size: 0.7rem !important; opacity: 0.75; max-width: 20rem; }
@@ -5319,45 +5313,6 @@ html[data-print-preview] .write--multi.is-empty {
     linear-gradient(180deg, #fdf1dd 0%, #f8e6c9 60%, #f3ddb8 100%);
 }
 .sheet--divider .sheet__body { justify-content: center; }
-.offdivider { text-align: center; padding: 10px 0; }
-.offdivider__emblems {
-  display: grid;
-  grid-template-columns: repeat(3, 64px);
-  grid-template-rows: repeat(3, 64px);
-  justify-content: center;
-  gap: 4px;
-  margin-bottom: 26px;
-  transform: rotate(0deg);
-}
-.offdiamond {
-  width: 64px; height: 64px;
-  border-radius: 12px;
-  transform: rotate(45deg) scale(0.72);
-  border: 4px solid #1f6b3a;
-  background: #2f8a4c;
-  box-shadow: inset 0 0 0 2px rgba(255, 233, 120, 0.9), 0 6px 12px -6px rgba(0, 0, 0, 0.4);
-  display: grid; place-items: center;
-}
-.offdiamond--flower { grid-area: 1 / 2; background: radial-gradient(circle at 50% 50%, #ffe066 0 28%, #2f8a4c 30%); }
-.offdiamond--mountain1 { grid-area: 2 / 1; background: linear-gradient(160deg, #b4241f 0 45%, #2f8a4c 47%); }
-.offdiamond--mountain2 { grid-area: 2 / 3; background: linear-gradient(160deg, #b4241f 0 45%, #2f8a4c 47%); }
-.offdiamond--wolf {
-  grid-area: 3 / 2;
-  font-size: 27px;
-  line-height: 1;
-  border-style: solid;
-  border-color: #2f8a4c;
-  background: #f6e6c8;
-  transform: rotate(45deg) scale(0.72);
-}
-.offdiamond--wolf i { display: block; font-style: normal; transform: rotate(-45deg); }
-.offdivider h2 {
-  font-family: var(--serif);
-  font-size: 21px;
-  letter-spacing: 0.16em;
-  color: #1d5c33;
-}
-.offdivider h2 em { display: block; margin-top: 4px; font-style: normal; font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; color: #14532d; }
 
 /* 會員章徽記 */
 .offmembership__emblem { display: grid; place-items: center; margin: 2px 0 6px; color: #563a78; }
@@ -5423,17 +5378,6 @@ html[data-print-preview] .write--multi.is-empty {
 .offlog .write, .offlog .wnative { width: 100%; font-size: 9px; }
 
 /* 團呼圓圈 */
-.offhowl { position: relative; width: 168px; height: 168px; margin: 14px auto 0; }
-.offhowl > span {
-  position: absolute;
-  left: 50%; top: 50%;
-  width: 9px; height: 9px;
-  margin: -4.5px;
-  border-radius: 50%;
-  background: #2f6b3a;
-  transform: rotate(calc(var(--i) * 25.7deg)) translateY(-78px);
-}
-.offhowl > svg { position: absolute; inset: 0; margin: auto; color: #2f6b3a; }
 
 /* 封面（官方黃色封面） */
 .sheet--cover {
@@ -5443,34 +5387,6 @@ html[data-print-preview] .write--multi.is-empty {
   padding: 22px;
 }
 .sheet--cover .sheet__body { justify-content: center; }
-.offcover__inner { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 6px 4px; }
-.offcover__emblem { position: relative; width: 74px; height: 74px; margin-bottom: 2px; }
-.offcover__diamond {
-  position: absolute; width: 40px; height: 40px;
-  border: 3px solid #1f6b3a;
-  background: #2f8a4c;
-  border-radius: 8px;
-  transform: rotate(45deg);
-  box-shadow: inset 0 0 0 2px rgba(255, 233, 120, 0.85);
-}
-.offcover__diamond--1 { top: 0; left: 17px; background: radial-gradient(circle, #ffe066 0 30%, #2f8a4c 32%); }
-.offcover__diamond--2 { bottom: 0; left: 0; background: linear-gradient(160deg, #b4241f 0 44%, #2f8a4c 46%); }
-.offcover__diamond--3 { bottom: 0; right: 0; background: linear-gradient(160deg, #b4241f 0 44%, #2f8a4c 46%); }
-.offcover__title {
-  font-family: var(--serif);
-  font-size: 30px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  color: #2b1a04;
-  line-height: 1.1;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-.offcover__title em { display: block; margin-top: 2px; font-style: normal; font-size: 13px; letter-spacing: 0.34em; color: #3a2606; }
-.offcover__org { margin: 0; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: #2b1a04; }
-.offcover__fields { width: 100%; max-width: 250px; margin: 16px auto 0; display: flex; flex-direction: column; gap: 8px; text-align: left; }
-.offcover__fields .frow { grid-template-columns: 44px 1fr; }
-.offcover__fields .frow__label { font-size: 11px; font-weight: 700; color: #2b1a04; }
-.offcover__foot { margin: 10px 0 0; font-size: 6.5px; color: rgba(43, 26, 4, 0.7); }
 
 /* 官方補充文字 */
 .offref { margin: 4px 0 0; text-align: right; font-size: 8px; color: #5d5342; }
@@ -5501,4 +5417,93 @@ html[data-print-preview] .write--multi.is-empty {
   .offexam__head, .offexam__row { grid-template-columns: 14px 1fr 62px 58px; }
   .offact__head, .offact__row { grid-template-columns: 1fr 64px 58px; }
   .offstack .frow { grid-template-columns: 96px 1fr; }
+}
+
+/* ==========================================================================
+   v1.2.2 官方原圖：封面、章節扉頁、徽章、六角徽章、團呼插圖（裁自官方 PDF）
+   ========================================================================== */
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 封面：整頁官方封面作底，姓名／小隊／旅別疊在官方印出的橫線上 */
+.sheet--cover {
+  padding: 0;
+  aspect-ratio: 432 / 306;
+  background: #f7c31a;
+}
+.sheet--cover .sheet__body { margin: 0; padding: 0; overflow: hidden; }
+.offcover-page .offcover2 { position: relative; width: 100%; height: 100%; }
+.offcover2__art { display: block; width: 100%; height: 100%; object-fit: contain; }
+.offcover2__fields { position: absolute; inset: 0; }
+.offcover2__row {
+  position: absolute;
+  display: block;
+  padding-bottom: 0.4%;
+}
+.offcover2__row--1 { left: 64.2%; right: 4.4%; bottom: 25.75%; }
+.offcover2__row--2 { left: 61.4%; right: 4.4%; bottom: 16.95%; }
+.offcover2__row--3 { left: 63.4%; right: 2.2%; bottom: 8.15%; }
+.offcover2__row .write {
+  width: 100%;
+  border-bottom: 0 !important;
+  background: transparent !important;
+  min-height: 14px;
+  padding: 0;
+}
+.offcover2__row .write__dot { display: none; }
+.offcover2__row .write__fit { font-size: clamp(9px, 1.55vh, 12.5px); color: #2b1a04; }
+
+/* 第 12 頁章節扉頁：整頁官方原圖 */
+.sheet--divider { padding: 0; background: #fdf1dd; }
+.sheet--divider .sheet__body { margin: 0; padding: 0; overflow: hidden; }
+.offdivider2 { position: relative; width: 100%; height: 100%; }
+.offdivider2__art { display: block; width: 100%; height: 100%; object-fit: contain; }
+
+/* 會員章世界徽記 */
+.offmembership__emblem {
+  display: block;
+  width: 34%;
+  max-width: 78px;
+  margin: 2px auto 6px;
+}
+
+/* 進度性獎章簡介：官方徽章原圖置左，說明文字置右 */
+.offintro { display: flex; gap: 10px; align-items: flex-start; }
+.offintro--art .offintro__art {
+  flex: none;
+  width: 21%;
+  max-width: 82px;
+  margin-top: 2px;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.12));
+}
+.offintro .pgpara { flex: 1; min-width: 0; }
+
+/* 第 27 頁頁尾六角徽章原圖 */
+.offhexes {
+  display: block;
+  width: 62%;
+  max-width: 190px;
+  margin: 8px auto 0;
+}
+
+/* 第 32 頁團呼插圖 */
+.offhowl__art {
+  display: block;
+  width: 68%;
+  max-width: 240px;
+  margin: 10px auto 0;
+}
+
+@media (max-width: 700px) {
+  .offcover2__row > span { font-size: 9px; }
+  .offcover2__row > span em { display: none; }
+  .offintro--art .offintro__art { width: 26%; }
 }

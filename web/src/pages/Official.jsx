@@ -27,6 +27,7 @@ const CORE_ROWS = (awardId) =>
 
 function CslSign({ path, label = '幼童軍團長簽署', en = 'C.S.L. Signature' }) {
   const [sig, setSig] = useField(path, null);
+  const readOnly = useReadOnly();
   const { isEn } = useLang();
   const [open, setOpen] = useState(false);
   return (
@@ -185,26 +186,29 @@ function MiniSig({ path, label = '團長簽署', en = 'C.S.L. Signature' }) {
 /* ------------------------------------------------------------------ 封面（不計頁碼） */
 
 export function PCover() {
+  const [name, setName] = useField('member.nameZh', '');
+  const [six, setSix] = useField('member.six', '');
+  const [group, setGroup] = useField('member.group', '');
   const { isEn } = useLang();
   return (
-    <Page id="cover" className="offcover">
-      <div className="offcover__inner">
-        <div className="offcover__emblem" aria-hidden="true">
-          <span className="offcover__diamond offcover__diamond--1" />
-          <span className="offcover__diamond offcover__diamond--2" />
-          <span className="offcover__diamond offcover__diamond--3" />
+    <Page id="cover" className="offcover-page">
+      <div className="offcover2">
+        <img
+          className="offcover2__art"
+          src="/official/cover.webp"
+          alt={isEn ? 'Official Cub Scout Record Book cover (© Scout Association of Hong Kong)' : '《幼童軍紀錄冊》官方封面（© 香港童軍總會）'}
+        />
+        <div className="offcover2__fields">
+          <label className="offcover2__row offcover2__row--1" aria-label={isEn ? 'Name' : '姓名'}>
+            <Write value={name || ''} onChange={setName} compact label={isEn ? 'Name' : '姓名'} />
+          </label>
+          <label className="offcover2__row offcover2__row--2" aria-label={isEn ? 'Six' : '小隊'}>
+            <Write value={six || ''} onChange={setSix} compact label={isEn ? 'Six' : '小隊'} />
+          </label>
+          <label className="offcover2__row offcover2__row--3" aria-label={isEn ? 'Group' : '旅別'}>
+            <Write value={group || ''} onChange={setGroup} compact label={isEn ? 'Group' : '旅別'} />
+          </label>
         </div>
-        <h1 className="offcover__title">
-          {isEn ? 'CUB SCOUT' : '幼童軍'}
-          <em>{isEn ? 'RECORD BOOK' : '紀　錄　冊'}</em>
-        </h1>
-        <p className="offcover__org">{isEn ? 'Scout Association of Hong Kong' : '香港童軍總會'}</p>
-        <div className="offcover__fields">
-          <Line label="姓名" en="Name" path="member.nameZh" />
-          <Line label="小隊" en="Six" path="member.six" />
-          <Line label="旅別" en="Group" path="member.group" />
-        </div>
-        <p className="offcover__foot">© 2026 · 九龍柯士甸道童軍徑香港童軍中心 10 樓</p>
       </div>
     </Page>
   );
@@ -572,9 +576,11 @@ export function P10() {
   return (
     <Page id="p10">
       <div className="offmembership">
-        <div className="offmembership__emblem" aria-hidden="true">
-          <Crest size={64} />
-        </div>
+        <img
+          className="offmembership__emblem"
+          src="/official/membership-emblem.png"
+          alt={isEn ? 'World Membership Badge' : '世界會員章'}
+        />
         <P en="When completed all the requirements for membership (within 2-3 months after joining the Pack), he/she can become a Cub Scout member and presented with his/her World Membership Badge.">
           必須在入團後兩至三個月內全部完成以下活動，才可以獲得世界會員章及正式成為幼童軍。
         </P>
@@ -616,17 +622,13 @@ export function P12() {
   const { isEn } = useLang();
   return (
     <Page id="p12" kind="divider">
-      <div className="offdivider">
-        <div className="offdivider__emblems" aria-hidden="true">
-          <span className="offdiamond offdiamond--flower" />
-          <span className="offdiamond offdiamond--mountain1" />
-          <span className="offdiamond offdiamond--mountain2" />
-          <span className="offdiamond offdiamond--wolf"><i>🐺</i></span>
-        </div>
-        <h2>
-          {isEn ? 'Progressive Badges' : '進度性獎章'}
-          <em>Progressive Badges</em>
-        </h2>
+      <div className="offdivider2">
+        <img
+          className="offdivider2__art"
+          src="/official/divider.webp"
+          alt={isEn ? 'Progressive Badges — Cub Scout Experience, Adventure, Adventure Crest and Golden Bauhinia badges' : '進度性獎章：幼童軍體驗章、歷奇章、高級歷奇章及金紫荊獎章'}
+        />
+        <h2 className="sr-only">{isEn ? 'Progressive Badges' : '進度性獎章'}</h2>
       </div>
     </Page>
   );
@@ -634,12 +636,17 @@ export function P12() {
 
 /* ------------------------------------------------------------------ 第 13–18 頁 核心範疇 */
 
-function CorePage({ id, awardId, titleZh, titleEn, level, intro, noBanner }) {
+function CorePage({ id, awardId, titleZh, titleEn, level, intro, noBanner, art }) {
   const { isEn } = useLang();
   const rows = CORE_ROWS(awardId);
   return (
     <Page id={id} dense banner={!noBanner}>
-      {intro && <P en={intro.en}>{intro.zh}</P>}
+      {(intro || art) && (
+        <div className={cx('offintro', art && 'offintro--art')}>
+          {art && <img className="offintro__art" src={art} alt="" aria-hidden="true" />}
+          {intro && <P en={intro.en}>{intro.zh}</P>}
+        </div>
+      )}
       {awardId !== 'OT-GB' && <div className="offlate">
         <span className="offlate__note">
           {isEn
@@ -676,6 +683,7 @@ export function P13() {
       awardId="L2"
       titleZh="幼童軍體驗章"
       titleEn="C.S. Experience Badge"
+      art="/official/badge-experience.png"
       intro={{
         zh: '此為幼童軍支部第一個進度性獎章，適合年滿六歲而考獲會員章之成員。',
         en: 'This is the first progressive badge for the Cub Scout Section, suitable for Cub Scout members who have reached the age of 6 and have earned the Membership Badge.',
@@ -685,15 +693,15 @@ export function P13() {
 }
 
 export function P14() {
-  return <CorePage id="p14" awardId="L3" titleZh="幼童軍歷奇章" titleEn="C.S. Adventure Award" level={{ zh: '初級', en: 'Elementary Level' }} />;
+  return <CorePage id="p14" awardId="L3" titleZh="幼童軍歷奇章" titleEn="C.S. Adventure Award" level={{ zh: '初級', en: 'Elementary Level' }} art="/official/badge-adventure.png" />;
 }
 
 export function P16() {
-  return <CorePage id="p16" awardId="L4" titleZh="幼童軍高級歷奇章" titleEn="C.S. Adventure Crest Award" level={{ zh: '中級', en: 'Intermediate Level' }} />;
+  return <CorePage id="p16" awardId="L4" titleZh="幼童軍高級歷奇章" titleEn="C.S. Adventure Crest Award" level={{ zh: '中級', en: 'Intermediate Level' }} art="/official/badge-crest.png" />;
 }
 
 export function P18() {
-  return <CorePage id="p18" awardId="OT-GB" titleZh="金紫荊獎章" titleEn="Golden Bauhinia Award" level={{ zh: '高級', en: 'Advanced Level' }} />;
+  return <CorePage id="p18" awardId="OT-GB" titleZh="金紫荊獎章" titleEn="Golden Bauhinia Award" level={{ zh: '高級', en: 'Advanced Level' }} art="/official/badge-golden.png" />;
 }
 
 /* ------------------------------------------------------------------ 第 15／17／19 頁 興趣範疇 */
@@ -878,6 +886,7 @@ function ActivityPage({ id, plan }) {
           </React.Fragment>
         ))}
       </div>
+      <img className="offhexes" src="/official/hexagons.png" alt="" aria-hidden="true" />
     </Page>
   );
 }
@@ -938,12 +947,11 @@ export function P32() {
       <P en="This is a special way to saying “hello” to Akela, your Cub Scout Leader, and a way of reminding you about your Cub Scout Promise every time you do it. When you have made your Promise and have been invested as a Cub Scout, you will be able to join in the Grand Howl at the beginning and end of a Pack meeting or event to say “hello!” and “thank you!” to Akela.">
         團呼是幼童軍向亞基拿——你們的團長致敬的儀式。每次團集會開始和完結時，幼童軍都會向團長做一個團呼，以表示向團長打招呼和感謝的意思。當你宣誓加入幼童軍團後，你也需要參加這個儀式。
       </P>
-      <div className="offhowl" aria-hidden="true">
-        {Array.from({ length: 14 }).map((_, i) => (
-          <span key={i} style={{ '--i': i }} />
-        ))}
-        <Crest size={34} />
-      </div>
+      <img
+        className="offhowl__art"
+        src="/official/grand-howl.png"
+        alt={isEn ? 'Cub Scouts standing in a circle for the Grand Howl' : '幼童軍圍圈進行團呼'}
+      />
     </Page>
   );
 }

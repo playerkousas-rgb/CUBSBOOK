@@ -285,3 +285,31 @@ test('package.json / vite.config.js 已完全改用 cubbook 及 /api/cubbadge', 
 
   assert.ok(!fs.existsSync(path.join(root, 'api/vsbadge.js')));
 });
+
+test('官方原圖：封面／扉頁／徽章全部裁自官方 PDF，不用近似幾何圖形', async () => {
+  const { statSync } = await import('node:fs');
+  const assets = [
+    'cover.webp',
+    'divider.webp',
+    'membership-emblem.png',
+    'badge-experience.png',
+    'badge-adventure.png',
+    'badge-crest.png',
+    'badge-golden.png',
+    'hexagons.png',
+    'grand-howl.png',
+  ];
+  for (const name of assets) {
+    const file = new URL(`../web/public/official/${name}`, import.meta.url);
+    assert.ok(statSync(file).size > 1000, `${name} 缺失或太小`);
+  }
+  const official = read('web/src/pages/Official.jsx');
+  for (const name of assets) {
+    assert.ok(official.includes(`/official/${name}`), `Official.jsx 未使用官方原圖 ${name}`);
+  }
+  // 舊的自繪幾何徽章必須已經移除
+  for (const legacy of ['offdiamond--flower', 'offcover__diamond', 'offhowl > span', '🐺']) {
+    assert.equal(official.includes(legacy), false, `仍有自繪圖形 ${legacy}`);
+  }
+  assert.ok(read('scripts/crop_official_art.py').includes('pypdfium2'), '缺少裁圖 script');
+});
