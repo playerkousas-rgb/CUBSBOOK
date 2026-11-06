@@ -1,21 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="CUBBOOK">
+  <title>CUBBOOK</title>
   <defs>
-    <linearGradient id="cubs" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ead040"/>
-      <stop offset="0.55" stop-color="#dcc02c"/>
+    <linearGradient id="cloth" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#664c0e"/>
+      <stop offset="0.55" stop-color="#3a2a08"/>
+      <stop offset="1" stop-color="#14100a"/>
+    </linearGradient>
+    <linearGradient id="foil" x1="0" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#f0d85e"/>
+      <stop offset="0.5" stop-color="#ead040"/>
       <stop offset="1" stop-color="#c0a21c"/>
     </linearGradient>
-    <linearGradient id="backdrop" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#241c10"/>
-      <stop offset="1" stop-color="#100c06"/>
-    </linearGradient>
+    <mask id="drop-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+      <rect width="64" height="64" fill="black"/>
+      <circle cx="32" cy="25.6" r="9.6" fill="white"/>
+      <path d="M26.816 17.344 L37.184 17.344 L32 6.88 Z" fill="white"/>
+      <circle cx="32" cy="25.856" r="4.992" fill="black"/>
+      <path d="M29.304 21.563 L34.696 21.563 L32 16.122 Z" fill="black"/>
+    </mask>
+    <mask id="c-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+      <rect width="64" height="64" fill="black"/>
+      <circle cx="32" cy="46.08" r="10.24" fill="white"/>
+      <circle cx="32" cy="46.08" r="5.12" fill="black"/>
+      <rect x="33.92" y="41.6" width="21.76" height="8.96" rx="1.6" fill="black"/>
+    </mask>
   </defs>
-  <rect width="64" height="64" rx="13" fill="url(#backdrop)"/>
-  <rect x="9" y="10" width="47" height="44" rx="5" fill="#f8f3e8"/>
-  <rect x="8" y="9" width="42" height="44" rx="5" fill="url(#cubs)"/>
-  <rect x="8" y="9" width="7" height="44" rx="3" fill="#806408"/>
-  <rect x="16.4" y="16" width="27" height="30" rx="2" fill="none" stroke="#1a1206" stroke-width="1.4"/>
-  <path d="M30 23.5c2.3 0 3.8 1.6 3.8 3.6 0 2.7-3.8 6.7-3.8 6.7s-3.8-4-3.8-6.7c0-2 1.5-3.6 3.8-3.6z" fill="#1a1206"/>
-  <rect x="22" y="37.5" width="16" height="2.4" rx="1.2" fill="#1a1206"/>
-  <rect x="25.5" y="41.6" width="9" height="1.8" rx="0.9" fill="#1a1206" opacity="0.75"/>
+  <rect width="64" height="64" rx="12.288" fill="url(#cloth)"/>
+  <rect x="2.56" y="2.56" width="58.88" height="58.88" rx="10.56" fill="none" stroke="url(#foil)" stroke-opacity="0.95" stroke-width="1.088"/>
+  <!-- 家族共用：水滴環（圓＋尖頂三角聯集，挖去同形內孔，露出布面） -->
+  <rect width="64" height="64" fill="url(#foil)" mask="url(#drop-mask)"/>
+  <!-- CUBBOOK 支部圖案：粗金 C -->
+  <rect width="64" height="64" fill="url(#foil)" mask="url(#c-cut)"/>
 </svg>

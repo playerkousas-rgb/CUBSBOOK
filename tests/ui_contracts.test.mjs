@@ -279,7 +279,7 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
   }
 
   const sw = read('web/public/sw.js');
-  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v4'"), '配色改版後需更新快取版本');
+  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v5'"), '圖標改版後需更新快取版本');
   // 官方 PDF 圖稿必須離線可用，否則露營現場翻開紀錄冊會破圖
   for (const asset of OFFICIAL_ASSETS) assert.ok(sw.includes(`'/official/${asset}'`), `Service Worker 未預快取 /official/${asset}`);
   assert.ok(!sw.includes('vsbook'));
@@ -292,6 +292,32 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
   }
   assert.ok(sw.includes("url.pathname.startsWith('/official/')"), 'Service Worker 需快取 /official/ 圖稿');
   assert.ok(!fs.existsSync(path.join(root, 'web/public/img')), '不應保留深資童軍徽章圖片');
+});
+
+test('G11 圖標九件套：家族版式、檔頭與 260 KB 預算', () => {
+  const script = read('scripts/generate_icons.mjs');
+  assert.match(script, /function dropletRing/, '家族共用水滴環');
+  assert.match(script, /function cubLetter/, 'CUBBOOK 支部圖案 C');
+  assert.match(script, /0\.192/, '家族圓角半徑');
+  assert.equal(script.includes('dBook'), false, '不得殘留舊書本卡片繪圖');
+
+  const names = [
+    'favicon.ico', 'favicon-16.png', 'favicon-32.png', 'apple-touch-icon.png',
+    'icon-192.png', 'icon-512.png', 'icon-maskable-192.png',
+    'icon-maskable-512.png', 'og-image.png',
+  ];
+  let total = 0;
+  for (const name of names) {
+    const buf = fs.readFileSync(path.join(root, 'web/public/icons', name));
+    total += buf.length;
+    if (name.endsWith('.png')) {
+      assert.deepEqual([...buf.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10], `${name} 必須是 PNG`);
+    } else {
+      assert.equal(buf.readUInt16LE(0), 0, `${name} ICO reserved`);
+      assert.equal(buf.readUInt16LE(2), 1, `${name} ICO type`);
+    }
+  }
+  assert.ok(total <= 260 * 1024, `九件套 ${(total / 1024).toFixed(1)} KB 超出 G11 260 KB`);
 });
 
 test('package.json / vite.config.js 已完全改用 cubbook 及 /api/cubbadge', () => {
