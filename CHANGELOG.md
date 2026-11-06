@@ -2,6 +2,19 @@
 
 本專案採用語義化版本（Semantic Versioning），每次更新同步對齊 `package.json`、`shared/book.js` 及 `web/index.html`。
 
+## [v1.2.6] — 2026-11-06
+
+### 更改（Changed · Favicon／圖標家族對齊）
+- **不再自創「黃布面書本卡片」**：`scripts/generate_icons.mjs` 全線重寫，對齊 `VSBOOK`／`ROVERBOOK`／`SCOUTBOOK` 實際出街圖標的基因——圓角布色方塊（radius `0.192`）＋內嵌金線（inset `0.04`）＋單色金浮雕（上方家族共用水滴環，下方支部圖案）。`CUBBOOK` 的支部圖案定為粗金「**C**」，與 `VSBOOK` 的「V」同級；`ROVERBOOK` 用缽＋橫桿、`SCOUTBOOK` 用打開的紀錄冊。
+- **配色**：布面改為幼童軍黃的深色階 `#664c0e → #3a2a08 → #14100a`，金浮雕只用 `#f0d85e → #ead040 → #c0a21c`；金色只配深布面，無白字配黃，亦無其他 BOOK 的森林綠／酒紅／海軍藍。`theme-color` 與 `manifest.theme_color` 繼續鎖定官方黃 `#ead040`。
+- **全套重繪**：`web/public/icons/` 九件套（含 16×16 手繪像素、maskable 中央 66% 安全區、180×180 滿版 apple-touch、1200×630 OG）、根目錄 `favicon.ico`／`favicon-32.png`／`favicon-48.png` 及 `favicon.svg` 全部由同一組 SDF 座標產生；SVG 的水滴環與「C」用 mask 重現 PNG 的聯集／挖空，不再與 PNG 不同形。九件套合計 **173.9 KB**（G11 ≤ 260 KB）。
+- **PWA 快取**：`web/public/sw.js` 升級 `cubbook-cache-v5`，避免舊圖示留在離線快取；`index.html` 版本 meta／`window.APP_VERSION` 與 `shared/book.js` 同步至 `v1.2.6`。
+- **文件**：新增 `docs/icon-family-preview.png` 四書並排對照；`README.md`、`docs/design-review.md`（ROUND 3）、`scripts/README.md` 同步改寫圖標段落，並提醒 Android／iOS 主畫面圖示需移除後重新加入。
+- **對外誠實聲明**：本輪只完成機器可驗部分（產生器、契約測試、靜態並排審視）；主畫面重新安裝後的實際裁切與 WhatsApp／Signal OG 預覽仍待真機確認。
+
+### 測試（Tests）
+- `tests/parent_mode.test.mjs` 改為鎖定家族版式（水滴環、C、圓角、內嵌金線、SVG mask）及幼童軍黃；`tests/ui_contracts.test.mjs` 新增九件套 PNG／ICO 檔頭與 260 KB 預算檢查，並更新 Service Worker 快取版本斷言；全套 `npm test` 全綠。
+
 ## [v1.2.5] — 2026-11-05
 
 ### 新增（Added · 分級活動徽章全鏈路同步）

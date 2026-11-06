@@ -54,7 +54,7 @@ export {
   withLevel,
 };
 
-export const APP_VERSION = 'v1.2.5';
+export const APP_VERSION = 'v1.2.6';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 

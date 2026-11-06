@@ -149,14 +149,23 @@ const ratio = (a, b) => {
   return (x + 0.05) / (y + 0.05);
 };
 
-test('圖示與 favicon 用總會紀錄冊的幼童軍黃 #ead040，不再用森林綠（綠色留給 SCOUTBOOK）', () => {
+test('圖示與 favicon 用總會紀錄冊的幼童軍黃 #ead040，並對齊 BOOK 家族版式', () => {
   const script = read('scripts/generate_icons.mjs');
-  assert.match(script, /234, 208, 64/, '主要封面黃 #ead040（取自官方 PDF 封面）');
+  assert.match(script, /234, 208, 64/, '主要金箔黃 #ead040（取自官方 PDF 封面）');
+  assert.match(script, /const RING\s*=\s*\{[^}]*cx:\s*0\.5/, '家族共用水滴環');
+  assert.match(script, /function cubLetter/, 'CUBBOOK 支部圖案 C');
+  assert.match(script, /sdRoundBox\(u, v, 0\.5, 0\.5, 0\.5, 0\.5, 0\.192\)/, '家族圓角 0.192');
+  assert.match(script, /0\.5 - 0\.04/, '內嵌金線 inset 0.04');
+  assert.equal(script.includes('dBook'), false, '不再畫舊黃布面書本卡片');
+  assert.equal(script.includes('emblemAlpha'), false, '不再用舊百合花徽號');
   assert.equal(script.includes('[28, 82, 54, 255]'), false, '16px 調色盤不得再用深綠');
   assert.equal(/mix\(8, 42, glow\)/.test(script), false, '背景不得再用森林綠漸層');
 
   const svg = read('web/public/favicon.svg');
   assert.match(svg, /#ead040/);
+  assert.match(svg, /id="drop-mask"/, 'SVG 水滴環需與 PNG 同源');
+  assert.match(svg, /id="c-cut"/, 'SVG 支部 C 需與 PNG 同源');
+  assert.match(svg, /rx="12\.288"/, 'SVG 圓角需與 PNG 同源');
   assert.equal(svg.includes('#143b28'), false, 'favicon 不再用深綠');
 
   const css = read('web/src/styles.css');
