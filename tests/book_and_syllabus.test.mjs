@@ -25,6 +25,9 @@ import {
   ageFromDob,
   ageInMonths,
   interestProgress,
+  interestDomainOptions,
+  itemElectiveOptions,
+  formatInterestBadgeLabel,
   badgeStats,
   allStats,
   membershipStatus,
@@ -349,3 +352,89 @@ test('空白紀錄冊建立後即為完整可用結構，示範資料不會留�
   }
   assert.equal(demo.otherBadges['OT-A22'].confirmedByBadge ?? false, false);
 });
+
+test('興趣範疇與核心選修項目選項：完全對齊 BADGE 及 2026《幼童軍訓練綱要》且中英文名稱完整', () => {
+  // L3 歷奇章：多元創藝 5 枚、科學與大自然 3 枚、運動與愛好 5 枚（另加三級制初／中／高選項）
+  const l3Creative = interestDomainOptions('L3', 'CREATIVE');
+  const l3Science = interestDomainOptions('L3', 'SCIENCE');
+  const l3Sports = interestDomainOptions('L3', 'SPORTS');
+  assert.deepEqual(
+    l3Creative.filter((o) => !o.level).map((o) => o.id),
+    ['OT-A12', 'OT-A14', 'OT-A20', 'OT-A18', 'OT-A16'],
+  );
+  assert.deepEqual(
+    l3Science.filter((o) => !o.level).map((o) => o.id),
+    ['OT-A22', 'OT-A23', 'OT-A25-PLASTIC'],
+  );
+  assert.deepEqual(
+    l3Sports.filter((o) => !o.level).map((o) => o.id),
+    ['OT-A38', 'OT-A35', 'OT-A39', 'OT-A30', 'OT-A28'],
+  );
+  // 三級制度章（如音樂章 OT-A18）同時提供初／中／高選項
+  assert.ok(l3Creative.some((o) => o.id === 'OT-A18-E' && o.zh === '音樂章（初級）'));
+  assert.ok(l3Creative.some((o) => o.id === 'OT-A18-I' && o.zh === '音樂章（中級）'));
+  assert.ok(l3Creative.some((o) => o.id === 'OT-A18-A' && o.zh === '音樂章（高級）'));
+
+  // L4 高級歷奇章：多元創藝 8 枚、科學與大自然 6 枚、運動與愛好 12 枚
+  assert.equal(interestDomainOptions('L4', 'CREATIVE').filter((o) => !o.level).length, 8);
+  assert.equal(interestDomainOptions('L4', 'SCIENCE').filter((o) => !o.level).length, 6);
+  assert.equal(interestDomainOptions('L4', 'SPORTS').filter((o) => !o.level).length, 12);
+
+  // OT-GB 金紫荊獎章：多元創藝 9 枚、科學與大自然 7 枚、運動與愛好 15 枚
+  assert.equal(interestDomainOptions('OT-GB', 'CREATIVE').filter((o) => !o.level).length, 9);
+  assert.equal(interestDomainOptions('OT-GB', 'SCIENCE').filter((o) => !o.level).length, 7);
+  assert.equal(interestDomainOptions('OT-GB', 'SPORTS').filter((o) => !o.level).length, 15);
+
+  // 所有選項必須具備非空白 zh / name / en
+  for (const awardId of ['L3', 'L4', 'OT-GB']) {
+    for (const cat of ['CREATIVE', 'SCIENCE', 'SPORTS']) {
+      for (const opt of interestDomainOptions(awardId, cat)) {
+        assert.ok(opt.zh && opt.zh.trim().length > 0, `${awardId}/${cat}/${opt.id} 缺少中文名稱`);
+        assert.ok(opt.name && opt.name.trim().length > 0, `${awardId}/${cat}/${opt.id} 缺少 name`);
+        assert.ok(opt.en && opt.en.trim().length > 0, `${awardId}/${cat}/${opt.id} 缺少英文名稱`);
+      }
+    }
+  }
+
+  // 核心範疇 12 個選修／指定徽章細項均提供完整選項
+  const electiveIds = [
+    'L3-CARING-04',
+    'L4-SKILLS-04',
+    'L4-CARING-04',
+    'L4-CARING-05',
+    'OT-GB-SKILLS-02',
+    'OT-GB-SKILLS-03',
+    'OT-GB-SKILLS-04',
+    'OT-GB-SKILLS-05',
+    'OT-GB-CARING-01',
+    'OT-GB-CARING-05',
+    'OT-GB-COUNTRY-04',
+    'OT-GB-FAMILY-01',
+  ];
+  for (const id of electiveIds) {
+    const opts = itemElectiveOptions(id);
+    assert.ok(opts.length >= 1, `${id} 應提供選修選項`);
+    for (const o of opts) {
+      assert.ok(o.zh && o.en, `${id} 選項缺少中英文標籤`);
+    }
+  }
+
+  assert.equal(formatInterestBadgeLabel('OT-A18-I', 'zh'), '音樂章（中級）');
+  assert.equal(formatInterestBadgeLabel('OT-A18-I', 'en'), 'Musician (Intermediate lv.)');
+
+  // interestProgress 同時識別第 15／17／19 頁 book.interest 之完成紀錄（含三級制後綴）
+  const book = newBook();
+  book.interest.L3 = {
+    chosen: ['CREATIVE', 'SPORTS'],
+    badges: {
+      CREATIVE: { badgeId: 'OT-A18-E', examiner: '王團長', date: '2026-04-01' },
+      SPORTS: { badgeId: 'OT-A39-E', examiner: '王團長', date: '2026-04-15' },
+    },
+  };
+  const l3Seg = ALL_AWARDS.find((a) => a.id === 'L3').segments.find((s) => s.activityRequirement);
+  const prog = interestProgress(book, l3Seg);
+  assert.equal(prog.satisfied, true);
+  assert.deepEqual(prog.categories.sort(), ['CREATIVE', 'SPORTS']);
+  assert.deepEqual(prog.completedBadges.map((b) => b.zh), ['音樂章（初級）', '游泳章（初級）']);
+});
+

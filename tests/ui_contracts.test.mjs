@@ -279,7 +279,7 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
   }
 
   const sw = read('web/public/sw.js');
-  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v5'"), '圖標改版後需更新快取版本');
+  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v6'"), '圖標或快取改版後需更新快取版本');
   // 官方 PDF 圖稿必須離線可用，否則露營現場翻開紀錄冊會破圖
   for (const asset of OFFICIAL_ASSETS) assert.ok(sw.includes(`'/official/${asset}'`), `Service Worker 未預快取 /official/${asset}`);
   assert.ok(!sw.includes('vsbook'));
@@ -362,3 +362,16 @@ test('官方原圖：封面／扉頁／徽章全部裁自官方 PDF，不用近�
   }
   assert.ok(read('scripts/crop_official_art.py').includes('pypdfium2'), '缺少裁圖 script');
 });
+
+test('興趣範疇與選修項目下拉選單：必須顯示中英文徽章名稱，不得出現空白 option 或中英混雜佔位字', () => {
+  const official = read('web/src/pages/Official.jsx');
+  const awardBlock = read('web/src/components/AwardBlock.jsx');
+
+  assert.ok(official.includes('interestDomainOptions(awardId, d.category)'), 'Official.jsx 需按階段與範疇載入指定活動徽章');
+  assert.ok(official.includes('b.zh || b.name'), 'Official.jsx 下拉選單需讀取 b.zh || b.name 避免中文空白');
+  assert.equal(official.includes('— 章 Badge —'), false, 'Official.jsx 不得出現中英夾雜佔位字「— 章 Badge —」');
+
+  assert.ok(awardBlock.includes('itemElectiveOptions(item)'), 'AwardBlock.jsx 需為核心選修細項提供下拉選單');
+  assert.ok(awardBlock.includes('interestDomainOptions(award.id, d.category)'), 'AwardBlock.jsx 需為興趣範疇提供下拉選單');
+});
+

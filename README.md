@@ -2,7 +2,7 @@
 
 > **幼童軍個人隨身離線電子紀錄冊** —— 逐頁對應香港童軍總會《幼童軍紀錄冊》官方 32 頁（2026 年版）及 2026 年第十版《幼童軍訓練綱要》，支援就地打字／手寫簽名、一鍵生成及列印 `PT/67`・`PT/68` 官方表格、成員⇄領袖純離線二維碼核簽，以及與 `cubbadge` 旅團進度表的**純進度、零個人資料**雙向同步。
 
-- **目前版本**：`v1.2.6`（2026-11-06）
+- **目前版本**：`v1.2.7`（2026-11-08）
 - **架構形態**：離線優先 PWA（React + Vite + Service Worker，`localStorage` 本機儲存，零帳號、零雲端上傳；可選配 Vercel `/api/leader` 與 `/api/cubbadge` 伺服器端接口）
 - **圖示／favicon（家族版式）**：對齊 `VSBOOK`／`ROVERBOOK`／`SCOUTBOOK` 的出街圖標——圓角深金布面（`#664c0e → #3a2a08 → #14100a`）＋內嵌幼童軍黃金線＋家族共用水滴環＋下方支部「C」；9 個圖示、`favicon.svg`、ICO 與 OG 圖一律由 `npm run icons` 決定性產生。金色只用 `#f0d85e → #ead040 → #c0a21c`，**森林綠、酒紅、海軍藍一律不用**，留給其他 BOOK。並排對照見 [`docs/icon-family-preview.png`](docs/icon-family-preview.png)。
 - **換圖標後的主畫面**：Android／iOS 的 PWA 圖示是「安裝嗰一刻」的快照；如仍見舊黃色書本，請移除主畫面捷徑後重新「加入主畫面」／重新安裝。瀏覽器分頁 favicon 只需強制重新整理（Service Worker 已升 `cubbook-cache-v5`）。

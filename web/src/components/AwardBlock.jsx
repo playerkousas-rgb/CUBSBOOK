@@ -1,10 +1,19 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useBook } from '../bookContext.js';
 import { useLang } from '../i18n.jsx';
 import { Icon, cx } from '../ui.jsx';
 import Write from './Write.jsx';
 import { SignModal } from './Ink.jsx';
-import { today, interestProgress } from '@shared/book.js';
+import {
+  INTEREST_DOMAINS,
+  interestDomainOptions,
+  interestProgress,
+  itemElectiveOptions,
+  levelsOf,
+  splitLevelRef,
+  toBookId,
+  today,
+} from '@shared/book.js';
 
 /**
  * AwardBlock — 進度性獎章細項表（對齊紙本「項目｜主考｜日期」三欄）。
@@ -26,6 +35,43 @@ export default function AwardBlock({ award, showDetail = false }) {
         [id]: { ...(b.progress?.[id] || {}), ...patch, at: new Date().toISOString() },
       },
     }));
+  };
+
+  const awardInterest = book.interest?.[award.id] || { chosen: [], badges: {} };
+  const setInterestState = (patch) => {
+    if (readOnly) return;
+    update((b) => ({
+      ...b,
+      interest: { ...(b.interest || {}), [award.id]: { ...awardInterest, ...patch } },
+    }));
+  };
+  const toggleInterestDomain = (code) => {
+    if (readOnly) return;
+    const chosen = awardInterest.chosen || [];
+    setInterestState({
+      chosen: chosen.includes(code) ? chosen.filter((c) => c !== code) : [...chosen, code].slice(0, 2),
+    });
+  };
+  const setInterestBadge = (code, patch) => {
+    if (readOnly) return;
+    const prevRow = awardInterest.badges?.[code] || {};
+    const nextRow = { ...prevRow, ...patch };
+    if (patch.badgeId && !nextRow.date) {
+      const { id: rawId, level } = splitLevelRef(patch.badgeId);
+      const baseId = toBookId(rawId);
+      const otherEntry = book.otherBadges?.[baseId];
+      const existingDate = level ? levelsOf(otherEntry)?.[level]?.date || otherEntry?.date : otherEntry?.date;
+      if (existingDate) nextRow.date = existingDate;
+    }
+    const chosen = awardInterest.chosen || [];
+    const nextChosen =
+      patch.badgeId && !chosen.includes(code) && chosen.length < 2
+        ? [...chosen, code]
+        : chosen;
+    setInterestState({
+      chosen: nextChosen,
+      badges: { ...(awardInterest.badges || {}), [code]: nextRow },
+    });
   };
 
   const toggleDetail = (id) => setOpenDetail((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -60,6 +106,12 @@ export default function AwardBlock({ award, showDetail = false }) {
                   const st = book.progress?.[item.id] || {};
                   const done = Boolean(st.date);
                   const detailOpen = openDetail[item.id] ?? showDetail;
+                  const electiveOpts = itemElectiveOptions(item);
+                  const selectedElective =
+                    st.elective ||
+                    (electiveOpts.length === 1 ? electiveOpts[0].id : '') ||
+                    electiveOpts.find((o) => o.badgeId && book.otherBadges?.[o.badgeId]?.date)?.id ||
+                    '';
                   return (
                     <div className={cx('assrow', done && 'is-done')} key={item.id}>
                       <div className="assrow__item">
@@ -81,6 +133,33 @@ export default function AwardBlock({ award, showDetail = false }) {
                             </span>
                           )}
                         </div>
+                        {electiveOpts.length > 0 && (
+                          <div className="assrow__elective">
+                            <span className="offselect">
+                              <select
+                                value={selectedElective}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const pickedOpt = electiveOpts.find((o) => o.id === val);
+                                  const badgeDate = pickedOpt?.badgeId ? book.otherBadges?.[pickedOpt.badgeId]?.date : '';
+                                  setEntry(item.id, {
+                                    elective: val,
+                                    ...(!st.date && badgeDate ? { date: badgeDate } : {}),
+                                  });
+                                }}
+                                disabled={readOnly}
+                                aria-label={`${item.name} 選修項目`}
+                              >
+                                <option value="">{isEn ? '— Select option —' : '— 請選擇完成方式／徽章 —'}</option>
+                                {electiveOpts.map((opt) => (
+                                  <option key={opt.id} value={opt.id}>
+                                    {isEn ? opt.en : opt.zh}
+                                  </option>
+                                ))}
+                              </select>
+                            </span>
+                          </div>
+                        )}
                         {item.detail && (
                           <>
                             <button
@@ -160,9 +239,69 @@ export default function AwardBlock({ award, showDetail = false }) {
                       ? `Choose ${interest.needed} listed activity badges from different areas`
                       : `尚需在指定清單中，於兩個不同範疇各完成 ${segment.activityRequirement.badgesPerCategory} 個活動徽章`}
                 </p>
+                <div className="offexam interestbox__exam">
+                  {INTEREST_DOMAINS.map((d) => {
+                    const picked = awardInterest.chosen?.includes(d.code);
+                    const row = awardInterest.badges?.[d.code] || {};
+                    const options = interestDomainOptions(award.id, d.category);
+                    return (
+                      <div className={cx('offexam__row', picked && 'is-picked')} key={d.code}>
+                        <span className="offexam__no">
+                          <button
+                            type="button"
+                            className={cx('offtick', picked && 'is-on')}
+                            onClick={() => toggleInterestDomain(d.code)}
+                            aria-pressed={picked}
+                            aria-label={d.zh}
+                          >
+                            {picked ? '✓' : ''}
+                          </button>
+                          ({d.no})
+                        </span>
+                        <span className="offexam__name">
+                          {isEn ? d.en : d.zh}
+                          {!isEn && <em>{d.en}</em>}
+                          <span className="offselect">
+                            <select
+                              value={row.badgeId || ''}
+                              onChange={(e) => setInterestBadge(d.code, { badgeId: e.target.value })}
+                              disabled={readOnly}
+                              aria-label={`${d.zh} 徽章`}
+                            >
+                              <option value="">{isEn ? '— Select badge —' : '— 請選擇活動徽章 —'}</option>
+                              {options.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                  {isEn ? b.en : b.zh || b.name}
+                                </option>
+                              ))}
+                            </select>
+                          </span>
+                        </span>
+                        <span className="offexam__cell">
+                          <Write
+                            value={row.examiner || ''}
+                            onChange={(v) => setInterestBadge(d.code, { examiner: v })}
+                            compact
+                            placeholder={isEn ? 'Name' : '姓名'}
+                            label={`${d.zh} 主考人`}
+                          />
+                        </span>
+                        <span className="offexam__cell">
+                          <Write
+                            value={row.date || ''}
+                            onChange={(v) => setInterestBadge(d.code, { date: v })}
+                            type="date"
+                            compact
+                            label={`${d.zh} 日期`}
+                          />
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
                 <p className="interestbox__list">
-                  {(segment.activityRequirement.allowedBadgeIds || [])
-                    .map((id) => book.otherBadges?.[id]?.date && id)
+                  {(interest.completedBadges || [])
+                    .map((b) => (isEn ? b.en : b.zh))
                     .filter(Boolean)
                     .join('、') || (isEn ? 'None yet' : '尚未記錄')}
                 </p>

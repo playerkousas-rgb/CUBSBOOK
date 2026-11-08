@@ -1,6 +1,6 @@
 /* CUBBOOK Service Worker — 確保露營、遠足及離線集會現場仍可完整開啟與讀寫紀錄冊。 */
 
-const CACHE_NAME = 'cubbook-cache-v5';
+const CACHE_NAME = 'cubbook-cache-v6';
 const SHELL = [
   '/',
   '/index.html',

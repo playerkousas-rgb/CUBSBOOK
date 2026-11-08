@@ -18,6 +18,8 @@
 import { LEVELED, LEVEL_LABEL } from './officialActivityBadges.js';
 import { OTHER_BADGES, toBadgeId, toBookId } from './syllabus.js';
 
+export { LEVEL_LABEL };
+
 /** 官方級別次序：初 → 中 → 高。 */
 export const LEVEL_KEYS = ['E', 'I', 'A'];
 
