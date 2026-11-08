@@ -18,6 +18,7 @@ import {
 import { COVER, OFFICIAL_PAGES } from './officialPages.js';
 import {
   LEVEL_KEYS,
+  LEVEL_LABEL,
   isLevelKey,
   levelSummary,
   otherBadgeRows,
@@ -43,6 +44,7 @@ export {
 
 export {
   LEVEL_KEYS,
+  LEVEL_LABEL,
   isLevelKey,
   isLeveledRef,
   levelSummary,
@@ -54,7 +56,7 @@ export {
   withLevel,
 };
 
-export const APP_VERSION = 'v1.2.6';
+export const APP_VERSION = 'v1.2.7';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 
@@ -242,22 +244,213 @@ export function newBook(partial = {}) {
   return book;
 }
 
+// ------------------------------------------------------------------ 選修／興趣範疇選項（對齊 BADGE 及 2026《幼童軍訓練綱要》）
+export const INTEREST_DOMAINS = [
+  { code: 'CREATIVE', no: '5', zh: '多元創藝', en: 'Diverse Creativity', category: 'CREATIVE' },
+  { code: 'NATURE', no: '6', zh: '科學與大自然', en: 'Science and Nature', category: 'SCIENCE' },
+  { code: 'SPORTS', no: '7', zh: '運動與愛好', en: 'Sports and Hobbies', category: 'SPORTS' },
+];
+
+/** 將活動徽章識別碼（含 `OT-A18-E` 三級制後綴）轉為可讀名稱。 */
+export function formatInterestBadgeLabel(ref, lang = 'zh') {
+  if (!ref) return '';
+  const { id, level } = splitLevelRef(String(ref).trim());
+  const bookId = toBookId(id);
+  const meta = OTHER_BADGES.find((b) => b.id === bookId);
+  if (!meta) return String(ref);
+  const base = lang === 'en' ? meta.en : meta.name;
+  if (level && LEVEL_LABEL[level]) {
+    return lang === 'en'
+      ? `${base} (${LEVEL_LABEL[level].en})`
+      : `${base}（${LEVEL_LABEL[level].zh}）`;
+  }
+  return base;
+}
+
+/**
+ * 依進度性獎章階段（`L3` 歷奇章、`L4` 高級歷奇章、`OT-GB` 金紫荊獎章）及範疇，
+ * 回傳《幼童軍訓練綱要》乙部「興趣範疇」及 BADGE `allowedBadgeIds` 指定之可選活動徽章清單。
+ * 三級制度章同時提供基本章與初／中／高級選項，方便記錄進階級別。
+ */
+export function interestDomainOptions(awardId, domainOrCategory) {
+  const category = domainOrCategory === 'NATURE' ? 'SCIENCE' : domainOrCategory;
+  const award = ALL_AWARDS.find((a) => a.id === awardId);
+  const seg = award?.segments?.find((s) => s.activityRequirement);
+  const allowedIds = seg?.activityRequirement?.allowedBadgeIds || [];
+  const baseBadges = allowedIds.length
+    ? allowedIds
+        .map((id) => OTHER_BADGES.find((b) => b.id === id))
+        .filter((b) => b && (!category || b.category === category))
+    : OTHER_BADGES.filter((b) => !category || b.category === category);
+
+  const out = [];
+  for (const b of baseBadges) {
+    out.push({
+      id: b.id,
+      badgeId: b.badgeId,
+      baseId: b.id,
+      level: '',
+      zh: b.name,
+      name: b.name,
+      en: b.en,
+      category: b.category,
+    });
+    if (isLeveledRef(b.id)) {
+      for (const lv of LEVEL_KEYS) {
+        out.push({
+          id: `${b.id}-${lv}`,
+          badgeId: `${b.badgeId}-${lv}`,
+          baseId: b.id,
+          level: lv,
+          zh: `${b.name}（${LEVEL_LABEL[lv].zh}）`,
+          name: `${b.name}（${LEVEL_LABEL[lv].zh}）`,
+          en: `${b.en} (${LEVEL_LABEL[lv].en})`,
+          category: b.category,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+const CORE_ELECTIVE_MAP = {
+  'L3-CARING-04': [
+    { id: 'OT-A06', badgeId: 'OT-A06', zh: '完成「家務章」', en: 'Complete Home Help Badge' },
+    { id: 'CONTENT', zh: '完成 a–d 日行一善考驗內容', en: 'Complete Good Turn items a–d' },
+  ],
+  'L4-SKILLS-04': [
+    { id: 'HOLIDAY_CAMP', zh: '度假營（不少於兩日一夜）', en: 'Holiday camp (at least 2 days 1 night)' },
+    { id: 'CAMPING', zh: '露營（不少於兩日一夜）', en: 'Camping (at least 2 days 1 night)' },
+    { id: 'BOTH', zh: '露營及度假營兩項均參與', en: 'Both camping and holiday camp' },
+  ],
+  'L4-CARING-04': [
+    { id: 'OT-A09-CHILD-PROTECTION', badgeId: 'OT-A09-CHILD-PROTECTION', zh: '完成「保護兒童章」', en: 'Complete Child Protection Badge' },
+  ],
+  'L4-CARING-05': [
+    { id: 'OT-A08', badgeId: 'OT-A08', zh: 'i. 水上安全章', en: 'i. Water Safety Badge' },
+    { id: 'OT-A07', badgeId: 'OT-A07', zh: 'ii. 道路安全章', en: 'ii. Road Safety Badge' },
+  ],
+  'OT-GB-SKILLS-02': [
+    { id: 'i+ii', zh: 'i. 旗杆架 ＋ ii. 衣鞋架', en: 'i. Flagpole stand + ii. Clothes/shoe rack' },
+    { id: 'i+iii', zh: 'i. 旗杆架 ＋ iii. 戰車架', en: 'i. Flagpole stand + iii. Chariot frame' },
+    { id: 'i+iv', zh: 'i. 旗杆架 ＋ iv. 羅馬炮架', en: 'i. Flagpole stand + iv. Roman catapult' },
+    { id: 'ii+iii', zh: 'ii. 衣鞋架 ＋ iii. 戰車架', en: 'ii. Clothes/shoe rack + iii. Chariot frame' },
+    { id: 'ii+iv', zh: 'ii. 衣鞋架 ＋ iv. 羅馬炮架', en: 'ii. Clothes/shoe rack + iv. Roman catapult' },
+    { id: 'iii+iv', zh: 'iii. 戰車架 ＋ iv. 羅馬炮架', en: 'iii. Chariot frame + iv. Roman catapult' },
+  ],
+  'OT-GB-SKILLS-03': [
+    { id: 'OT-A01', badgeId: 'OT-A01', zh: '完成「露營章」', en: 'Complete Camper Badge' },
+    { id: 'CONTENT', zh: '完成 a 項（i–vi）露營考驗內容', en: 'Complete camping items a (i–vi)' },
+  ],
+  'OT-GB-SKILLS-04': [
+    { id: 'OT-A02', badgeId: 'OT-A02', zh: '完成「探險章」', en: 'Complete Explorer Badge' },
+    { id: 'CONTENT', zh: '完成 a–c 地圖及指南針考驗內容', en: 'Complete map & compass items a–c' },
+  ],
+  'OT-GB-SKILLS-05': [
+    { id: 'OT-A02', badgeId: 'OT-A02', zh: '完成「探險章」', en: 'Complete Explorer Badge' },
+    { id: 'CONTENT', zh: '完成 a–b 遠足考驗內容', en: 'Complete expedition items a–b' },
+  ],
+  'OT-GB-CARING-01': [
+    { id: 'OT-A05', badgeId: 'OT-A05', zh: '完成「急救章」', en: 'Complete First Aid Badge' },
+  ],
+  'OT-GB-CARING-05': [
+    { id: 'OT-A04', badgeId: 'OT-A04', zh: 'i. 共融章', en: 'i. Disability Awareness Badge' },
+    { id: 'OT-A03', badgeId: 'OT-A03', zh: 'ii. 愛護動物章', en: 'ii. Animal Care Badge' },
+  ],
+  'OT-GB-COUNTRY-04': [
+    { id: 'OT-A10', badgeId: 'OT-A10', zh: '完成「香港歷史章」', en: 'Complete Hong Kong Historian Badge' },
+    { id: 'CONTENT', zh: '完成 a 項香港古蹟與文物考驗內容', en: 'Complete Hong Kong heritage item a' },
+  ],
+  'OT-GB-FAMILY-01': [
+    { id: 'CONTENT', zh: '完成 a–d 全部考驗內容', en: 'Complete all items a–d' },
+    { id: 'OT-A42', badgeId: 'OT-A42', zh: '已完成「童軍先修章」（豁免 d 部分）', en: 'Completed Scout Link Badge (exempt part d)' },
+  ],
+};
+
+/** 回傳核心範疇選修／替代活動徽章或考驗選項清單（無選修項則回傳空陣列）。 */
+export function itemElectiveOptions(itemOrId) {
+  const id = typeof itemOrId === 'string' ? itemOrId : itemOrId?.id;
+  if (!id) return [];
+  const item = ITEM_INDEX[id] || SYLLABUS_ITEMS.find((it) => it.id === id || it.legacyCode === id);
+  const key = item?.id || id;
+  if (CORE_ELECTIVE_MAP[key]) return CORE_ELECTIVE_MAP[key];
+  if (item?.alternativeBadgeIds?.length) {
+    return item.alternativeBadgeIds.map((bid) => {
+      const meta = OTHER_BADGES.find((b) => b.id === bid);
+      return {
+        id: bid,
+        badgeId: bid,
+        zh: meta ? meta.name : bid,
+        en: meta ? meta.en : bid,
+      };
+    });
+  }
+  if (item?.requiredBadgeId) {
+    const meta = OTHER_BADGES.find((b) => b.id === item.requiredBadgeId);
+    return [
+      {
+        id: item.requiredBadgeId,
+        badgeId: item.requiredBadgeId,
+        zh: meta ? `完成「${meta.name}」` : item.requiredBadgeId,
+        en: meta ? `Complete ${meta.en} Badge` : item.requiredBadgeId,
+      },
+    ];
+  }
+  return [];
+}
+
 // ------------------------------------------------------------------ 進度判斷
 const hasDate = (book, id) => Boolean(book?.progress?.[id]?.date);
 
 /** 興趣範疇是否已達標：指定清單內、兩個不同類別、每類至少一個活動徽章。 */
 export function interestProgress(book, segment) {
   const req = segment?.activityRequirement;
-  if (!req) return { satisfied: false, count: 0, categories: [], needed: null };
+  if (!req) return { satisfied: false, count: 0, categories: [], needed: null, completedBadges: [] };
   const allowed = new Set(req.allowedBadgeIds || []);
   const byCategory = new Map();
+  const completedMap = new Map();
+  const addCompleted = (badge, refId, date) => {
+    if (!badge || !allowed.has(badge.id) || !date) return;
+    if (!byCategory.has(badge.category)) byCategory.set(badge.category, []);
+    const list = byCategory.get(badge.category);
+    if (!list.includes(badge.id)) list.push(badge.id);
+    if (!completedMap.has(badge.id)) {
+      completedMap.set(badge.id, {
+        id: refId || badge.id,
+        baseId: badge.id,
+        zh: formatInterestBadgeLabel(refId || badge.id, 'zh'),
+        en: formatInterestBadgeLabel(refId || badge.id, 'en'),
+        date,
+      });
+    }
+  };
+
   for (const badge of OTHER_BADGES) {
     if (!allowed.has(badge.id)) continue;
     const entry = book?.otherBadges?.[badge.id];
-    if (!entry?.date) continue;
-    if (!byCategory.has(badge.category)) byCategory.set(badge.category, []);
-    byCategory.get(badge.category).push(badge.id);
+    const date = entry?.date || latestLevelDate(levelsOf(entry));
+    if (!date) continue;
+    addCompleted(badge, badge.id, date);
   }
+
+  const awardId = String(segment?.code || '').replace(/-INTEREST$/, '');
+  const awardInterest = awardId ? book?.interest?.[awardId] : null;
+  if (awardInterest?.badges && typeof awardInterest.badges === 'object') {
+    for (const row of Object.values(awardInterest.badges)) {
+      if (!row?.badgeId) continue;
+      const { id, level } = splitLevelRef(row.badgeId);
+      const baseId = toBookId(id);
+      const badge = OTHER_BADGES.find((b) => b.id === baseId);
+      if (!badge) continue;
+      const otherEntry = book?.otherBadges?.[baseId];
+      const fallbackDate = level
+        ? levelsOf(otherEntry)?.[level]?.date || otherEntry?.date
+        : otherEntry?.date || latestLevelDate(levelsOf(otherEntry));
+      const date = row.date || fallbackDate || '';
+      if (date) addCompleted(badge, row.badgeId, date);
+    }
+  }
+
   const categories = [...byCategory.keys()];
   const perCategoryOk = categories.filter(
     (cat) => (byCategory.get(cat) || []).length >= req.badgesPerCategory,
@@ -268,6 +461,7 @@ export function interestProgress(book, segment) {
     categories: perCategoryOk,
     needed: `${req.distinctCategories} × ${req.badgesPerCategory}`,
     allowed: [...allowed],
+    completedBadges: [...completedMap.values()],
   };
 }
 

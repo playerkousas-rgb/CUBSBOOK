@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { BADGE_SYLLABUS, GOLD_AWARD, OTHER_BADGES, ageFromDob, allStats, membershipStatus } from '@shared/book.js';
+import {
+  BADGE_SYLLABUS,
+  GOLD_AWARD,
+  INTEREST_DOMAINS,
+  OTHER_BADGES,
+  ageFromDob,
+  allStats,
+  interestDomainOptions,
+  levelsOf,
+  membershipStatus,
+  splitLevelRef,
+  toBookId,
+} from '@shared/book.js';
 import { OFFICIAL_GROUPS, OFFICIAL_PAGES } from '@shared/officialPages.js';
 import { ACTIVITY_DOMAINS, LEVEL_LABEL, expandActivityPlan } from '@shared/officialActivityBadges.js';
 import { useBook, useField, useReadOnly } from '../bookContext.js';
@@ -706,12 +718,6 @@ export function P18() {
 
 /* ------------------------------------------------------------------ 第 15／17／19 頁 興趣範疇 */
 
-const INTEREST_DOMAINS = [
-  { code: 'CREATIVE', no: '5', zh: '多元創藝', en: 'Diverse Creativity', category: 'CREATIVE' },
-  { code: 'NATURE', no: '6', zh: '科學與大自然', en: 'Science and Nature', category: 'SCIENCE' },
-  { code: 'SPORTS', no: '7', zh: '運動與愛好', en: 'Sports and Hobbies', category: 'SPORTS' },
-];
-
 function InterestPage({ id, awardId }) {
   const { book, update, readOnly } = useBook();
   const { isEn } = useLang();
@@ -726,7 +732,27 @@ function InterestPage({ id, awardId }) {
     const chosen = state.chosen || [];
     setState({ chosen: chosen.includes(code) ? chosen.filter((c) => c !== code) : [...chosen, code].slice(0, 2) });
   };
-  const setBadge = (code, patch) => setState({ badges: { ...(state.badges || {}), [code]: { ...(state.badges?.[code] || {}), ...patch } } });
+  const setBadge = (code, patch) => {
+    if (readOnly) return;
+    const prevRow = state.badges?.[code] || {};
+    const nextRow = { ...prevRow, ...patch };
+    if (patch.badgeId && !nextRow.date) {
+      const { id: rawId, level } = splitLevelRef(patch.badgeId);
+      const baseId = toBookId(rawId);
+      const otherEntry = book.otherBadges?.[baseId];
+      const existingDate = level ? levelsOf(otherEntry)?.[level]?.date || otherEntry?.date : otherEntry?.date;
+      if (existingDate) nextRow.date = existingDate;
+    }
+    const chosen = state.chosen || [];
+    const nextChosen =
+      patch.badgeId && !chosen.includes(code) && chosen.length < 2
+        ? [...chosen, code]
+        : chosen;
+    setState({
+      chosen: nextChosen,
+      badges: { ...(state.badges || {}), [code]: nextRow },
+    });
+  };
 
   return (
     <Page id={id} dense>
@@ -743,7 +769,7 @@ function InterestPage({ id, awardId }) {
         {INTEREST_DOMAINS.map((d) => {
           const picked = state.chosen?.includes(d.code);
           const row = state.badges?.[d.code] || {};
-          const options = OTHER_BADGES.filter((b) => b.category === d.category);
+          const options = interestDomainOptions(awardId, d.category);
           return (
             <div className={cx('offexam__row', picked && 'is-picked')} key={d.code}>
               <span className="offexam__no">
@@ -757,10 +783,10 @@ function InterestPage({ id, awardId }) {
                 {!isEn && <em>{d.en}</em>}
                 <span className="offselect">
                   <select value={row.badgeId || ''} onChange={(e) => setBadge(d.code, { badgeId: e.target.value })} disabled={readOnly} aria-label={`${d.zh} 徽章`}>
-                    <option value="">{isEn ? '— Badge —' : '— 章 Badge —'}</option>
+                    <option value="">{isEn ? '— Select badge —' : '— 請選擇活動徽章 —'}</option>
                     {options.map((b) => (
                       <option key={b.id} value={b.id}>
-                        {isEn ? b.en : b.zh}
+                        {isEn ? b.en : b.zh || b.name}
                       </option>
                     ))}
                   </select>

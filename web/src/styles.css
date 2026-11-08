@@ -4106,6 +4106,10 @@ html[data-print-preview] .write--multi.is-empty {
 .interestbox__req { margin: 0 0 4px; font-size: 11.5px; color: var(--ink-2); }
 .interestbox__state { margin: 0; display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--warn); }
 .interestbox__state.is-ok { color: var(--ok); }
+.interestbox__exam { margin: 6px 0 4px; }
+.interestbox__exam .offselect select,
+.assrow__elective .offselect select { font-size: 11px; padding: 2px 4px; max-width: 260px; }
+.assrow__elective { margin-top: 3px; }
 .interestbox__list { margin: 3px 0 0; font-size: 10.5px; color: var(--ink-3); }
 
 .marklegend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0; font-size: 10px; color: var(--ink-3); }
