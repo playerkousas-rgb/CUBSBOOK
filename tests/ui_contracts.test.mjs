@@ -279,7 +279,7 @@ test('圖示全套 9 個 + 根目錄 favicon、manifest 與 Service Worker 一�
   }
 
   const sw = read('web/public/sw.js');
-  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v6'"), '圖標或快取改版後需更新快取版本');
+  assert.ok(sw.includes("const CACHE_NAME = 'cubbook-cache-v7'"), '圖標或快取改版後需更新快取版本');
   // 官方 PDF 圖稿必須離線可用，否則露營現場翻開紀錄冊會破圖
   for (const asset of OFFICIAL_ASSETS) assert.ok(sw.includes(`'/official/${asset}'`), `Service Worker 未預快取 /official/${asset}`);
   assert.ok(!sw.includes('vsbook'));
@@ -375,3 +375,43 @@ test('興趣範疇與選修項目下拉選單：必須顯示中英文徽章名�
   assert.ok(awardBlock.includes('interestDomainOptions(award.id, d.category)'), 'AwardBlock.jsx 需為興趣範疇提供下拉選單');
 });
 
+
+test('全書欄寬按內容統一（v1.2.8）：日期夠寬、簽署只按姓名計、不照 PDF 比例', () => {
+  const css = read('web/src/styles.css');
+  const audit = css.slice(css.indexOf('v1.2.8 全書欄寬重整'));
+  assert.ok(audit.length > 1000, '缺少 v1.2.8 全書欄寬重整段落');
+
+  // 統一基準必須是流動 clamp（按表格闊度百分比自動伸縮），不得再用固定像素死寬；
+  // 項目欄一律 minmax(0, 1fr)，頁面／表格以 container query 按實際闊度分段適配
+  for (const token of ['--col-date: clamp(', '--col-person: clamp(', '--col-sig: clamp(', '--col-cert: clamp(']) {
+    assert.ok(audit.includes(token), `欄寬基準缺少流動 ${token}`);
+  }
+  assert.ok(audit.includes('clamp(100px, 17%, 124px)'), '日期欄必須以百分比按表格闊度自動伸縮');
+  // 名稱欄按實測最長字數收窄：徽章名 ≤7 字、範疇名 ≤9 字、項目 ≤14 字，不得再獨佔 minmax(0, 1fr)
+  assert.ok(audit.includes('minmax(112px, 1.25fr)'), '活動徽章欄必須收窄至約四成，其餘還給日期／簽署');
+  assert.ok(audit.includes('minmax(118px, 1.6fr)'), '主考表範疇欄必須收窄，其餘還給主考／日期');
+  assert.ok(audit.includes('minmax(150px, 2fr)'), '逐項表項目欄必須收窄，其餘還給主考／日期');
+  assert.equal(/\.offact__row \{[^}]*minmax\(0, 1fr\) var\(--col-date\)/.test(audit), false, '活動徽章欄仍獨佔餘下全部闊度');
+  assert.ok(audit.includes('@media (max-width: 540px)'), '缺少窄闊自動轉兩行制的分段斷點');
+  // container-type 會困住頁內的 fixed 簽署彈窗，禁止使用
+  assert.equal(/container-type\s*:/.test(audit), false, '不得以 container-type 量度頁闊（會困住簽署彈窗）');
+  for (const sel of ['.offexam__row', '.offact__row', '.offlog__row', '.offgrid__row', '.asstable__head', '.assrow']) {
+    assert.ok(audit.includes(sel), `欄寬重整未涵蓋 ${sel}`);
+  }
+  // 表頭與表身必須共用同一 template，禁止再出現舊窄欄（日期 58–82px／主考 74px）
+  assert.match(audit, /\.asstable__head,\s*\.assrow\s*\{[^}]*minmax\(150px, 2fr\)/);
+  assert.equal(/grid-template-columns:[^;]*(58px|62px|68px|74px|82px)/.test(audit), false, '重整段落仍有舊窄欄寬');
+  // 簽名圖只限高不限寬是疊圖成因之一，必須同時限寬
+  assert.match(audit, /\.assrow__sigbtn img\s*\{[^}]*max-width:/);
+  // 手機主考表改兩行制（項目全寬、主考＋日期並排），不得四欄硬塞
+  assert.ok(audit.includes('grid-template-areas'), '手機版主考表缺少兩行制 grid-areas');
+
+  // 簽署慣例：只寫姓名，不預填「姓名＋職銜」，示範資料的人名欄亦只放姓名
+  const book = read('shared/book.js');
+  assert.equal(book.includes('陳團長'), false, '示範資料仍以「陳團長」（姓名＋職銜）填人名欄');
+  for (const rel of ['web/src/pages/Official.jsx', 'web/src/components/Form.jsx', 'web/src/components/AwardBlock.jsx', 'web/src/components/SignoffPanel.jsx']) {
+    assert.equal(/defaultTitle=\{isEn/.test(read(rel)), false, `${rel} 仍預填簽署職銜`);
+  }
+  const ink = read('web/src/components/Ink.jsx');
+  assert.ok(ink.includes('[value.name, value.at]'), '簽署欄顯示必須只含姓名＋日期，不含職銜');
+});

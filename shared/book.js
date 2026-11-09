@@ -56,7 +56,7 @@ export {
   withLevel,
 };
 
-export const APP_VERSION = 'v1.2.7';
+export const APP_VERSION = 'v1.2.8';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 
@@ -946,7 +946,7 @@ export function demoBook() {
     district: '沙田北區',
     group: '沙田第 12 旅',
     pack: '沙田第 12 旅幼童軍團',
-    csl: '陳團長',
+    csl: '陳志軒',
     cslPhone: '9123 4567',
     six: '棕狼隊',
     pob: '香港',
@@ -983,7 +983,7 @@ export function demoBook() {
   book.otherBadges['OT-A01'] = { date: '2025-03-15', cert: 'ACT/2025/0181', confirmedByBadge: true };
   book.otherBadges['OT-A22'] = { date: '2025-05-10', cert: 'ACT/2025/0244' };
   book.otherBadges['OT-A26'] = { levels: { E: { date: '2025-03-15' } }, date: '2025-03-15' };
-  book.pages.award_L1 = { date: '2023-11-25', certNo: 'MB/2023/0912', presentedBy: '陳團長' };
+  book.pages.award_L1 = { date: '2023-11-25', certNo: 'MB/2023/0912', presentedBy: '陳志軒' };
   book.personalProgress = {
     ...book.personalProgress,
     membership: '2023-11-25',
@@ -991,23 +991,23 @@ export function demoBook() {
   };
   book.serviceStars = { ...book.serviceStars, y1: '2024-09-01', y2: '2025-09-01' };
   book.domains = {
-    'L2-SKILLS': { examiner: '陳團長', date: '2024-03-09' },
-    'L2-CARING': { examiner: '陳團長', date: '2024-04-13' },
-    'L2-COUNTRY': { examiner: '陳團長', date: '2024-05-11' },
-    'L2-FAMILY': { examiner: '陳團長', date: '2024-06-08' },
-    'L3-SKILLS': { examiner: '陳團長', date: '2025-01-11' },
-    'SL-1': { examiner: '陳團長', date: '2025-06-14' },
+    'L2-SKILLS': { examiner: '陳志軒', date: '2024-03-09' },
+    'L2-CARING': { examiner: '陳志軒', date: '2024-04-13' },
+    'L2-COUNTRY': { examiner: '陳志軒', date: '2024-05-11' },
+    'L2-FAMILY': { examiner: '陳志軒', date: '2024-06-08' },
+    'L3-SKILLS': { examiner: '陳志軒', date: '2025-01-11' },
+    'SL-1': { examiner: '陳志軒', date: '2025-06-14' },
   };
-  book.interest = { L3: { chosen: ['CREATIVE', 'SPORTS'], badges: { CREATIVE: { badgeId: 'OT-A12', examiner: '陳團長', date: '2025-02-08' }, SPORTS: { badgeId: 'OT-A28', examiner: '陳團長', date: '2025-03-08' } } } };
+  book.interest = { L3: { chosen: ['CREATIVE', 'SPORTS'], badges: { CREATIVE: { badgeId: 'OT-A12', examiner: '陳志軒', date: '2025-02-08' }, SPORTS: { badgeId: 'OT-A28', examiner: '陳志軒', date: '2025-03-08' } } } };
   book.activities = [
     { date: '2025-10-04', text: '旅團大會操' },
     { date: '2025-11-15', text: '沙田區幼童軍大會操' },
     { date: '2025-12-20', text: '社區長者中心服務' },
   ];
   book.renewals = [
-    { from: '2024-01-01', validUntil: '2024-12-31', leaderName: '陳團長' },
-    { from: '2025-01-01', validUntil: '2025-12-31', leaderName: '陳團長' },
-    { from: '2026-01-01', validUntil: '2027-12-31', leaderName: '陳團長' },
+    { from: '2024-01-01', validUntil: '2024-12-31', leaderName: '陳志軒' },
+    { from: '2025-01-01', validUntil: '2025-12-31', leaderName: '陳志軒' },
+    { from: '2026-01-01', validUntil: '2027-12-31', leaderName: '陳志軒' },
   ];
   book.transfers = [{ date: '2025-08-01', group: '沙田第 15 旅' }];
   book.addressChanges = [{ date: '2025-08-15', address: '沙田石門安群街 3 號' }];

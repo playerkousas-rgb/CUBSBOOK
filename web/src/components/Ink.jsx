@@ -193,8 +193,8 @@ export function SignModal({
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={isEn ? 'e.g. Chan Chi-hin' : '例如：陳志軒'} />
           </label>
           <label>
-            <span>{isEn ? 'Post / Title' : '職位／身分'}</span>
-            <input type="text" value={role} onChange={(e) => setRole(e.target.value)} placeholder={isEn ? 'e.g. CSL' : '例如：幼童軍團長 CSL'} />
+            <span>{isEn ? 'Post / Title (optional)' : '職位／身分（可留空）'}</span>
+            <input type="text" value={role} onChange={(e) => setRole(e.target.value)} placeholder={isEn ? 'Optional — signing your name alone is enough' : '可留空；一般簽署只寫姓名即可'} />
           </label>
           <label>
             <span>{isEn ? 'Date' : '簽署日期'}</span>
@@ -253,7 +253,9 @@ export function SignatureBlock({ label, en, value, onChange, defaultName = '', d
           <img src={value.png} alt={label || '簽名'} />
           {(value.name || value.at) && (
             <small>
-              {[value.name, value.title, value.at].filter(Boolean).join(' · ')}
+              {/* 簽署欄只顯示姓名＋日期：一般簽署只寫姓名，不會寫「姓名＋職銜」，
+                  職銜（title）只作資料保存，不佔簽署欄寬度。 */}
+              {[value.name, value.at].filter(Boolean).join(' · ')}
             </small>
           )}
         </div>

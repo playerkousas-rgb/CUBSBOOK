@@ -64,7 +64,7 @@ function CslSign({ path, label = '幼童軍團長簽署', en = 'C.S.L. Signature
         onClose={() => setOpen(false)}
         title={isEn ? en : label}
         defaultName={sig?.name || ''}
-        defaultTitle={isEn ? 'C.S.L.' : '幼童軍團長'}
+        defaultTitle=""
         onSave={(next) => {
           setSig(next);
           setOpen(false);
@@ -185,7 +185,7 @@ function MiniSig({ path, label = '團長簽署', en = 'C.S.L. Signature' }) {
         onClose={() => setOpen(false)}
         title={isEn ? en : label}
         defaultName={sig?.name || ''}
-        defaultTitle={isEn ? 'C.S.L.' : '幼童軍團長'}
+        defaultTitle=""
         onSave={(next) => {
           set(next);
           setOpen(false);

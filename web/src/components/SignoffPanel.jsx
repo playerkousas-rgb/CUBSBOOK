@@ -283,7 +283,7 @@ export default function SignoffPanel({ payload }) {
         open={openSign}
         onClose={() => setOpenSign(false)}
         title={isEn ? 'Leader / Assessor Signature' : '領袖／主考簽署'}
-        defaultTitle={isEn ? 'Cub Scout Leader' : '幼童軍團長 CSL'}
+        defaultTitle=""
         onSave={(sig) => {
           setLeader(sig);
           setOpenSign(false);
