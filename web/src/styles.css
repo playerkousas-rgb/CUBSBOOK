@@ -5708,3 +5708,383 @@ html[data-print-preview] .write--multi.is-empty {
   color: #2b1a04;
 }
 .coverart__open { color: #f2dd76; }
+
+/* ==========================================================================
+   v1.2.8 全書欄寬重整（真實測試修訂：不再照足官方 PDF 比例，按內容定欄寬）
+   --------------------------------------------------------------------------
+   疊字成因（逐項核實）：
+   1. 日期欄只有 58–82px，但原生日期輸入要顯示「YYYY-MM-DD＋日曆鈕」至少需 ~110px，
+      數字被迫擠壓／與相鄰欄重疊；主考人欄同理被日期欄擠爆。
+   2. 簽署欄按「姓名＋職銜」（如「陳某某 團長」）預留 1.6fr／128–226px，但實際簽署
+      最多只寫姓名／簽名筆跡，寬度白白浪費，令項目欄被壓窄。
+   3. 表頭與表身曾用兩套不同欄寬（.asstable__head 128/118px vs .assrow 92/96px），
+      欄位天生對不齊。
+   4. 簽名圖只限高不限寬、彈性欄用 1fr（minmax(auto,1fr)）而不是 minmax(0,1fr)，
+      長內容會把固定欄推出格外，造成視覺重疊。
+   統一欄寬基準（全書共用）：全部以 clamp 百分比按表格實際闊度自動伸縮，
+   只設下限（窄到咁多就轉兩行制，唔再硬擠）與上限（闊頁唔浪費）：
+     日期／人名／簽署／證書／編號 = clamp(下限, 佔闊百分比, 上限)
+     項目／名稱／事項             = minmax(0, 1fr)：餘下全部寬度，永遠是主角
+   頁面以 container query 量度自身闊度分三段適配（見檔尾）：闊頁並排、
+   中頁收緊、窄頁（≤480px）轉兩行制；裝置直／橫向、平板、分屏、列印各自正確。
+   ========================================================================== */
+
+/* 欄寬不是死數：以表格闊度百分比自動伸縮，只設「最窄不疊字／最闊不浪費」上下限。
+   例如日期欄在 650px 闊的內頁約佔 110px、在 900px 闊的表格自動加闊至上限 124px、
+   在窄頁則縮至下限 100px 後改行（見下方 container query 兩行制），永不硬擠。 */
+:root {
+  --col-no: clamp(22px, 4%, 30px);
+  --col-person: clamp(76px, 13%, 104px);
+  --col-date: clamp(100px, 17%, 124px);
+  --col-sig: clamp(64px, 11%, 88px);
+  --col-cert: clamp(92px, 15%, 118px);
+}
+
+/* 為何不用 container query 量度頁闊？container-type 會成為 fixed 定位的包含塊，
+   令頁內的簽署／放大填寫彈窗（.modal-backdrop: position:fixed）被困在頁內而破版。
+   本 APP 內頁在任何裝置都是全闊單頁（桌面置中上限 760px、手機滿版），
+   故欄寬改以「百分比 clamp 直接按每張表格自身闊度伸縮」＋與頁闊對齊的斷點分段，
+   效果同樣是逐張表按實際可用闊度適配，且不影響任何彈窗。 */
+
+/* --- 防疊字核心：單行欄不換行硬塞、簽名圖不越格、窄欄不顯示放大鈕 ---------- */
+.write { min-width: 0; }
+.write__fit { min-width: 0; }
+.write:not(.write--multi) .write__text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.write__date {
+  min-width: 0;
+  width: 100%;
+  font-size: 11.5px;
+  letter-spacing: -0.01em;
+}
+.offexam .write__zoom,
+.offact .write__zoom,
+.offgrid .write__zoom,
+.offlog .write__zoom,
+.assrow .write__zoom,
+.offdotted .write__zoom {
+  display: none;
+}
+.offexam .write,
+.offact .write,
+.offgrid .write,
+.offlog .write,
+.assrow .write,
+.offdotted .write { padding-right: 3px; }
+.offsig img,
+.offsign__img img,
+.assrow__sigbtn img,
+.otrow__sig img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.offsig,
+.offsign__img,
+.assrow__sigbtn {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+.assrow__sigbtn { width: 100%; }
+.assrow__sigbtn img { max-width: min(72px, 100%); }
+.assrow__sigbtn small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sigblock__preview { min-width: 0; }
+.sigblock__preview img {
+  flex: 0 1 auto;
+  max-width: min(190px, 56%);
+  height: auto;
+  object-fit: contain;
+}
+.sigblock__preview small {
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.frow__label { white-space: normal; overflow-wrap: anywhere; }
+
+/* --- 主考人／日期點線表（官方第 13–20 頁、興趣範疇、附錄興趣表） ---------- */
+.offexam__head,
+.offexam__row {
+  grid-template-columns: var(--col-no) minmax(118px, 1.6fr) minmax(76px, 1fr) minmax(100px, 1.25fr);
+}
+.offexam__no { min-width: 0; }
+.offexam__name { min-width: 0; overflow-wrap: anywhere; }
+.offexam__cell { min-width: 0; overflow: hidden; }
+.offselect select { max-width: 100%; }
+
+/* --- 會員章／附錄逐項表：表頭表身共用同一欄寬（項目｜主考｜日期） ---------- */
+.asstable__head,
+.assrow {
+  grid-template-columns: minmax(150px, 2fr) minmax(76px, 1fr) minmax(100px, 1.2fr);
+}
+.assrow__item,
+.assrow__init,
+.assrow__date { min-width: 0; overflow: hidden; }
+
+/* --- 活動徽章紀錄（第 21–27 頁）：徽章名｜完成日期｜團長簽署 --------------- */
+.offact__head,
+.offact__row {
+  grid-template-columns: minmax(112px, 1.25fr) minmax(100px, 1fr) minmax(64px, 0.75fr);
+}
+.offact__name { min-width: 0; text-align: left; overflow-wrap: anywhere; }
+.offact__date,
+.offact__sig { min-width: 0; overflow: hidden; }
+.offact__sig .offsig img { max-width: min(110px, 100%); }
+
+/* --- 活動及服務紀錄（第 28–31 頁）：事項｜日期 ----------------------------- */
+.offlog__head,
+.offlog__row { grid-template-columns: minmax(0, 2.2fr) minmax(100px, 1fr); }
+.offlog__row > span { min-width: 0; overflow: hidden; }
+
+/* --- 個人進度／服務年星點線表（第 8–9 頁）：名稱｜獲取日期 ------------------ */
+.offdotted__row { grid-template-columns: minmax(120px, 1.5fr) minmax(100px, 1fr); }
+
+/* --- 頒發／完成日期列（AwardDate，原本 .offline 未有任何 CSS） -------------- */
+.offline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--col-date);
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+}
+.offline__label {
+  font-family: var(--serif);
+  font-size: 11px;
+  font-weight: 600;
+  color: #1d1a12;
+  text-align: right;
+}
+.offline__label em {
+  display: block;
+  font-style: normal;
+  font-family: var(--sans);
+  font-size: 7px;
+  font-weight: 500;
+  color: #8a7d63;
+}
+.offline__field { min-width: 0; }
+.offsign { min-width: 0; }
+.offsign__label { flex: 0 0 auto; }
+.offsign__img img { max-width: min(132px, 42vw); }
+
+/* --- 會員資格續期（第 4 頁）：由｜至｜領袖簽署｜領袖姓名 ----------------------
+   簽署只得筆跡／姓名，收窄至 var(--col-sig)；兩格日期各 118px；
+   領袖姓名只寫姓名，佔餘下寬度。表頭兩行與表身必須共用同一 template。 */
+.offgrid--renewal .offgrid__head--span,
+.offgrid--renewal .offgrid__head--sub,
+.offgrid__row {
+  grid-template-columns: minmax(100px, 1.1fr) minmax(100px, 1.1fr) minmax(64px, 0.8fr) minmax(76px, 1fr);
+}
+.offgrid__row > span { min-width: 0; overflow: hidden; }
+.offgrid .offsig img { max-width: min(64px, 100%); }
+
+/* --- 轉旅／遷移地址（第 5 頁）：日期｜新旅號／新地址 ------------------------- */
+.offgrid--transfer .offgrid__head,
+.offgrid--transfer .offgrid__row {
+  grid-template-columns: minmax(100px, 1fr) minmax(120px, 1.6fr);
+}
+.offgrid--address .offgrid__head,
+.offgrid--address .offgrid__row {
+  grid-template-columns: minmax(100px, 1fr) minmax(0, 2.2fr);
+}
+
+/* --- 附錄頒發列：頒發日期｜證書編號｜頒發人（只寫姓名）｜簽署 ---------------- */
+.presentbox__row {
+  grid-template-columns: minmax(100px, 1fr) minmax(92px, 1.3fr) minmax(76px, 1fr) minmax(64px, 0.75fr);
+}
+
+/* --- 附錄活動徽章列（.otrow）：名稱｜日期｜證書｜簽署 ------------------------ */
+.otrow {
+  grid-template-columns: minmax(110px, 1.3fr) minmax(100px, 1fr) minmax(92px, 1.1fr) minmax(64px, 0.75fr);
+}
+
+/* --- 官方表格 PT/67、PT/68 列印表：固定佈局，長項目名在本欄內換行 ---------- */
+.pttable { table-layout: auto; width: 100%; }
+.pttable th,
+.pttable td { overflow-wrap: anywhere; }
+
+/* --- 遺留 .offtable（舊版表格樣式）：主考收窄、日期讓位予項目欄 -------------- */
+.offtable__head,
+.offtable__row {
+  grid-template-columns: 2.4rem minmax(110px, 1.5fr) minmax(76px, 1fr) minmax(100px, 1.2fr);
+}
+.offtable__row--two,
+.offtable__head--two { grid-template-columns: minmax(0, 1fr) var(--col-date); }
+.offtable__row--badge,
+.offtable__head--badge {
+  grid-template-columns: minmax(110px, 1.4fr) minmax(100px, 1fr) minmax(64px, 0.75fr);
+}
+
+/* --- 手機（≤700px）：主考表改兩行制，項目獨佔一行、主考＋日期並排 ------------
+   四欄硬塞入 ~360px 只會令每欄都唔夠位；改為項目全寬，下一行人名＋日期，
+   每格反而有足夠闊度，唔再疊字。 */
+@media (max-width: 700px) {
+  .offexam__head { display: none; }
+  .offexam__row {
+    grid-template-columns: var(--col-no) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "no name name"
+      "no examiner date";
+    row-gap: 1px;
+    padding: 5px 0;
+  }
+  .offexam__no { grid-area: no; }
+  .offexam__name { grid-area: name; }
+  .offexam__row > .offexam__cell:nth-of-type(3) { grid-area: examiner; }
+  .offexam__row > .offexam__cell:nth-of-type(4) { grid-area: date; }
+  .offexam__cell { display: flex; align-items: center; gap: 5px; }
+  .offexam__row > .offexam__cell:nth-of-type(3)::before {
+    content: "主考";
+    flex: 0 0 auto;
+    font-size: 9px;
+    font-weight: 600;
+    color: #8a7d63;
+  }
+  html[data-lang="en"] .offexam__row > .offexam__cell:nth-of-type(3)::before { content: "Examiner"; }
+  .offexam__row > .offexam__cell:nth-of-type(4)::before {
+    content: "日期";
+    flex: 0 0 auto;
+    font-size: 9px;
+    font-weight: 600;
+    color: #8a7d63;
+  }
+  html[data-lang="en"] .offexam__row > .offexam__cell:nth-of-type(4)::before { content: "Date"; }
+  .offexam__cell .write { flex: 1; min-width: 0; }
+
+  .offact__head,
+  .offact__row {
+    grid-template-columns: minmax(112px, 1.25fr) minmax(100px, 1fr) minmax(64px, 0.75fr);
+  }
+
+  .asstable__head { display: none; }
+  .assrow {
+    grid-template-columns: minmax(0, 1fr) var(--col-date);
+    grid-template-areas:
+      "item item"
+      "init date";
+  }
+  .assrow__item { grid-area: item; }
+  .assrow__init { grid-area: init; }
+  .assrow__date { grid-area: date; }
+
+  /* 續期表手機改 2×2：由／至一行、簽署／姓名一行 */
+  .offgrid--renewal .offgrid__head--span,
+  .offgrid--renewal .offgrid__head--sub { display: none; }
+  .offgrid--renewal .offgrid__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .presentbox__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* --- 列印：不論螢幕闊度，一律用桌面欄寬（日期必須完整顯示） ------------------ */
+@media print {
+  /* 列印不設固定像素：按 A4 紙面實際可用闊度同樣流動伸縮 */
+  .offexam__head,
+  .offexam__row {
+    grid-template-columns: var(--col-no) minmax(118px, 1.6fr) minmax(76px, 1fr) minmax(100px, 1.25fr);
+    grid-template-areas: none;
+  }
+  .offexam__no,
+  .offexam__name,
+  .offexam__row > .offexam__cell:nth-of-type(3),
+  .offexam__row > .offexam__cell:nth-of-type(4) { grid-area: auto; }
+  .offexam__row > .offexam__cell::before { content: none !important; }
+}
+
+/* ==========================================================================
+   自動適配三段制（按頁面／表格實際闊度，不按裝置猜）：
+     闊頁（>620px）：四欄並排，欄寬隨頁闊流動（clamp 百分比）
+     中頁（481–620px）：仍並排，但收緊間距與字體，項目欄優先
+     窄頁（≤480px）：主考表改兩行制；續期表改 2×2；逐項表項目全寬
+   表格在全寬頁、半寬卡片、手機、分屏及 A4 列印中各自量度、各自適配。
+   ========================================================================== */
+
+@media (max-width: 680px) {
+  .offexam__head,
+  .offexam__row,
+  .offact__head,
+  .offact__row,
+  .offlog__head,
+  .offlog__row,
+  .offgrid__row { gap: 3px; }
+  .offexam__name,
+  .offact__name { font-size: 10px; }
+  .write__date { font-size: 11px; }
+  .offgrid--renewal .offgrid__head--span,
+  .offgrid--renewal .offgrid__head--sub { font-size: 9px; }
+}
+
+@media (max-width: 540px) {
+  /* 主考表兩行制：項目全寬；主考人＋日期並排，各佔約半行 */
+  .offexam__head { display: none; }
+  .offexam__row {
+    grid-template-columns: var(--col-no) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "no name name"
+      "no examiner date";
+    row-gap: 1px;
+    padding: 5px 0;
+  }
+  .offexam__no { grid-area: no; }
+  .offexam__name { grid-area: name; }
+  .offexam__row > .offexam__cell:nth-of-type(3) { grid-area: examiner; }
+  .offexam__row > .offexam__cell:nth-of-type(4) { grid-area: date; }
+  .offexam__cell { display: flex; align-items: center; gap: 5px; min-width: 0; }
+  .offexam__row > .offexam__cell:nth-of-type(3)::before {
+    content: "主考";
+    flex: 0 0 auto;
+    font-size: 9px;
+    font-weight: 600;
+    color: #8a7d63;
+  }
+  html[data-lang="en"] .offexam__row > .offexam__cell:nth-of-type(3)::before { content: "Examiner"; }
+  .offexam__row > .offexam__cell:nth-of-type(4)::before {
+    content: "日期";
+    flex: 0 0 auto;
+    font-size: 9px;
+    font-weight: 600;
+    color: #8a7d63;
+  }
+  html[data-lang="en"] .offexam__row > .offexam__cell:nth-of-type(4)::before { content: "Date"; }
+  .offexam__cell .write { flex: 1; min-width: 0; }
+
+  /* 逐項表：項目全寬一行，主考＋日期下一行並排 */
+  .asstable__head { display: none; }
+  .assrow {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "item item"
+      "init date";
+  }
+  .assrow__item { grid-area: item; }
+  .assrow__init { grid-area: init; }
+  .assrow__date { grid-area: date; }
+
+  /* 續期表改 2×2：由／至一行、簽署／領袖姓名一行 */
+  .offgrid--renewal .offgrid__head--span,
+  .offgrid--renewal .offgrid__head--sub { display: none; }
+  .offgrid--renewal .offgrid__row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .presentbox__row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+/* 申請表（A4）在窄容器自動由四欄轉兩欄，表格欄寬由瀏覽器按內容自動分配 */
+@media (max-width: 620px) {
+  .ptgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ptcell--s3, .ptcell--s4 { grid-column: span 2; }
+  .ptsignrow, .ptendorse { grid-template-columns: minmax(0, 1fr); }
+}

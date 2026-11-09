@@ -103,10 +103,10 @@ function GoldItemTable({ rows, showCert = false }) {
     <table className="pttable">
       <thead>
         <tr>
-          <th style={{ width: '48%' }}>{isEn ? 'Item' : '考驗項目'}</th>
-          <th style={{ width: '18%' }}>{isEn ? 'Date completed' : '完成日期'}</th>
-          {showCert && <th style={{ width: '18%' }}>{isEn ? 'Certificate' : '證書編號'}</th>}
-          <th>{isEn ? 'Assessor' : '考驗員'}</th>
+          <th style={{ width: '38%' }}>{isEn ? 'Item' : '考驗項目'}</th>
+          <th style={{ width: '15%' }}>{isEn ? 'Date completed' : '完成日期'}</th>
+          {showCert && <th style={{ width: '14%' }}>{isEn ? 'Certificate' : '證書編號'}</th>}
+          <th style={{ width: '13%' }}>{isEn ? 'Assessor' : '考驗員'}</th>
         </tr>
       </thead>
       <tbody>
@@ -349,8 +349,8 @@ function FormPT68() {
           <thead>
             <tr>
               <th>{isEn ? 'Interest badges (two different areas)' : '興趣範疇活動徽章（兩個不同類別）'}</th>
-              <th style={{ width: '16%' }}>{isEn ? 'Date' : '日期'}</th>
-              <th style={{ width: '20%' }}>{isEn ? 'Certificate' : '證書編號'}</th>
+              <th style={{ width: '15%' }}>{isEn ? 'Date' : '日期'}</th>
+              <th style={{ width: '14%' }}>{isEn ? 'Certificate' : '證書編號'}</th>
             </tr>
           </thead>
           <tbody>
@@ -508,9 +508,9 @@ function FormGbac() {
       <table className="pttable">
         <thead>
           <tr>
-            <th>{isEn ? 'Badge' : '活動徽章'}</th>
+            <th style={{ width: '42%' }}>{isEn ? 'Badge' : '活動徽章'}</th>
             <th>{isEn ? 'Area' : '類別'}</th>
-            <th style={{ width: '18%' }}>{isEn ? 'Date' : '日期'}</th>
+            <th style={{ width: '15%' }}>{isEn ? 'Date' : '日期'}</th>
           </tr>
         </thead>
         <tbody>

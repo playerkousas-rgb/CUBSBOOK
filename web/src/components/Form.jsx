@@ -299,7 +299,7 @@ export function AssessTable({ title, en, items, exempted = false }) {
         onClose={() => setSignItem(null)}
         title={signItem ? `${isEn ? 'Assessor Initials' : '主考簽核'} · (${signItem.no})` : ''}
         defaultName={signItem ? book.progress?.[signItem.id]?.assessor || '' : ''}
-        defaultTitle={isEn ? 'Assessor / CSL' : '主考／團長'}
+        defaultTitle=""
         onSave={(sig) => {
           if (signItem) {
             setEntry(signItem.id, {
