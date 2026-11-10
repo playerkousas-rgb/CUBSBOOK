@@ -68,33 +68,59 @@ function stubFetch(impl) {
 const okJson = (obj) => ({ ok: true, json: async () => obj });
 
 test('後端來源只接受 https；開發測試可明確開啟本機位址', () => {
+  withEnv({ CUBBADGE_ORIGIN: undefined, CUBSBADGE_ORIGIN: undefined }, () => {
+    assert.equal(resolveBadgeOrigin(), 'https://cubsbadge.vercel.app');
+  });
   withEnv({ CUBBADGE_ORIGIN: 'https://cubbadge.vercel.app/' }, () => {
-    assert.equal(resolveBadgeOrigin(), 'https://cubbadge.vercel.app');
+    assert.equal(resolveBadgeOrigin(), 'https://cubsbadge.vercel.app');
+  });
+  withEnv({ CUBBADGE_ORIGIN: 'https://cubsbadge.vercel.app/' }, () => {
+    assert.equal(resolveBadgeOrigin(), 'https://cubsbadge.vercel.app');
+  });
+  withEnv({ CUBSBADGE_ORIGIN: 'https://cubsbadge.vercel.app/' }, () => {
+    assert.equal(resolveBadgeOrigin(), 'https://cubsbadge.vercel.app');
+  });
+  withEnv({ CUBBADGE_ORIGIN: 'https://custom-cubsbadge.example.com/' }, () => {
+    assert.equal(resolveBadgeOrigin(), 'https://custom-cubsbadge.example.com');
   });
   withEnv({ CUBBADGE_ORIGIN: 'http://evil.example.com' }, () => {
-    assert.equal(resolveBadgeOrigin(), 'https://cubbadge.vercel.app');
+    assert.equal(resolveBadgeOrigin(), 'https://cubsbadge.vercel.app');
   });
-  withEnv({ CUBBADGE_ORIGIN: 'https://user:pass@cubbadge.vercel.app' }, () => {
-    assert.equal(resolveBadgeOrigin(), 'https://cubbadge.vercel.app');
+  withEnv({ CUBBADGE_ORIGIN: 'https://user:pass@cubsbadge.vercel.app' }, () => {
+    assert.equal(resolveBadgeOrigin(), 'https://cubsbadge.vercel.app');
   });
   withEnv({ CUBBADGE_ORIGIN: 'not a url' }, () => {
-    assert.equal(resolveBadgeOrigin(), 'https://cubbadge.vercel.app');
+    assert.equal(resolveBadgeOrigin(), 'https://cubsbadge.vercel.app');
   });
   withEnv({ CUBBADGE_ORIGIN: 'http://127.0.0.1:8787', CUBBOOK_PROXY_TEST: '1', VERCEL: undefined }, () => {
     assert.equal(resolveBadgeOrigin(), 'http://127.0.0.1:8787');
   });
 });
 
-test('GET /api/cubbadge：零金鑰旅團清單，永不回傳後端網址或 API key', async () => {
+test('GET /api/cubbadge：零金鑰旅團清單，去重 _aliasOf 並回報 upstreamOk', async () => {
   await withEnv({ TROOP_T12_NAME: '沙田第 12 旅', TROOP_T12_EN: '12th Sha Tin', TROOP_T12_BACKEND: BACKEND, TROOP_T12_APIKEY: 'SECRET-KEY-123' }, async () => {
-    const stub = stubFetch(() => okJson({ troops: { T99: { name: '遠端旅團', en: 'Remote' } } }));
+    const stub = stubFetch(() =>
+      okJson({
+        troops: {
+          '0082': { name: '第 82 旅', en: '82nd Group', connected: true },
+          82: { name: '第 82 旅', en: '82nd Group', _aliasOf: '0082', connected: true },
+          T99: { name: '遠端旅團', en: 'Remote' },
+          OFF: { name: '未啟用旅團', connected: false },
+        },
+      }),
+    );
     try {
       const res = await callApi('GET');
       assert.equal(res.status, 200);
       assert.equal(res.body.success, true);
+      assert.equal(res.body.origin, 'https://cubsbadge.vercel.app');
       assert.equal(res.body.privacy, 'progress-only');
+      assert.equal(res.body.upstreamOk, true);
       assert.equal(res.body.troops.T12.name, '沙田第 12 旅');
       assert.equal(res.body.troops.T12.en, '12th Sha Tin');
+      assert.deepEqual(res.body.troops['0082'], { name: '第 82 旅', en: '82nd Group' });
+      assert.equal(res.body.troops['82'], undefined, '帶有 _aliasOf 且主鍵存在時應略過重複別名');
+      assert.equal(res.body.troops.OFF, undefined, 'connected === false 應略過');
       assert.deepEqual(res.body.troops.T99, { name: '遠端旅團', en: 'Remote' });
       const json = JSON.stringify(res.body);
       assert.equal(json.includes('SECRET-KEY-123'), false);
@@ -103,6 +129,15 @@ test('GET /api/cubbadge：零金鑰旅團清單，永不回傳後端網址或 AP
       stub.restore();
     }
   });
+
+  const downStub = stubFetch(() => ({ ok: false, status: 503, json: async () => ({}) }));
+  try {
+    const res = await callApi('GET');
+    assert.equal(res.status, 200);
+    assert.equal(res.body.upstreamOk, false);
+  } finally {
+    downStub.restore();
+  }
 });
 
 test('BOOK 只能讀取及申報待核實；save / saveOtherBadge 一律 403', async () => {

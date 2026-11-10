@@ -7,6 +7,7 @@
  */
 
 export const BRIDGE_ENDPOINT = '/api/cubbadge';
+export const DEFAULT_CUBSBADGE_URL = 'https://cubsbadge.vercel.app';
 
 export async function probeCubBadgeBridge({
   fetchImpl = globalThis.fetch,
@@ -33,7 +34,12 @@ export async function probeCubBadgeBridge({
     if (!data?.success || !data.troops || typeof data.troops !== 'object' || Array.isArray(data.troops)) {
       return { available: false, reason: 'bad-payload' };
     }
-    return { available: true, troops: data.troops, origin: data.origin || '' };
+    return {
+      available: true,
+      troops: data.troops,
+      origin: data.origin || DEFAULT_CUBSBADGE_URL,
+      upstreamOk: data.upstreamOk !== false,
+    };
   } catch (err) {
     return { available: false, reason: err?.name === 'AbortError' ? 'timeout' : 'network' };
   } finally {

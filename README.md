@@ -2,7 +2,7 @@
 
 > **幼童軍個人隨身離線電子紀錄冊** —— 逐頁對應香港童軍總會《幼童軍紀錄冊》官方 32 頁（2026 年版）及 2026 年第十版《幼童軍訓練綱要》，支援就地打字／手寫簽名、一鍵生成及列印 `PT/67`・`PT/68` 官方表格、成員⇄領袖純離線二維碼核簽，以及與 `cubbadge` 旅團進度表的**純進度、零個人資料**雙向同步。
 
-- **目前版本**：`v1.2.7`（2026-11-08）
+- **目前版本**：`v1.2.9`（2026-11-10）
 - **架構形態**：離線優先 PWA（React + Vite + Service Worker，`localStorage` 本機儲存，零帳號、零雲端上傳；可選配 Vercel `/api/leader` 與 `/api/cubbadge` 伺服器端接口）
 - **圖示／favicon（家族版式）**：對齊 `VSBOOK`／`ROVERBOOK`／`SCOUTBOOK` 的出街圖標——圓角深金布面（`#664c0e → #3a2a08 → #14100a`）＋內嵌幼童軍黃金線＋家族共用水滴環＋下方支部「C」；9 個圖示、`favicon.svg`、ICO 與 OG 圖一律由 `npm run icons` 決定性產生。金色只用 `#f0d85e → #ead040 → #c0a21c`，**森林綠、酒紅、海軍藍一律不用**，留給其他 BOOK。並排對照見 [`docs/icon-family-preview.png`](docs/icon-family-preview.png)。
 - **換圖標後的主畫面**：Android／iOS 的 PWA 圖示是「安裝嗰一刻」的快照；如仍見舊黃色書本，請移除主畫面捷徑後重新「加入主畫面」／重新安裝。瀏覽器分頁 favicon 只需強制重新整理（Service Worker 已升 `cubbook-cache-v5`）。
@@ -42,7 +42,7 @@ node scripts/preflight_v1.0.mjs .
 | :-: | :--- | :--- |
 | 1 | **BOOK ≠ BADGE** | 只做單一成員的官方 32 頁紀錄冊、進度獎章、活動徽章與官方表格。**不做**全團名冊、批量簽核、多成員切換槽（屬 `cubbadge`）。 |
 | 2 | **全螢幕＝一本實體書 + 幼童軍黃對比陷阱** | `100dvh` 布面封面與紙本內頁、無卡片框線陰影；空白欄只顯示小圓點 `.write__dot`（列印自動隱藏）；就地打字自動縮字；簽名壓縮為單色透明 PNG。封面／按鈕用幼童軍黃配深墨（`#1a1206`），不用白字配黃。中英文完全分開，一鍵 `中文 / EN`。 |
-| 3 | **BOOK ⇄ BADGE 純進度同步（可選）** | 只傳 `SCOUT ID`、項目代號、日期；未接駁時以獨立模式運作。空白簿輸入 SCOUT ID + `cubbadge` 密碼即可綁定並拉取已核實進度；`pendingRequests` **永不**錄入；`save`／`saveOtherBadge` 一律 `403`；BOOK→BADGE 只轉發 `requestComplete`，寫入 `status: 'pending'`。旅團下拉由 `CUBBADGE_ORIGIN` 伺服器端取得，BOOK 不存 Google Sheet 網址或 API key。 |
+| 3 | **BOOK ⇄ BADGE 純進度同步（可選）** | 只傳 `SCOUT ID`、項目代號、日期；未接駁時以獨立模式運作。數位附錄會自動由 `CUBSBADGE` 讀取已登記旅團下拉選單（如清單為空或找不到旅團，可一鍵跳轉至 `https://cubsbadge.vercel.app` 開戶）；CUBSBADGE 進度檔匯出／匯入須先連接 CUBSBADGE 帳戶（本機完整紀錄冊備份／還原仍可離線使用）。`pendingRequests` **永不**錄入；`save`／`saveOtherBadge` 一律 `403`；BOOK→BADGE 只轉發 `requestComplete`，寫入 `status: 'pending'`。 |
 | 4 | **領袖模式（只讀）與普通模式嚴格分離** | 普通模式不能讀取他人紀錄冊，只能貼上領袖簽發的 `CB1S.` 核簽碼；出示 QR（`CB1.`）預設全不剔選。領袖模式以伺服器端 `LEADER_CODE`（**不加 `VITE_`**、`crypto.timingSafeEqual` 比對）解鎖後，本機紀錄冊鎖為唯讀，只可當面掃描及簽發 `CB1S.`。 |
 | 5 | **項目 ID 單一真相** | `shared/syllabus.js` 由 `cubbadge/data/items.json` 產生，72 個進度細項 + 49 個活動徽章逐一對照，測試以 fixture 的 sha256 與 ID 清單鎖定。 |
 | 6 | **官方表格自動帶入 + A4 忠實列印** | `PT/67`（1 頁）、`PT/68`（2 頁）自動填入；2026 新制只提供**明確標示非官方**的資料核對清單，不自行編造表格編號。桌面／平板維持 A4 比例，`≤740px` 手機自動單欄、無水平捲軸。 |
@@ -69,7 +69,7 @@ node scripts/preflight_v1.0.mjs .
 | 變數 | 必填 | 說明 |
 | :--- | :--: | :--- |
 | `LEADER_CODE` | 是（否則隱藏領袖模式） | 領袖模式密碼，於 `/api/leader` 以 `crypto.timingSafeEqual` 比對。本機未設定時預設 `1234` 方便測試。 |
-| `CUBBADGE_ORIGIN` | 否（預設 `https://cubbadge.vercel.app`） | 只用於伺服器端組出 `GET /api/troops` 及 `POST /api/proxy`。 |
+| `CUBBADGE_ORIGIN`（或 `CUBSBADGE_ORIGIN`） | 否（預設 `https://cubsbadge.vercel.app`） | 只用於伺服器端組出 `GET /api/troops` 及 `POST /api/proxy`。 |
 | `TROOP_<id>_NAME` / `_EN` / `_BACKEND` / `_APIKEY` | 否 | 個別旅團覆寫（`_BACKEND` 必須是 `script.google.com/macros/s/…/exec`）。 |
 | `CUBBOOK_PROXY_TEST` | 否 | 僅本機開發設 `1`，允許 `127.0.0.1` 測試後端。 |
 

@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useBook } from '../bookContext.js';
 import { useToast, Icon, Modal } from '../ui.jsx';
 import { download, clearBook, slugify } from '../bookStore.js';
-import { APP_VERSION, demoBook, importFromBadge, newBook, today } from '@shared/book.js';
+import { APP_VERSION, demoBook, newBook, today } from '@shared/book.js';
 import { LegalNote } from './Legal.jsx';
 import { navigate } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
@@ -14,7 +14,6 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
   const { isEn } = useLang();
   const { push } = useToast();
   const backupRef = useRef(null);
-  const vsRef = useRef(null);
   const [showAbout, setShowAbout] = useState(false);
   const [showHome, setShowHome] = useState(false);
 
@@ -31,37 +30,13 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
     reader.onload = () => {
       try {
         const data = JSON.parse(String(reader.result));
-        if (!data?.member) throw new Error(isEn ? 'Not a CUBBOOK backup file' : '這不是 CUBBOOK 備份檔');
+        if (!data?.member || !data?.pages) throw new Error(isEn ? 'Not a CUBBOOK backup file' : '這不是 CUBBOOK 備份檔');
         if (!window.confirm(isEn ? 'Overwrite current record book with this backup?' : '匯入備份會覆蓋目前這本紀錄冊，確定嗎？')) return;
         replace(newBook(data));
         push(isEn ? 'Backup restored' : '備份已還原');
         onClose();
       } catch (e) {
         push(e.message || (isEn ? 'Invalid file format' : '檔案格式不正確'), 'error');
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const importBadge = (file) => {
-    if (!file || leader || parent) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(String(reader.result));
-        const result = importFromBadge(data, book);
-        replace(result.book);
-        push(
-          isEn
-            ? `Imported ${result.imported} leader-confirmed items (${result.matchedBy})`
-            : `已從 cubbadge 錄入 ${result.imported} 項領袖已核實進度${
-                result.skippedPending ? `（已略過 ${result.skippedPending} 項未核實項目）` : ''
-              }`,
-        );
-        navigate('/p/contents');
-        onClose();
-      } catch (e) {
-        push(e.message || (isEn ? 'Cannot read cubbadge file' : '無法讀取 cubbadge 檔案'), 'error');
       }
     };
     reader.readAsText(file);
@@ -317,7 +292,7 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
           <Icon name="book" size={18} />
           <span>
             <strong>{isEn ? 'Digital Appendix & Storage Health' : '數位附錄與儲存健康'}</strong>
-            <em>{isEn ? 'Export cubbadge JSON, shrink photos/ink, inspect storage' : '匯出 cubbadge 進度檔、壓縮相片墨跡及查看容量'}</em>
+            <em>{isEn ? 'Sync with CUBSBADGE, shrink photos/ink, inspect storage' : '連接 CUBSBADGE 同步進度、壓縮相片墨跡及查看容量'}</em>
           </span>
         </button>
 
@@ -388,7 +363,6 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
         )}
 
         <input ref={backupRef} type="file" accept="application/json,.json" hidden onChange={(e) => importBackup(e.target.files?.[0])} />
-        <input ref={vsRef} type="file" accept="application/json,.json" hidden onChange={(e) => importBadge(e.target.files?.[0])} />
       </div>
     </Modal>
   );
