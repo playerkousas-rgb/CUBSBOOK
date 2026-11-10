@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { probeCubBadgeBridge } from '../cubadgeBridge.js';
+import React, { useCallback, useEffect, useState } from 'react';
+import { DEFAULT_CUBSBADGE_URL, probeCubBadgeBridge } from '../cubadgeBridge.js';
 import {
   PARENT_NOTICE,
   clearParentSession,
@@ -15,11 +15,13 @@ import { Icon, cx } from '../ui.jsx';
 import { useLang } from '../i18n.jsx';
 import { navigate } from '../router.jsx';
 
+const TROOP_NOT_FOUND = '__NOT_FOUND__';
+
 /**
  * 家長模式連線頁（/parent/connect）
  * ---------------------------------------------------------------
  * 兩條取得資料的路徑：
- *   A. 連接 cubbadge：用孩子的旅團＋SCOUT ID＋密碼，把已核實現進度
+ *   A. 連接 CUBSBADGE：用孩子的旅團＋SCOUT ID＋密碼，把已核實現進度
  *      「匯出」到這部手機（只下載，永不提交）。
  *   B. 掃描孩子出示的 CB1 二維碼：離線、免登入。
  */
@@ -29,6 +31,8 @@ export default function ParentConnect() {
   const [bridge, setBridge] = useState('checking');
   const [reason, setReason] = useState('');
   const [troops, setTroops] = useState({});
+  const [badgeOrigin, setBadgeOrigin] = useState(DEFAULT_CUBSBADGE_URL);
+  const [upstreamOk, setUpstreamOk] = useState(true);
   const [troopId, setTroopId] = useState('');
   const [scoutId, setScoutId] = useState('');
   const [password, setPassword] = useState('');
@@ -37,22 +41,28 @@ export default function ParentConnect() {
   const [info, setInfo] = useState('');
   const session = typeof window === 'undefined' ? null : loadParentSession();
 
-  useEffect(() => {
-    let live = true;
-    probeCubBadgeBridge().then((r) => {
-      if (!live) return;
-      setBridge(r.available ? 'ready' : 'unavailable');
-      setReason(r.reason || '');
-      if (r.available) {
-        setTroops(r.troops || {});
-        const first = Object.keys(r.troops || {})[0];
-        if (first) setTroopId((cur) => cur || first);
-      }
-    });
-    return () => {
-      live = false;
-    };
+  const probe = useCallback(async () => {
+    setBridge('checking');
+    const r = await probeCubBadgeBridge();
+    setBridge(r.available ? 'ready' : 'unavailable');
+    setReason(r.reason || '');
+    if (r.available) {
+      const nextTroops = r.troops || {};
+      setTroops(nextTroops);
+      setBadgeOrigin(r.origin || DEFAULT_CUBSBADGE_URL);
+      setUpstreamOk(r.upstreamOk !== false);
+      const keys = Object.keys(nextTroops);
+      setTroopId((cur) => {
+        if (cur && cur !== TROOP_NOT_FOUND && nextTroops[cur]) return cur;
+        if (keys.length === 1) return keys[0];
+        return '';
+      });
+    }
   }, []);
+
+  useEffect(() => {
+    probe();
+  }, [probe]);
 
   useEffect(() => {
     if (session?.ymis) setScoutId((cur) => cur || session.ymis);
@@ -94,8 +104,8 @@ export default function ParentConnect() {
     setInfo('');
     const tid = troopId.trim();
     const sid = scoutId.trim();
-    if (!tid || !sid || !password) {
-      setError(isEn ? 'Fill in Group, Scout ID and cubbadge password.' : '請填寫旅團、SCOUT ID 及 cubbadge 密碼。');
+    if (!tid || tid === TROOP_NOT_FOUND || !sid || !password) {
+      setError(isEn ? 'Select Group, enter Scout ID and CUBSBADGE password.' : '請選擇已登記旅團，並填寫 SCOUT ID 及 CUBSBADGE 密碼。');
       return;
     }
     setBusy(true);
@@ -162,6 +172,9 @@ export default function ParentConnect() {
 
   const synced = existing?.meta?.parent;
   const syncedAt = synced?.syncedAt ? new Date(synced.syncedAt) : null;
+  const troopEntries = Object.entries(troops);
+  const noTroopsFound = bridge === 'ready' && troopEntries.length === 0;
+  const troopNotListed = troopId === TROOP_NOT_FOUND;
 
   return (
     <div className="pconnect">
@@ -255,31 +268,102 @@ export default function ParentConnect() {
           </div>
         ) : (
           <form className="pconnect__form" onSubmit={login}>
-            <label className="field">
-              <span className="field__label">{isEn ? 'Group' : '旅團'}</span>
-              <select value={troopId} onChange={(e) => setTroopId(e.target.value)} disabled={busy || bridge === 'checking'}>
-                <option value="">{isEn ? 'Select group' : '選擇旅團'}</option>
-                {Object.entries(troops).map(([id, t]) => (
-                  <option key={id} value={id}>
-                    {t?.name || id}
+            {troopEntries.length > 0 && (
+              <div className="field">
+                <div className="field__label cubsync__labelrow">
+                  <label htmlFor="pconnect-troop">{isEn ? 'Registered Group' : '已登記旅團'}</label>
+                  <button
+                    type="button"
+                    className="cubsync__hintlink"
+                    onClick={() => setTroopId(TROOP_NOT_FOUND)}
+                  >
+                    {isEn ? 'Not listed?' : '找不到旅團？'}
+                  </button>
+                </div>
+                <select id="pconnect-troop" value={troopId} onChange={(e) => setTroopId(e.target.value)} disabled={busy || bridge === 'checking'}>
+                  <option value="">
+                    {isEn
+                      ? `— Select registered group (${troopEntries.length}) —`
+                      : `— 請選擇已登記旅團（共 ${troopEntries.length} 個）—`}
                   </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              <span className="field__label">{isEn ? 'Child’s Scout ID' : '孩子的 SCOUT ID'}</span>
-              <input value={scoutId} onChange={(e) => setScoutId(e.target.value)} placeholder="25081420" inputMode="numeric" disabled={busy} />
-            </label>
-            <label className="field">
-              <span className="field__label">{isEn ? 'cubbadge password' : 'cubbadge 密碼'}</span>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" disabled={busy} />
-            </label>
-            <div className="pconnect__actions">
-              <button type="submit" className="btn btn--gold" disabled={busy || bridge === 'checking'}>
-                <Icon name="download" size={15} />{' '}
-                {busy ? (isEn ? 'Exporting…' : '匯出中…') : isEn ? 'Export progress to this phone' : '匯出進度到這部手機'}
-              </button>
-            </div>
+                  {troopEntries.map(([id, t]) => (
+                    <option key={id} value={id}>
+                      {id} · {isEn && t?.en ? t.en : t?.name || id}
+                    </option>
+                  ))}
+                  <option value={TROOP_NOT_FOUND}>
+                    {isEn
+                      ? '— Group not listed (Open account on CUBSBADGE) —'
+                      : '— 找不到我的旅團（前往 CUBSBADGE 開戶）—'}
+                  </option>
+                </select>
+              </div>
+            )}
+
+            {(noTroopsFound || troopNotListed) && (
+              <div className="cubsync__notfound">
+                <Icon name="info" size={16} />
+                <div className="cubsync__notfound-body">
+                  <strong>
+                    {noTroopsFound
+                      ? isEn
+                        ? 'No registered groups found — open an account on CUBSBADGE first'
+                        : '未找到已登記旅團，請先前往 CUBSBADGE 開戶'
+                      : isEn
+                        ? 'Group not listed? Open an account on CUBSBADGE first'
+                        : '找不到旅團？請先前往 CUBSBADGE 開戶及登記旅團'}
+                  </strong>
+                  <p>
+                    {noTroopsFound && !upstreamOk
+                      ? isEn
+                        ? 'Could not load registered groups from CUBSBADGE right now. Click Refresh, or visit CUBSBADGE to verify your group and open an account.'
+                        : '暫時未能從 CUBSBADGE 讀取已登記旅團清單。請按「重新讀取」，或先前往 CUBSBADGE 確認旅團已完成登記並開戶。'
+                      : isEn
+                        ? 'The Cub Scout and group must be registered with an account on CUBSBADGE before connecting here.'
+                        : '必須先在 CUBSBADGE 完成旅團登記及成員開戶，方可於此選取旅團並匯出進度。'}
+                  </p>
+                  <div className="cubsync__notfound-actions">
+                    <a
+                      className="btn btn--gold btn--sm"
+                      href={badgeOrigin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Icon name="external" size={14} />{' '}
+                      {isEn ? 'Open Account on CUBSBADGE' : '前往 CUBSBADGE 開戶'}
+                    </a>
+                    {noTroopsFound && (
+                      <button type="button" className="btn btn--ghost btn--sm" onClick={probe}>
+                        <Icon name="refresh" size={13} /> {isEn ? 'Refresh List' : '重新讀取旅團清單'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!noTroopsFound && !troopNotListed && (
+              <>
+                <label className="field">
+                  <span className="field__label">{isEn ? 'Child’s Scout ID' : '孩子的 SCOUT ID'}</span>
+                  <input value={scoutId} onChange={(e) => setScoutId(e.target.value)} placeholder="25081420" inputMode="numeric" disabled={busy} />
+                </label>
+                <label className="field">
+                  <span className="field__label">{isEn ? 'CUBSBADGE password' : 'CUBSBADGE 密碼'}</span>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" disabled={busy} />
+                </label>
+                <div className="pconnect__actions">
+                  <button
+                    type="submit"
+                    className="btn btn--gold"
+                    disabled={busy || bridge === 'checking' || !troopId || troopId === TROOP_NOT_FOUND}
+                  >
+                    <Icon name="download" size={15} />{' '}
+                    {busy ? (isEn ? 'Exporting…' : '匯出中…') : isEn ? 'Export progress to this phone' : '匯出進度到這部手機'}
+                  </button>
+                </div>
+              </>
+            )}
             {session && (
               <p className="pconnect__small">
                 {isEn ? 'Signed in as ' : '目前已登入：'}

@@ -92,10 +92,20 @@ test('BOOK 核心功能完全不需要 BADGE：無網絡亦能建立、填寫、
 test('probeCubBadgeBridge：純靜態部署／404／HTML fallback／壞 payload／逾時 一律安全降級', async () => {
   // 正常伺服器
   const ok = await probeCubBadgeBridge({
-    fetchImpl: async () => jsonRes({ success: true, origin: 'https://cubbadge.vercel.app', troops: { T12: { name: '沙田第 12 旅' } } }),
+    fetchImpl: async () => jsonRes({ success: true, origin: 'https://cubsbadge.vercel.app', upstreamOk: true, troops: { T12: { name: '沙田第 12 旅' } } }),
   });
   assert.equal(ok.available, true);
+  assert.equal(ok.origin, 'https://cubsbadge.vercel.app');
+  assert.equal(ok.upstreamOk, true);
   assert.equal(ok.troops.T12.name, '沙田第 12 旅');
+
+  // 上游清單失敗但橋接本身存在
+  const emptyUp = await probeCubBadgeBridge({
+    fetchImpl: async () => jsonRes({ success: true, upstreamOk: false, troops: {} }),
+  });
+  assert.equal(emptyUp.available, true);
+  assert.equal(emptyUp.origin, 'https://cubsbadge.vercel.app');
+  assert.equal(emptyUp.upstreamOk, false);
 
   // 靜態主機：SPA rewrite 回 200 text/html
   const html = await probeCubBadgeBridge({ fetchImpl: async () => jsonRes(null, { type: 'text/html; charset=utf-8' }) });
@@ -132,15 +142,27 @@ test('probeCubBadgeBridge：純靜態部署／404／HTML fallback／壞 payload�
   assert.deepEqual(slow, { available: false, reason: 'timeout' });
 });
 
-test('數位附錄把 cubbadge 標示為「可選」，未接駁時提供獨立模式說明與本地 JSON 交換', () => {
+test('數位附錄把 CUBSBADGE 標示為「可選」，未連接前鎖定進度檔匯出匯入，找不到旅團可跳轉開戶', () => {
   const card = read('web/src/components/CubBadgeSyncCard.jsx');
   assert.ok(card.includes('probeCubBadgeBridge'));
   assert.ok(card.includes('獨立模式') && card.includes('standalone mode'));
   assert.ok(card.includes('不連接亦可用完整紀錄冊'));
-  assert.ok(card.includes('exportForBadge') && card.includes('importFromBadge'), '離線 JSON 交換必須保留');
+  assert.ok(card.includes('exportForBadge') && card.includes('importFromBadge'), '已連接時保留 JSON 交換');
   assert.ok(card.includes("push(isEn ? 'Signed out of cubbadge'"), '登出只影響雲端連線，不影響本機資料');
 
+  // 未登入 CUBSBADGE 前必須鎖定 CUBSBADGE 進度檔匯出／匯入，並保留本機完整備份說明
+  assert.match(card, /if \(!session\?\.token \|\| !session\?\.ymis\)[\s\S]*onExportFile|onExportFile[\s\S]*if \(!session\?\.token \|\| !session\?\.ymis\)/);
+  assert.ok(card.includes('{session ? (') && card.includes('cubsync__locked'), '未連接 CUBSBADGE 前不可顯示進度匯出／匯入按鈕');
+  assert.ok(card.includes('__NOT_FOUND__') && card.includes('前往 CUBSBADGE 開戶'), '必須提供找不到旅團時跳轉 CUBSBADGE 開戶');
+
+  const welcome = read('web/src/pages/Welcome.jsx');
+  assert.equal(welcome.includes('importFromBadge'), false, '歡迎頁未連接 CUBSBADGE 前不得直接匯入 CUBSBADGE 進度檔');
+
+  const connect = read('web/src/pages/ParentConnect.jsx');
+  assert.ok(connect.includes('__NOT_FOUND__') && connect.includes('前往 CUBSBADGE 開戶'), '家長連線頁找不到旅團時須提供跳轉 CUBSBADGE 開戶');
+
   const bridge = read('web/src/cubadgeBridge.js');
+  assert.ok(bridge.includes('https://cubsbadge.vercel.app'));
   assert.ok(bridge.includes("cache: 'no-store'"));
   assert.ok(bridge.includes('not-json'), '必須識破 SPA fallback 的 HTML 回應');
 

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useToast, Crest, Icon } from '../ui.jsx';
-import { demoBook, importFromBadge, newBook } from '@shared/book.js';
+import { demoBook, newBook } from '@shared/book.js';
 import { persistBook } from '../bookStore.js';
 import { navigate } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
@@ -45,16 +45,13 @@ export default function Welcome({ onReady, onLeader, onParent }) {
           return;
         }
         if (data?.progress || data?.otherBadges || data?.flatProgress || Array.isArray(data?.members) || data?.schema?.includes('cubbadge')) {
-          const res = importFromBadge(data, newBook());
-          start(res.book, '/p/contents');
-          push(
+          throw new Error(
             isEn
-              ? `Imported ${res.imported} leader-verified items from cubbadge`
-              : `已從 cubbadge 匯入 ${res.imported} 項領袖已核實進度`,
+              ? 'CUBSBADGE progress files require connecting your CUBSBADGE account in Digital Appendix after opening a record book.'
+              : 'CUBSBADGE 進度檔需先建立或開啟紀錄冊，並於「數位附錄」連接 CUBSBADGE 帳戶後方可匯入。',
           );
-          return;
         }
-        throw new Error(isEn ? 'Not a CUBBOOK or cubbadge JSON file' : '這不是 CUBBOOK 或 cubbadge 備份檔');
+        throw new Error(isEn ? 'Not a CUBBOOK backup JSON file' : '這不是 CUBBOOK 備份檔');
       } catch (err) {
         push(err.message || (isEn ? 'Invalid file format' : '檔案格式不正確'), 'error');
       }

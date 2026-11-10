@@ -2,6 +2,18 @@
 
 本專案採用語義化版本（Semantic Versioning），每次更新同步對齊 `package.json`、`shared/book.js` 及 `web/index.html`。
 
+## [v1.2.9] — 2026-11-10
+
+### 修正與新增（Fixed & Added · CUBSBADGE 連線、自動讀取旅團清單及開戶引導）
+
+- **修正 CUBSBADGE 預設橋接網址並自動去重已登記旅團**：`api/cubbadge.js`、`web/src/cubadgeBridge.js`、`.env.example` 及 `README.md` 的預設目標修正為 `https://cubsbadge.vercel.app`（同時兼容 `CUBSBADGE_ORIGIN` 與 `CUBBADGE_ORIGIN` 環境變數），確保連接 CUBSBADGE 時可自動由 `/api/troops` 讀取並列出已登記旅團供直接選取；並略過帶有 `_aliasOf` 的重複別名鍵（例如同時出現 `0082` 與 `82`），避免旅團下拉選單重複顯示。
+- **未連接 CUBSBADGE 前鎖定 CUBSBADGE 進度檔匯出／匯入**：`web/src/components/CubBadgeSyncCard.jsx` 在尚未連接並登入 CUBSBADGE 帳戶（`!session`）時，隱藏／鎖定「匯出『待領袖核實』進度檔」及「從 CUBSBADGE 匯入『領袖已核實』進度檔」功能並提示須先連接帳戶；`Welcome.jsx` 亦不再於未連接 CUBSBADGE 前直接匯入 CUBSBADGE 進度檔，同時清理 `MenuDialog.jsx` 冗餘匯入程式碼。本機紀錄冊自身的「完整備份 JSON／還原備份 JSON」與所有核心功能維持完全離線可用。
+- **找不到旅團或旅團清單為空時跳轉至 CUBSBADGE 開戶**：在 `CubBadgeSyncCard.jsx` 及 `ParentConnect.jsx` 的旅團選單新增「找不到我的旅團（前往 CUBSBADGE 開戶）」選項（及清單為空時自動顯示），提供清楚說明及前往 `https://cubsbadge.vercel.app` 的開戶按鈕，讓使用者知道必須先在 CUBSBADGE 完成旅團登記及成員開戶；並於 `web/src/ui.jsx` 補上 `refresh` 及 `external` 圖示與對應的 `.cubsync__*` 版面樣式。
+
+### 測試（Tests）
+
+- 更新 `tests/cubbadge_sync.test.mjs`、`tests/standalone_book.test.mjs` 及 `tests/ui_contracts.test.mjs`：驗證 `https://cubsbadge.vercel.app` 預設網址、`_aliasOf` 旅團去重、未連接 CUBSBADGE 時鎖定進度檔匯出／匯入、及找不到旅團時跳轉開戶提示。`web/public/sw.js` 快取升至 `cubbook-cache-v8`。
+
 ## [v1.2.8] — 2026-11-09
 
 ### 修正（Fixed · 真實測試：全書欄寬重整，解決疊字）

@@ -3887,7 +3887,8 @@ html[data-print-preview] .write--multi.is-empty {
   padding: 20px clamp(14px, 3vw, 32px) 48px;
 }
 
-.vsbsync__stats {
+.vsbsync__stats,
+.cubsync__stats {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 16px;
@@ -3900,39 +3901,49 @@ html[data-print-preview] .write--multi.is-empty {
   color: var(--ink-2);
 }
 
-.vsbsync__stats b {
+.vsbsync__stats b,
+.cubsync__stats b {
   color: var(--vs-red);
   font-size: 14px;
 }
 
-.vsbsync__login {
+.vsbsync__login,
+.cubsync__login {
   margin: 10px 0;
   padding: 12px;
   border: 1px solid rgba(122, 67, 6, 0.24);
+  border-radius: 6px;
   background: rgba(255, 252, 244, 0.72);
 }
 
-.vsbsync__fields {
+.vsbsync__fields,
+.cubsync__fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
   align-items: end;
 }
 
-.vsbsync__fields label {
+.vsbsync__fields label,
+.cubsync__fields label,
+.cubsync__field {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.vsbsync__fields label span {
+.vsbsync__fields label span,
+.cubsync__fields label > span,
+.cubsync__fields .cubsync__labelrow label {
   font-size: 12px;
   font-weight: 700;
   color: var(--ink-2);
 }
 
 .vsbsync__fields input,
-.vsbsync__fields select {
+.vsbsync__fields select,
+.cubsync__fields input,
+.cubsync__fields select {
   width: 100%;
   padding: 7px 9px;
   border: 1px solid rgba(122, 67, 6, 0.28);
@@ -3943,10 +3954,93 @@ html[data-print-preview] .write--multi.is-empty {
   color: var(--ink);
 }
 
-.vsbsync__files {
+.vsbsync__files,
+.cubsync__files {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px dashed rgba(122, 67, 6, 0.2);
+}
+
+.cubsync__labelrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cubsync__hintlink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--vs-red);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cubsync__locked {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border: 1px dashed rgba(122, 67, 6, 0.34);
+  border-radius: 6px;
+  background: rgba(122, 67, 6, 0.04);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.cubsync__locked > svg {
+  flex: none;
+  color: var(--vs-red);
+  margin-top: 2px;
+}
+
+.cubsync__notfound {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(122, 86, 0, 0.45);
+  border-radius: 8px;
+  background: rgba(234, 208, 64, 0.18);
+  color: var(--ink);
+}
+
+.cubsync__notfound > svg {
+  flex: none;
+  color: var(--vs-red);
+  margin-top: 2px;
+}
+
+.cubsync__notfound-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.cubsync__notfound-body strong {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ink);
+}
+
+.cubsync__notfound-body p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.cubsync__notfound-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 .qrsignoff-in__triggers {
@@ -4301,7 +4395,9 @@ html[data-print-preview] .write--multi.is-empty {
 .checklist__text { min-width: 0; }
 
 @media print {
-  .cubsync__offline { display: none; }
+  .cubsync__offline,
+  .cubsync__locked,
+  .cubsync__notfound { display: none; }
 }
 
 /* ==========================================================================

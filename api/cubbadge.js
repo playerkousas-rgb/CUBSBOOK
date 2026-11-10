@@ -17,7 +17,7 @@
 import { toBadgeId, ITEM_INDEX, toBookId } from '../shared/syllabus.js';
 import { LEVEL_KEYS, isLevelKey, isLeveledRef, levelsOf, splitLevelRef } from '../shared/badgeLevels.js';
 
-const DEFAULT_BADGE_ORIGIN = 'https://cubbadge.vercel.app';
+const DEFAULT_BADGE_ORIGIN = 'https://cubsbadge.vercel.app';
 const EXEC_URL_RE = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec\/?$/i;
 const TEST_LOCAL_RE = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?(\/[A-Za-z0-9._~\-/?=&%]*)?$/;
 const ALLOWED_ACTIONS = new Set(['login', 'logout', 'load', 'submitPending']);
@@ -27,11 +27,15 @@ const TIMEOUT_MS = 30000;
 const MAX_ITEMS = 200;
 
 export function resolveBadgeOrigin() {
-  const raw = String(process.env.CUBBADGE_ORIGIN || DEFAULT_BADGE_ORIGIN).trim();
+  const raw = String(process.env.CUBSBADGE_ORIGIN || process.env.CUBBADGE_ORIGIN || DEFAULT_BADGE_ORIGIN).trim();
   try {
     const u = new URL(raw);
     if (u.username || u.password) return DEFAULT_BADGE_ORIGIN;
-    if (u.protocol === 'https:') return u.origin;
+    if (u.protocol === 'https:') {
+      // 舊版 .env.example 曾誤寫為 cubbadge.vercel.app（漏了 s），自動導正為官方 CUBSBADGE
+      if (u.origin === 'https://cubbadge.vercel.app') return DEFAULT_BADGE_ORIGIN;
+      return u.origin;
+    }
     if (
       process.env.CUBBOOK_PROXY_TEST === '1' &&
       process.env.VERCEL !== '1' &&
@@ -340,6 +344,7 @@ export default async function handler(req, res) {
     for (const [id, t] of Object.entries(localRegistry)) {
       troops[id] = { name: t.name, ...(t.en ? { en: t.en } : {}) };
     }
+    let upstreamOk = false;
     try {
       const up = await fetch(`${origin}/api/troops`, {
         method: 'GET',
@@ -349,8 +354,13 @@ export default async function handler(req, res) {
       if (up.ok) {
         const json = await up.json().catch(() => null);
         if (json?.troops && typeof json.troops === 'object') {
+          upstreamOk = true;
           for (const [id, info] of Object.entries(json.troops)) {
-            if (!troops[id] && info && typeof info === 'object' && info.name) {
+            if (!info || typeof info !== 'object' || !info.name) continue;
+            if (info.connected === false) continue;
+            // cubsbadge /api/troops 會同時回傳「0082」及別名「82」（帶 _aliasOf），略過別名避免下拉選單重複
+            if (info._aliasOf && json.troops[info._aliasOf]) continue;
+            if (!troops[id]) {
               troops[id] = { name: String(info.name), ...(info.en ? { en: String(info.en) } : {}) };
             }
           }
@@ -363,6 +373,7 @@ export default async function handler(req, res) {
       success: true,
       origin,
       privacy: 'progress-only',
+      upstreamOk,
       troops,
     });
   }
