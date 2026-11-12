@@ -4,17 +4,23 @@ import {
   FORM_ORDER,
   PRINT_CHECKLIST,
   PT67_CHECKLIST,
+  PT67_CHECKLIST_EN,
   PT68_CHECKLIST,
+  PT68_CHECKLIST_EN,
   buildFormValues,
   formReadiness,
   itemRowsForAward,
 } from '@shared/forms.js';
-import { GOLD_AWARD, OTHER_BADGES, goldenBauhiniaEligibility, levelSummary } from '@shared/book.js';
+import { GOLD_AWARD, goldenBauhiniaEligibility } from '@shared/book.js';
 import { useBook } from '../bookContext.js';
+import { DemoNotice, DemoSignMark, useIsDemo } from '../components/DemoNotice.jsx';
 import Write from '../components/Write.jsx';
 import { Icon, cx } from '../ui.jsx';
 import { Link } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
+
+/** 三款表格合共的 A4 張數（由 FORM_META 推導，不手寫）。 */
+export const FORMS_SHEET_TOTAL = FORM_ORDER.reduce((sum, id) => sum + (FORM_META[id].pages || 0), 0);
 
 function usePrintPreview() {
   const [on, setOn] = useState(false);
@@ -83,6 +89,7 @@ function SectionTitle({ children, en }) {
 
 function SignatureLine({ label, en, sig }) {
   const { isEn } = useLang();
+  const demo = useIsDemo();
   return (
     <div className="ptsignbox">
       <span className="ptcell__lbl">
@@ -90,10 +97,55 @@ function SignatureLine({ label, en, sig }) {
         {!isEn && en && <em>{en}</em>}
       </span>
       <div className="ptsignbox__ink">
-        {sig?.png ? <img src={sig.png} alt={label} /> : <span className="ptblank" />}
+        {/* 示範紀錄冊一律不顯示任何簽名圖片，只印「示範簽署」文字。 */}
+        {demo ? <DemoSignMark /> : sig?.png ? <img src={sig.png} alt={label} /> : <span className="ptblank" />}
       </div>
-      {sig?.name && <small>{sig.name}</small>}
+      {!demo && sig?.name && <small>{sig.name}</small>}
     </div>
+  );
+}
+
+/** 領袖／總監簽署位置：正式表格留白由本人簽署蓋印；示範紀錄冊只印「示範簽署」。 */
+function EndorseSign() {
+  const demo = useIsDemo();
+  return demo ? <DemoSignMark className="demo-sign--endorse" /> : null;
+}
+
+function InterestChosenTable({ rows, showCert = false }) {
+  const { isEn } = useLang();
+  const cols = showCert ? 4 : 3;
+  return (
+    <table className="pttable pttable--chk">
+      <thead>
+        <tr>
+          <th>{isEn ? 'Interest area badge (official page 19)' : '興趣範疇活動徽章（官方第 19 頁）'}</th>
+          <th style={{ width: '22%' }}>{isEn ? 'Area' : '類別'}</th>
+          <th style={{ width: '15%' }}>{isEn ? 'Date' : '日期'}</th>
+          {showCert && <th style={{ width: '14%' }}>{isEn ? 'Certificate' : '證書編號'}</th>}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((b) => (
+          <tr key={`${b.domain}-${b.id}`}>
+            <td>
+              {isEn ? b.en : b.name} <small className="pttable__code">{b.badgeId}</small>
+            </td>
+            <td>{isEn ? b.domainEn : b.domainZh}</td>
+            <td>{b.date}</td>
+            {showCert && <td>{b.cert || ''}</td>}
+          </tr>
+        ))}
+        {rows.length === 0 && (
+          <tr>
+            <td colSpan={cols} className="tiny">
+              {isEn
+                ? 'No interest area badges chosen yet — pick two different areas on page 19.'
+                : '尚未選定興趣範疇活動徽章：請在第 19 頁選兩個不同類別，各填一枚活動徽章。'}
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
   );
 }
 
@@ -113,7 +165,7 @@ function GoldItemTable({ rows, showCert = false }) {
         {rows.map((row) => (
           <tr key={row.id}>
             <td>
-              {row.name}
+              {isEn ? row.en || row.name : row.name}
               <small className="pttable__code"> {row.badgeId}</small>
             </td>
             <td>{row.date || ''}</td>
@@ -138,13 +190,14 @@ export function FormsIndex() {
     <div className="formsindex">
       <div className="formsindex__head">
         <div>
-          <span className="eyebrow">OFFICIAL FORMS · AUTO-FILLED</span>
+          <span className="eyebrow">{isEn ? 'FORMS · AUTO-FILLED' : '申請表 · 自動帶入'}</span>
           <h1>{isEn ? 'Cub Scout Forms & Print Checklist' : '幼童軍申請表及列印檢查清單'}</h1>
           <p>
             {isEn
               ? 'Personal particulars, Scout ID, HKID first 4 characters, Golden Bauhinia item dates and the applicant signature are auto-filled from your record book. Tap any box to fine-tune before A4 printing.'
               : '個人摘要、SCOUT ID、身份證首四位、金紫荊考驗項目日期及申請人簽名均由紀錄冊自動帶入；列印前仍可點擊任何格線微調。'}
           </p>
+          <DemoNotice />
         </div>
         <div className="formsindex__btns">
           <Link to="/p/contents" className="btn btn--ghost btn--sm">
@@ -175,18 +228,20 @@ export function FormsIndex() {
                 </span>
               </div>
               <h2>{isEn ? meta.en : meta.title}</h2>
-              <p className="formcard__when">{meta.when}</p>
+              <p className="formcard__when">{isEn && meta.whenEn ? meta.whenEn : meta.when}</p>
               <p className="tiny">{isEn && meta.noteEn ? meta.noteEn : meta.note}</p>
               {!check.ready && (
                 <p className="formcard__missing">
                   <strong>{isEn ? 'Pending: ' : '待補填：'}</strong>
-                  {check.missing.join('、')}
+                  {isEn ? check.missingEn.join(', ') : check.missing.join('、')}
                 </p>
               )}
               <div className="formcard__actions">
                 <Link to={`/forms/${id}`} className="btn btn--primary btn--sm">
                   <Icon name="file" size={14} />{' '}
-                  {isEn ? `Open ${meta.short} (${meta.pages}p)` : `開啟 ${meta.short}（共 ${meta.pages} 頁）`}
+                  {isEn
+                    ? `Open ${meta.shortEn || meta.short} (${meta.pages} A4 ${meta.pages > 1 ? 'sheets' : 'sheet'})`
+                    : `開啟 ${meta.short}（共 ${meta.pages} 張 A4）`}
                 </Link>
               </div>
             </article>
@@ -199,12 +254,10 @@ export function FormsIndex() {
         <div className="checklistgrid">
           {PRINT_CHECKLIST.map((group) => (
             <article key={group.title}>
-              <h3>{group.title}</h3>
-              <p className="tiny">
-                {group.paper} → {isEn ? 'digital pages' : '電子頁'} {group.digital}
-              </p>
+              <h3>{isEn ? group.titleEn : group.title}</h3>
+              <p className="tiny">{isEn ? group.refEn : group.ref}</p>
               <ul>
-                {group.items.map((it) => (
+                {(isEn ? group.itemsEn : group.items).map((it) => (
                   <li key={it}>{it}</li>
                 ))}
               </ul>
@@ -225,10 +278,10 @@ function FormPT67() {
   const { isEn } = useLang();
   const [v, set] = useFormEditor('pt67');
   const gb = goldenBauhiniaEligibility(book);
-  const rows = itemRowsForAward(book, GOLD_AWARD);
 
   return (
     <article className="a4sheet ptform">
+      <DemoNotice />
       <FormHead meta={FORM_META.pt67} values={v} />
 
       <SectionTitle en="(1) Personal Particulars">（1）個人資料</SectionTitle>
@@ -280,11 +333,13 @@ function FormPT67() {
         <div className="ptsignbox">
           <FCell label="旅長／團長姓名" en="GSL / CSL Name" k="csl" values={v} set={set} />
           <FCell label="日期" en="Date" k="cslDate" values={v} set={set} type="date" />
+          <EndorseSign />
           <span className="ptendorse__stamp">{isEn ? 'Group / Pack Stamp' : '旅／團印'}</span>
         </div>
         <div className="ptsignbox">
           <FCell label="區總監批核" en="District Commissioner" k="dcName" values={v} set={set} />
           <FCell label="日期" en="Date" k="dcDate" values={v} set={set} type="date" />
+          <EndorseSign />
           <span className="ptendorse__stamp">{isEn ? 'District Stamp' : '區印'}</span>
         </div>
       </div>
@@ -292,7 +347,7 @@ function FormPT67() {
       <div className="ptfollow">
         <strong>{isEn ? 'Documents to attach (PT/67):' : '遞交時須附上（PT/67）：'}</strong>
         <ul>
-          {PT67_CHECKLIST.map((item) => (
+          {(isEn ? PT67_CHECKLIST_EN : PT67_CHECKLIST).map((item) => (
             <li key={item}>{item}</li>
           ))}
         </ul>
@@ -315,6 +370,7 @@ function FormPT68() {
   return (
     <>
       <article className="a4sheet ptform">
+        <DemoNotice />
         <FormHead meta={FORM_META.pt68} values={v} />
 
         <SectionTitle en="(1) Personal Particulars">（1）個人資料</SectionTitle>
@@ -345,35 +401,7 @@ function FormPT68() {
           <FCell label="領導才能日期" en="Leadership Dates" k="leadershipDates" values={v} set={set} span={4} />
         </div>
         <GoldItemTable rows={rows} showCert />
-        <table className="pttable pttable--chk">
-          <thead>
-            <tr>
-              <th>{isEn ? 'Interest badges (two different areas)' : '興趣範疇活動徽章（兩個不同類別）'}</th>
-              <th style={{ width: '15%' }}>{isEn ? 'Date' : '日期'}</th>
-              <th style={{ width: '14%' }}>{isEn ? 'Certificate' : '證書編號'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {v.interestRows
-              .filter((b) => b.date)
-              .map((b) => (
-                <tr key={b.id}>
-                  <td>
-                    {isEn ? b.en : b.name} <small className="pttable__code">{b.badgeId}</small>
-                  </td>
-                  <td>{b.date}</td>
-                  <td>{b.cert || ''}</td>
-                </tr>
-              ))}
-            {v.interestRows.filter((b) => b.date).length === 0 && (
-              <tr>
-                <td colSpan={3} className="tiny">
-                  {isEn ? 'No activity badges recorded yet.' : '尚未記錄活動徽章。'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <InterestChosenTable rows={v.chosenInterestRows} showCert />
         <p className="ptnotes">
           {isEn
             ? 'Candidates must be between 10.5 and 12, or complete before finishing primary school. Documentary proof from the school is required when the Cub Scout is over 12.'
@@ -385,13 +413,16 @@ function FormPT68() {
       </article>
 
       <article className="a4sheet ptform">
+        <DemoNotice />
         <div className="pthead">
           <div>
             <strong>{isEn ? 'SCOUT ASSOCIATION OF HONG KONG' : '香港童軍總會'}</strong>
             <h1>{isEn ? 'Confirmation, Nomination & Approval' : '確認、提名及批核'}</h1>
-            <p>FORM PT/68 (06/2024) · {isEn ? 'page 2' : '第 2 頁'}</p>
+            <p>
+              {FORM_META.pt68.code} · {isEn ? 'sheet 2 of 2' : '第 2 張（共 2 張）'}
+            </p>
           </div>
-          <span className="pthead__code">PT/68 · p.2</span>
+          <span className="pthead__code">{isEn ? 'PT/68 · 2 of 2' : 'PT/68 · 2／2'}</span>
         </div>
 
         <SectionTitle en="(3) Confirmation and Approval">（3）確認及批核</SectionTitle>
@@ -415,6 +446,7 @@ function FormPT68() {
             </p>
             <FCell label="姓名" en="Name" k="nominationName" values={v} set={set} />
             <FCell label="日期" en="Date" k="nominationDate" values={v} set={set} type="date" />
+            <EndorseSign />
             <span className="ptendorse__stamp">{isEn ? 'Group / Pack Stamp' : '旅／團印'}</span>
           </div>
           <div className="ptendorse__box">
@@ -424,6 +456,7 @@ function FormPT68() {
             </p>
             <FCell label="姓名" en="Name" k="recommendationName" values={v} set={set} />
             <FCell label="日期" en="Date" k="recommendationDate" values={v} set={set} type="date" />
+            <EndorseSign />
             <span className="ptendorse__stamp">{isEn ? 'District Stamp' : '區印'}</span>
           </div>
           <div className="ptendorse__box">
@@ -433,6 +466,7 @@ function FormPT68() {
             </p>
             <FCell label="姓名" en="Name" k="approvalName" values={v} set={set} />
             <FCell label="日期" en="Date" k="approvalDate" values={v} set={set} type="date" />
+            <EndorseSign />
             <span className="ptendorse__stamp">{isEn ? 'Regional Stamp' : '地域印'}</span>
           </div>
           <div className="ptendorse__box ptendorse__box--office">
@@ -450,7 +484,7 @@ function FormPT68() {
         <div className="ptfollow">
           <strong>{isEn ? 'Documents to attach (PT/68):' : '遞交時須附上（PT/68）：'}</strong>
           <ul>
-            {PT68_CHECKLIST.map((item) => (
+            {(isEn ? PT68_CHECKLIST_EN : PT68_CHECKLIST).map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
@@ -475,10 +509,10 @@ function FormGbac() {
   const [v, set] = useFormEditor('gbac');
   const rows = itemRowsForAward(book, GOLD_AWARD);
   const gb = goldenBauhiniaEligibility(book);
-  const interest = OTHER_BADGES.filter((b) => book.otherBadges?.[b.id]?.date);
 
   return (
     <article className="a4sheet ptform ptform--unofficial">
+      <DemoNotice />
       <div className="pthead">
         <div>
           <strong>{isEn ? 'UNOFFICIAL DATA CHECKLIST — NOT AN OFFICIAL FORM' : '非官方資料核對清單 — 不是官方表格'}</strong>
@@ -504,38 +538,8 @@ function FormGbac() {
       <SectionTitle en="Core items (4.1.1 – 4.4.2)">核心項目（4.1.1 – 4.4.2）</SectionTitle>
       <GoldItemTable rows={rows} />
 
-      <SectionTitle en="Interest area badges">興趣範疇活動徽章</SectionTitle>
-      <table className="pttable">
-        <thead>
-          <tr>
-            <th style={{ width: '42%' }}>{isEn ? 'Badge' : '活動徽章'}</th>
-            <th>{isEn ? 'Area' : '類別'}</th>
-            <th style={{ width: '15%' }}>{isEn ? 'Date' : '日期'}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {interest.map((b) => (
-            <tr key={b.id}>
-              <td>
-                {isEn ? b.en : b.name} <small className="pttable__code">{b.badgeId}</small>
-              </td>
-              <td>{isEn ? b.categoryNameEn : b.categoryName}</td>
-              <td>
-                {book.otherBadges[b.id].levels
-                  ? levelSummary(book.otherBadges[b.id], isEn ? 'en' : 'zh')
-                  : book.otherBadges[b.id].date}
-              </td>
-            </tr>
-          ))}
-          {interest.length === 0 && (
-            <tr>
-              <td colSpan={3} className="tiny">
-                {isEn ? 'No activity badges recorded yet.' : '尚未記錄活動徽章。'}
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <SectionTitle en="Interest area badges (two different areas)">興趣範疇活動徽章（兩個不同類別）</SectionTitle>
+      <InterestChosenTable rows={v.chosenInterestRows} />
 
       <div className={cx('ptnotes', gb.halfPastTen ? 'is-ok' : '')}>
         <strong>{isEn ? 'Age & schooling condition: ' : '年齡及學籍條件：'}</strong>
@@ -599,7 +603,7 @@ export function FormsAll() {
         <Link to="/forms" className="btn btn--ghost btn--sm">
           <Icon name="back" size={14} /> {isEn ? 'Back' : '返回表格總覽'}
         </Link>
-        <strong>{isEn ? 'All Forms (4 A4 pages)' : '全部表格（共 4 頁 A4）'}</strong>
+        <strong>{isEn ? `All Forms (${FORMS_SHEET_TOTAL} A4 sheets)` : `全部表格（共 ${FORMS_SHEET_TOTAL} 張 A4）`}</strong>
         <div className="formdoc__acts">
           <button type="button" className={cx('btn btn--ghost btn--sm', preview && 'is-on')} onClick={togglePreview}>
             {preview ? (isEn ? 'Resume Editing' : '返回填寫') : isEn ? 'Print Preview' : '預覽列印效果'}

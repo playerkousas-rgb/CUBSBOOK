@@ -19,6 +19,7 @@ import { Area, AssessTable, Grid, H, Line, Note, P, Page, Sig } from '../compone
 import Write from '../components/Write.jsx';
 import { PhotoPicker } from '../components/PhotoPicker.jsx';
 import { SignModal } from '../components/Ink.jsx';
+import { DemoSignMark, useIsDemo } from '../components/DemoNotice.jsx';
 import { Crest, Icon, cx } from '../ui.jsx';
 import { useLang } from '../i18n.jsx';
 import { Link } from '../router.jsx';
@@ -41,6 +42,7 @@ function CslSign({ path, label = '幼童軍團長簽署', en = 'C.S.L. Signature
   const [sig, setSig] = useField(path, null);
   const readOnly = useReadOnly();
   const { isEn } = useLang();
+  const demo = useIsDemo();
   const [open, setOpen] = useState(false);
   return (
     <div className="offsign">
@@ -48,7 +50,9 @@ function CslSign({ path, label = '幼童軍團長簽署', en = 'C.S.L. Signature
         {isEn ? en : label}
         {!isEn && <em>{en}</em>}
       </span>
-      {sig?.png ? (
+      {demo ? (
+        <DemoSignMark className="demo-sign--line" />
+      ) : sig?.png ? (
         <button type="button" className="offsign__img" onClick={() => setOpen(true)} title={sig.name || ''}>
           <img src={sig.png} alt={isEn ? 'Signature' : '簽署'} />
         </button>
@@ -162,11 +166,16 @@ function CheckLine({ path, zh, en, inline = false }) {
   );
 }
 
-function MiniSig({ path, label = '團長簽署', en = 'C.S.L. Signature' }) {
+/** `filled`：該行是否已有資料。示範紀錄冊只在有資料的行印「示範簽署」，空白行保持空白。 */
+function MiniSig({ path, label = '團長簽署', en = 'C.S.L. Signature', filled = true }) {
   const [sig, set] = useField(path, null);
   const readOnly = useReadOnly();
   const { isEn } = useLang();
+  const demo = useIsDemo();
   const [open, setOpen] = useState(false);
+  if (demo) {
+    return filled ? <DemoSignMark className="demo-sign--mini" /> : <span className="offsig offsig--blank" aria-hidden="true" />;
+  }
   return (
     <>
       {sig?.png ? (
@@ -345,7 +354,7 @@ export function P04() {
             <div className="offgrid__row" key={i}>
               <span><Write value={row.from || ''} onChange={(v) => setCell(i, 'from', v)} type="date" compact label="由" /></span>
               <span><Write value={row.validUntil || ''} onChange={(v) => setCell(i, 'validUntil', v)} type="date" compact label="至" /></span>
-              <span><MiniSig path={`renewals.${i}.signature`} label={`第 ${i + 1} 年領袖簽署`} /></span>
+              <span><MiniSig path={`renewals.${i}.signature`} label={`第 ${i + 1} 年領袖簽署`} filled={Boolean(row.from || row.validUntil)} /></span>
               <span><Write value={row.leaderName || ''} onChange={(v) => setCell(i, 'leaderName', v)} compact label="領袖姓名" /></span>
             </div>
           );
@@ -897,7 +906,7 @@ function ActivityPage({ id, plan }) {
                     <Write value={st.date || ''} onChange={(v) => setRow(row, { date: v })} type="date" compact label={displayZh} />
                   </span>
                   <span className="offact__sig">
-                    <MiniSig path={row.level ? `otherBadges.${row.id}.levels.${row.level}.signature` : `otherBadges.${row.id}.signature`} label={`${displayZh} 團長簽署`} />
+                    <MiniSig path={row.level ? `otherBadges.${row.id}.levels.${row.level}.signature` : `otherBadges.${row.id}.signature`} label={`${displayZh} 團長簽署`} filled={Boolean(st.date)} />
                   </span>
                 </div>
               );

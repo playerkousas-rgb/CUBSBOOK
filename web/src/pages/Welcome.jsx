@@ -4,6 +4,7 @@ import { demoBook, newBook } from '@shared/book.js';
 import { persistBook } from '../bookStore.js';
 import { navigate } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
+import { demoLoadedToast } from '../components/DemoNotice.jsx';
 
 export default function Welcome({ onReady, onLeader, onParent }) {
   const { push } = useToast();
@@ -12,7 +13,7 @@ export default function Welcome({ onReady, onLeader, onParent }) {
     nameZh: '',
     nameEn: '',
     scoutId: '',
-    unit: '',
+    pack: '',
     group: '',
     district: '',
     region: '',
@@ -77,7 +78,7 @@ export default function Welcome({ onReady, onLeader, onParent }) {
             {isEn ? (
               <>
                 <span className="coverart__kicker">CUB SCOUT SECTION</span>
-                <h1 className="coverart__title coverart__title--en">VENTURE SCOUT</h1>
+                <h1 className="coverart__title coverart__title--en">CUB SCOUT</h1>
                 <h2 className="coverart__subtitle">RECORD BOOK</h2>
               </>
             ) : (
@@ -91,7 +92,7 @@ export default function Welcome({ onReady, onLeader, onParent }) {
           <div className="coverart__plate">
             <span className="coverart__plate-label">{isEn ? 'HOLDER' : '持有人'}</span>
             <strong>{(isEn ? form.nameEn || form.nameZh : form.nameZh || form.nameEn) || (isEn ? 'Your Name' : '你的名字')}</strong>
-            <span className="coverart__plate-sub">{form.unit || form.group || (isEn ? 'Cub Scout Unit' : '幼童軍團')}</span>
+            <span className="coverart__plate-sub">{form.pack || form.group || (isEn ? 'Cub Scout Pack' : '幼童軍團')}</span>
           </div>
         </div>
       </div>
@@ -147,8 +148,8 @@ export default function Welcome({ onReady, onLeader, onParent }) {
           </div>
           <div className="welcome__row">
             <label className="field">
-              <span className="field__label">{isEn ? 'Cub Scout Unit' : '幼童軍團'}</span>
-              <input className="welcome__input" value={form.unit} onChange={set('unit')} placeholder={isEn ? '28th HK Cub Scout Unit' : '港島第 28 旅幼童軍團'} />
+              <span className="field__label">{isEn ? 'Cub Scout Pack' : '幼童軍團'}</span>
+              <input className="welcome__input" value={form.pack} onChange={set('pack')} placeholder={isEn ? '28th HK Group Cub Scout Pack' : '港島第 28 旅幼童軍團'} />
             </label>
             <label className="field">
               <span className="field__label">{isEn ? 'District' : '區'}</span>
@@ -179,10 +180,10 @@ export default function Welcome({ onReady, onLeader, onParent }) {
               className="btn btn--onpaper"
               onClick={() => {
                 start(demoBook(), '/p/contents');
-                push(isEn ? 'Demo record book loaded' : '已載入示範紀錄冊');
+                push(demoLoadedToast(isEn));
               }}
             >
-              {isEn ? 'Try Demo Data' : '用示範資料看看'}
+              {isEn ? 'Try the Demo Book (fictional)' : '看看示範紀錄冊（虛構資料）'}
             </button>
             <button type="button" className="btn btn--onpaper" onClick={() => fileRef.current?.click()}>
               {isEn ? 'Import Backup' : '匯入備份'}
@@ -202,6 +203,11 @@ export default function Welcome({ onReady, onLeader, onParent }) {
             {isEn
               ? 'No sign-up or cloud sync. Data lives on this device — export a backup before switching phones.'
               : '沒有「註冊」或「登入」。資料留在這部裝置；換機前請在選單匯出備份。'}
+          </p>
+          <p className="welcome__fine">
+            {isEn
+              ? 'The demo book is a complete but fictional Golden Bauhinia Award application for testing the layout and A4 print. Every page is marked as a sample; it must not be submitted and cannot sync with CUBSBADGE.'
+              : '示範紀錄冊是一份完整但虛構的金紫荊獎章申請樣本，只供測試版面及 A4 列印；每頁均印有示範標示，不可遞交，亦不可與 CUBSBADGE 同步。'}
           </p>
           <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => importFile(e.target.files?.[0])} />
         </form>

@@ -219,10 +219,13 @@ export function mirrorFromTransfer(payload) {
   Object.entries(payload.awards || {}).forEach(([awardId, row]) => {
     book.pages[`award_${awardId}`] = { ...(book.pages[`award_${awardId}`] || {}), ...row };
   });
-  if (payload.investiture) book.pages.p15 = { ...(book.pages.p15 || {}), ...payload.investiture };
+  if (payload.investiture?.investitureDate && !book.member.dateInvestiture) {
+    book.member.dateInvestiture = payload.investiture.investitureDate;
+  }
 
   book.meta = {
     ...(book.meta || {}),
+    ...(payload.demo === true ? { demo: true } : {}),
     parent: {
       source: 'qr',
       ymis: book.member?.scoutId || payload.scoutId || '',

@@ -99,9 +99,9 @@ v1.2.1 取得完整 PDF 後，逐頁核對並作以下校正：
 
 ## 四、落地位置
 
-- `shared/officialPages.js`：32 頁頁碼、中英標題、章節、頁面類型（單一真相）。
+- `shared/officialPages.js`：32 頁頁碼、中英標題、章節、頁面類型（單一真相）；`PAPER_SECTIONS` 把章節對應到頁碼，`PT/67`・`PT/68` 附件清單及列印檢查清單的頁碼文案一律由此推導（`shared/forms.js`），不得手寫。
 - `shared/officialActivityBadges.js`：第 21–27 頁逐頁範疇帶與 60 行級別編排。
 - `shared/book.js`：`SECTIONS`（封面＋32 頁＋附錄）、`PAGE_TOTAL = 32`、`PRINT_PAGES = 33`。
 - `web/src/pages/Official.jsx`：`PCover`、`P01`–`P32`、`ContentsPage`。
-- `web/src/components/Paper.jsx`：官方橙色標題帶、紫色頁碼圈、章節扉頁與封面版式。
-- 契約測試：`tests/*.test.mjs`（44 項）鎖定頁數、頁序、標題、活動徽章行數與範疇切分。
+- `web/src/components/Paper.jsx`：官方標題帶、金黃頁碼圈、章節扉頁與封面版式；示範紀錄冊在每頁頁腳加上示範標示。
+- 契約測試：`tests/*.test.mjs` 鎖定頁數、頁序、標題、活動徽章行數、範疇切分及頁碼文案。

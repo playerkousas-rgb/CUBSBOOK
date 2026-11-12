@@ -9,6 +9,7 @@ import {
 } from '@shared/transfer.js';
 import { syllabusItem } from '@shared/forms.js';
 import { otherBadgeRows } from '@shared/book.js';
+import { DEMO_NOTICE } from '@shared/demo.js';
 import { useBook } from '../bookContext.js';
 import SignoffPanel from '../components/SignoffPanel.jsx';
 import { Crest, Icon, useToast } from '../ui.jsx';
@@ -313,6 +314,12 @@ export function MemberPayloadView({ payload, withSignoff = false, onCloseHref = 
         ))}
       </div>
 
+      {payload.demo === true && (
+        <p className="demo-notice" role="note" data-demo-notice="scan">
+          {isEn ? DEMO_NOTICE.en : DEMO_NOTICE.zh}
+        </p>
+      )}
+
       {withSignoff && <SignoffPanel payload={{ ...payload, member: { ...m, scoutId: sid } }} />}
 
       <section className="snapcard">
@@ -325,13 +332,12 @@ export function MemberPayloadView({ payload, withSignoff = false, onCloseHref = 
             </h2>
             <p>
               {isEn ? 'Scout ID:' : '童軍成員編號：'} <strong>{sid || '—'}</strong>
-              {(m.region || m.district || m.group || m.unit) &&
-                ` · ${[m.region, m.district, m.group, m.unit].filter(Boolean).join(' · ')}`}
+              {(m.region || m.district || m.group || m.pack) &&
+                ` · ${[m.region, m.district, m.group, m.pack].filter(Boolean).join(' · ')}`}
             </p>
-            {(m.vsl || m.dateJoined) && (
+            {m.dateJoined && (
               <p className="tiny">
-                {m.vsl ? `${isEn ? 'CSL' : '團長'}：${m.vsl}` : ''}{' '}
-                {m.dateJoined ? `· ${isEn ? 'Joined' : '入團日期'}：${m.dateJoined}` : ''}
+                {isEn ? 'Joined' : '入團日期'}：{m.dateJoined}
               </p>
             )}
           </div>

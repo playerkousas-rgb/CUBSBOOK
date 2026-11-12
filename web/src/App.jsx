@@ -22,6 +22,7 @@ import {
 } from './pages/Official.jsx';
 import { AppendixPage, PrintBook } from './pages/Appendix.jsx';
 import { FormDoc, FormsAll, FormsIndex } from './pages/Forms.jsx';
+import { DemoRibbon } from './components/DemoNotice.jsx';
 import ParentView from './pages/ParentView.jsx';
 import ParentConnect from './pages/ParentConnect.jsx';
 import { HashSnapshotViewer, Scan, ScanView, Signoff } from './pages/Scan.jsx';
@@ -162,8 +163,8 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
                   : '表格'
                 : formId === 'all'
                   ? isEn
-                    ? 'All 3'
-                    : '全部三張'
+                    ? '3 forms · 4 A4 sheets'
+                    : '三款表格 · 共 4 張 A4'
                   : ``}
             </strong>
           </span>
@@ -176,13 +177,17 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
                 ? isEn
                   ? 'Contents'
                   : '目錄'
-                : !meta?.page || meta.page === '—'
+                : section === 'cover'
                   ? isEn
-                    ? 'Appendix'
-                    : '附錄'
-                  : isEn
-                    ? `Page ${meta.page}`
-                    : `第 ${meta.page} 頁`}
+                    ? 'Unnumbered'
+                    : '不計頁碼'
+                  : !meta?.page || meta.page === '—'
+                    ? isEn
+                      ? 'Appendix'
+                      : '附錄'
+                    : isEn
+                      ? `Page ${meta.page}`
+                      : `第 ${meta.page} 頁`}
             </span>
             <strong>
               {section === 'contents'
@@ -285,6 +290,8 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
           </button>
         </div>
       )}
+
+      {!printAll && !scanPath && !leaderRoute && !parentConnectRoute && <DemoRibbon />}
 
       {!online && (
         <div className="offlinebar no-print" role="status">
@@ -402,8 +409,8 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
         <div className="coverhint no-print">
           <span>
             {isEn
-              ? `${PAGE_TOTAL} pages · Offline-first · Zero personal data upload`
-              : `對應紙本共 ${PAGE_TOTAL} 頁 · 點「打開紀錄冊」或按 → 翻開`}
+              ? `Cover + ${PAGE_TOTAL} official pages · Offline-first · Zero personal data upload`
+              : `封面＋對應紙本第 1–${PAGE_TOTAL} 頁 · 點「打開紀錄冊」或按 → 翻開`}
           </span>
         </div>
       )}

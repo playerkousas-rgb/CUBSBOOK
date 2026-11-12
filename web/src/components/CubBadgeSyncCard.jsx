@@ -1,8 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  DEMO_NOTICE,
+  DEMO_SYNC_BLOCKED,
   collectPendingForBadge,
   exportForBadge,
   importFromBadge,
+  isDemoBook,
   scoutId,
 } from '@shared/book.js';
 import { useBook } from '../bookContext.js';
@@ -31,7 +34,36 @@ function writeMemberSession(sess) {
   }
 }
 
-export default function CubBadgeSyncCard({ readOnly = false }) {
+/**
+ * 示範紀錄冊（虛構資料）一律不顯示任何連線、送交或匯出入口：
+ * 連登入表單也不渲染，亦不會向 /api/cubbadge 發出任何請求。
+ */
+function DemoSyncLocked() {
+  const { isEn } = useLang();
+  return (
+    <section className="appxcard cubsync cubsync--demo" data-demo-sync="blocked">
+      <h3>
+        <Icon name="lock" size={16} />{' '}
+        {isEn ? 'CUBSBADGE Sync Is Disabled for Demo Data' : '示範資料不可同步至 CUBSBADGE'}
+      </h3>
+      <p className="cubsync__demo-notice">{isEn ? DEMO_NOTICE.en : DEMO_NOTICE.zh}</p>
+      <p className="tiny">{isEn ? DEMO_SYNC_BLOCKED.en : DEMO_SYNC_BLOCKED.zh}</p>
+      <p className="tiny">
+        {isEn
+          ? 'To use sync: open “Sample Data & Reset” below and start a new blank record book, or restore your own backup.'
+          : '如要使用同步：請在下方「示範資料與重設」建立全新空白紀錄冊，或匯入自己的備份。'}
+      </p>
+    </section>
+  );
+}
+
+export default function CubBadgeSyncCard(props) {
+  const { book } = useBook();
+  if (isDemoBook(book)) return <DemoSyncLocked />;
+  return <CubBadgeSyncLive {...props} />;
+}
+
+function CubBadgeSyncLive({ readOnly = false }) {
   const { book, update, replace } = useBook();
   const { push } = useToast();
   const { isEn } = useLang();

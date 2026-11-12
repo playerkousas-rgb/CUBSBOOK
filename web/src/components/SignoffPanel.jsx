@@ -5,7 +5,8 @@ import { qrSvg } from '../qr.js';
 import { shrinkSignature } from '../signature.js';
 import { syllabusItem } from '@shared/forms.js';
 import { otherBadgeRows } from '@shared/book.js';
-import { QR_LIMIT, encodeSignoff } from '@shared/transfer.js';
+import { QR_LIMIT, encodeSignoff, isDemoPayload } from '@shared/transfer.js';
+import { DEMO_NOTICE } from '@shared/demo.js';
 import { useLang } from '../i18n.jsx';
 
 const nameOf = (id, isEn) => {
@@ -63,7 +64,7 @@ export default function SignoffPanel({ payload }) {
 
   useEffect(() => {
     let alive = true;
-    if (!leader || chosen.length + chosenBadges.length === 0) {
+    if (isDemoPayload(payload) || !leader || chosen.length + chosenBadges.length === 0) {
       setResult(null);
       setSvg('');
       return () => {
@@ -116,6 +117,22 @@ export default function SignoffPanel({ payload }) {
       else next.add(key);
       return next;
     });
+
+  if (isDemoPayload(payload)) {
+    return (
+      <section className="signpanel signpanel--demo" data-demo-sync="blocked">
+        <h2>
+          <Icon name="lock" size={16} /> {isEn ? 'Sign-off Disabled for Demo Data' : '示範資料不可核簽'}
+        </h2>
+        <p className="demo-notice">{isEn ? DEMO_NOTICE.en : DEMO_NOTICE.zh}</p>
+        <p className="signpanel__hint">
+          {isEn
+            ? 'This QR comes from the fictional demo record book. No return sign-off code can be issued for it.'
+            : '這個二維碼來自虛構的示範紀錄冊，不可簽發核簽回傳碼。'}
+        </p>
+      </section>
+    );
+  }
 
   if (!hasAny) {
     return (
@@ -280,6 +297,7 @@ export default function SignoffPanel({ payload }) {
       {error && <p className="form-error">{error}</p>}
 
       <SignModal
+        allowDemo
         open={openSign}
         onClose={() => setOpenSign(false)}
         title={isEn ? 'Leader / Assessor Signature' : '領袖／主考簽署'}

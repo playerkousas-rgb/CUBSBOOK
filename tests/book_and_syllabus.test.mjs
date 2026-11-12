@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { sampleBook } from './fixtures/sampleBook.mjs';
 import { readFileSync } from 'node:fs';
 import {
   APP_VERSION,
@@ -16,7 +17,6 @@ import {
   toBookId,
   toBadgeId,
   newBook,
-  demoBook,
   scoutId,
   normalizeScoutId,
   sameScoutId,
@@ -188,7 +188,7 @@ test('年齡與金紫荊資格：年滿十歲半（126 個月）才可完成最�
   assert.equal(ageFromDob('2016-04-12', ref), 10);
   assert.equal(ageInMonths('2016-04-12', ref), 126);
 
-  const demo = demoBook();
+  const demo = sampleBook();
   const elig = goldenBauhiniaEligibility(demo, ref);
   assert.equal(elig.months, 126);
   assert.equal(elig.halfPastTen, true);
@@ -197,8 +197,8 @@ test('年齡與金紫荊資格：年滿十歲半（126 個月）才可完成最�
   assert.equal(goldenBauhiniaEligibility(young, ref).halfPastTen, false);
 });
 
-test('示範紀錄冊只示範版面：統計與會員續期狀態準確', () => {
-  const demo = demoBook();
+test('部分完成的成員紀錄冊：統計與會員續期狀態準確', () => {
+  const demo = sampleBook();
   const stats = allStats(demo);
   assert.deepEqual(
     stats.awards.map((a) => ({ id: a.award.id, done: a.done, total: a.total, percent: a.percent })),
@@ -227,7 +227,7 @@ test('示範紀錄冊只示範版面：統計與會員續期狀態準確', () =>
 });
 
 test('BOOK → BADGE：匯出一律 pending、零個人資料，只保留 SCOUT ID 及項目／日期', () => {
-  const demo = demoBook();
+  const demo = sampleBook();
   const out = exportForBadge(demo, 'T12');
 
   assert.equal(out.schema, SYNC_SCHEMA);
@@ -332,7 +332,7 @@ test('BADGE → BOOK：只錄入領袖已核實進度，pendingRequests 永不�
   assert.throws(() => importFromBadge(pendingOnly, blank), /待領袖核實/);
 
   // 匯出後再倒灌自身的 pending 檔，同樣必須被拒
-  const demo = demoBook();
+  const demo = sampleBook();
   assert.throws(() => importFromBadge(exportForBadge(demo, 'T12'), demo), /待領袖核實/);
 });
 
@@ -344,11 +344,11 @@ test('空白紀錄冊建立後即為完整可用結構，示範資料不會留�
   assert.equal(book.appVersion, APP_VERSION);
   assert.ok(ITEM_INDEX['L1-A']);
 
-  const demo = demoBook();
+  const demo = sampleBook();
   for (const [id, entry] of Object.entries(demo.progress)) {
     assert.ok(ITEM_INDEX[id], `${id} 不在綱要內`);
     assert.match(entry.date, /^\d{4}-\d{2}-\d{2}$/);
-    assert.equal(entry.signature ?? null, null, '示範資料不可偽造簽名墨跡');
+    assert.equal(entry.signature ?? null, null, '樣本資料不可帶簽名墨跡');
   }
   assert.equal(demo.otherBadges['OT-A22'].confirmedByBadge ?? false, false);
 });

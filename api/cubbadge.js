@@ -16,6 +16,7 @@
 
 import { toBadgeId, ITEM_INDEX, toBookId } from '../shared/syllabus.js';
 import { LEVEL_KEYS, isLevelKey, isLeveledRef, levelsOf, splitLevelRef } from '../shared/badgeLevels.js';
+import { DEMO_SYNC_BLOCKED, isDemoScoutId } from '../shared/demo.js';
 
 const DEFAULT_BADGE_ORIGIN = 'https://cubsbadge.vercel.app';
 const EXEC_URL_RE = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{10,}\/exec\/?$/i;
@@ -404,6 +405,20 @@ export default async function handler(req, res) {
     return sendJson(res, 403, {
       success: false,
       error: 'CUBBOOK 不允許此操作；只准 login、logout、load 及 submitPending（轉發 requestComplete）。',
+    });
+  }
+  // 示範紀錄冊（虛構資料）第三重封鎖：帶示範標記或保留的全零示範 SCOUT ID 的請求，
+  // 在接觸 cubbadge 後端之前一律拒絕，連登入也不轉發。
+  if (
+    body.demo === true ||
+    rawData.demo === true ||
+    isDemoScoutId(rawData.login_id) ||
+    isDemoScoutId(rawData.ymis)
+  ) {
+    return sendJson(res, 403, {
+      success: false,
+      code: DEMO_SYNC_BLOCKED.code,
+      error: DEMO_SYNC_BLOCKED.zh,
     });
   }
   if (!/^[0-9A-Za-z_-]{1,32}$/.test(troopId)) {

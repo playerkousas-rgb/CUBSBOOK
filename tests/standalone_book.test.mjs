@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { sampleBook } from './fixtures/sampleBook.mjs';
 import { readFileSync } from 'node:fs';
 import {
   ALL_AWARDS,
@@ -7,7 +8,6 @@ import {
   PRINT_PAGES,
   allStats,
   badgeStats,
-  demoBook,
   newBook,
   toBadgeId,
 } from '../shared/book.js';
@@ -47,7 +47,7 @@ test('BOOK 核心功能完全不需要 BADGE：無網絡亦能建立、填寫、
   assert.equal(stats.awards.find((a) => a.award.id === 'L4').percent, 0);
 
   // 4. 官方表格自動帶入（PT/67、PT/68）
-  const v67 = buildFormValues(book, 'pt67');
+  const v67 = buildFormValues(book, 'pt67', new Date('2026-11-05'));
   assert.equal(v67.nameZh, '陳小狼');
   assert.equal(v67.ageMonths, '126');
   const r68 = formReadiness(book, 'pt68');
@@ -200,8 +200,8 @@ test('官方 32 頁齊備、頁序與標題照官方，內頁不出現自創「�
   assert.equal((official.match(/<AssessTable/g) || []).length, 2);
 });
 
-test('示範資料只示範版面，不冒充任何領袖核實或簽名', () => {
-  const demo = demoBook();
+test('一般成員樣本及綱要總數：進度不帶任何簽名圖片', () => {
+  const demo = sampleBook();
   assert.ok(Object.keys(demo.progress).length >= 10);
   assert.equal(ALL_AWARDS.length, 5);
   assert.equal(OTHER_BADGES.length, 49);

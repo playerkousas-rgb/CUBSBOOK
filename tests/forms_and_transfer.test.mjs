@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { sampleBook } from './fixtures/sampleBook.mjs';
 import { existsSync, readFileSync } from 'node:fs';
-import { demoBook, newBook, ALL_AWARDS, OTHER_BADGES } from '../shared/book.js';
+import { newBook, ALL_AWARDS, OTHER_BADGES } from '../shared/book.js';
 import {
   FORM_META,
   FORM_ORDER,
@@ -53,16 +54,20 @@ test('官方表格 PT/67・PT/68 齊備，2026 新制只提供清晰標示的非
 
   assert.equal(PT67_CHECKLIST.length >= 4, true);
   assert.equal(PT68_CHECKLIST.length >= 5, true);
-  assert.ok(PT67_CHECKLIST.some((line) => line.includes('1 至 3、5、10 至 13')));
-  assert.ok(PT68_CHECKLIST.some((line) => line.includes('2–4、10–11、13–19')));
+  // 附件頁碼按 2026 年版紀錄冊（封面＋第 1–32 頁）由 officialPages.js 推導，不得再出現舊冊頁碼
+  assert.ok(PT67_CHECKLIST.some((line) => line.includes('第 1–4、10–11、13 頁')));
+  assert.ok(PT68_CHECKLIST.some((line) => line.includes('第 1–4、10–11、13–19 頁')));
+  assert.equal([...PT67_CHECKLIST, ...PT68_CHECKLIST].some((line) => line.includes('1 至 3、5、10 至 13')), false);
   assert.ok(PT68_CHECKLIST.some((line) => line.includes('PT/67')));
   assert.equal(PRINT_CHECKLIST.length, 5);
-  assert.equal(PRINT_CHECKLIST[0].items.includes('個人資料（含近照及持有人簽署）'), true);
+  assert.ok(PRINT_CHECKLIST[0].items[0].startsWith('個人摘要（第 1–2 頁）'));
 });
 
 test('紀錄冊資料一次填寫即自動帶入 PT/67・PT/68，缺漏欄位準確回報', () => {
-  const demo = demoBook();
-  const v67 = buildFormValues(demo, 'pt67');
+  const demo = sampleBook();
+  // 年齡以固定參考日期計算，測試結果不隨執行當日改變
+  const ref = new Date('2026-11-05');
+  const v67 = buildFormValues(demo, 'pt67', ref);
   assert.equal(v67.nameZh, '陳小狼');
   assert.equal(v67.nameEn, 'CHAN SIU-LONG');
   assert.equal(v67.scoutId, '0012345678');
@@ -75,17 +80,18 @@ test('紀錄冊資料一次填寫即自動帶入 PT/67・PT/68，缺漏欄位準
   assert.ok(v67.goldRows.length >= 17);
   assert.equal(v67.goldRows[0].badgeId, '4.1.1');
 
-  const r67 = formReadiness(demo, 'pt67');
+  const r67 = formReadiness(demo, 'pt67', ref);
   assert.equal(r67.ready, true);
   assert.deepEqual(r67.missing, []);
 
   // PT/68 需要更多個人資料：只填姓名與編號不足以遞交
   const bare = newBook({ member: { nameZh: '陳小狼', nameEn: 'CHAN Siu-long', dob: '2016-04-12' } });
-  const r68 = formReadiness(bare, 'pt68');
+  const r68 = formReadiness(bare, 'pt68', ref);
   assert.equal(r68.ready, false);
   assert.ok(r68.missing.includes('SCOUT ID'));
   assert.ok(r68.missing.includes('性別'));
-  assert.equal(buildFormValues(bare, 'pt68').ageMonths, '126');
+  assert.ok(r68.missingEn.includes('Gender'), '英文介面須有獨立的英文缺漏欄位名稱');
+  assert.equal(buildFormValues(bare, 'pt68', ref).ageMonths, '126');
 
   // 細項列只取該獎章，並保留 cubbadge 官方編號供對照
   const rows = itemRowsForAward(demo, ALL_AWARDS[3]);
@@ -117,7 +123,7 @@ test('QR 預設全不剔選（私隱自決），空格包不含任何個人資�
   }
   assert.equal(TRANSFER_OPTIONS.filter((o) => o.sensitive).length, 1);
 
-  const demo = demoBook();
+  const demo = sampleBook();
   const empty = buildPayload(demo, []);
   assert.deepEqual(empty.sel, []);
   assert.equal(empty.member, undefined);
@@ -137,7 +143,7 @@ test('QR 預設全不剔選（私隱自決），空格包不含任何個人資�
 });
 
 test('CB1 二維碼壓縮編解碼、CB1S 核簽碼與 #v= 連結解析', async () => {
-  const demo = demoBook();
+  const demo = sampleBook();
   const enc = await encodeTransfer(demo, ['particulars', 'progress']);
   assert.match(enc.value, /^CB1(P?)\./);
   assert.equal(enc.tooBig, false);
@@ -177,7 +183,7 @@ test('CB1 二維碼壓縮編解碼、CB1S 核簽碼與 #v= 連結解析', async 
 });
 
 test('套用領袖核簽：寫入日期／主考／簽名，SCOUT ID 不符即拒絕', async () => {
-  const demo = demoBook();
+  const demo = sampleBook();
   const sig = await encodeSignoff({
     member: { scoutId: '0012345678' },
     leader: { name: '陳團長', title: '幼童軍團長 CSL', png: 'data:image/png;base64,AAA' },
@@ -213,12 +219,13 @@ test('套用領袖核簽：寫入日期／主考／簽名，SCOUT ID 不符即�
   assert.throws(() => applySignoff(demo, { t: KIND_MEMBER }), /核簽單/);
 });
 
-test('列印版面與版面契約：A4 表單、19 頁列印、目錄及附錄存在', () => {
+test('列印版面與版面契約：A4 表單、封面＋官方 32 頁列印、目錄及附錄存在', () => {
   const app = read('web/src/App.jsx');
   const forms = read('web/src/pages/Forms.jsx');
   const css = read('web/src/styles.css');
 
-  for (let i = 1; i <= 19; i += 1) {
+  assert.ok(app.includes('cover: PCover'), 'App.jsx 缺少封面（不計頁碼）');
+  for (let i = 1; i <= 32; i += 1) {
     const id = `p${String(i).padStart(2, '0')}`;
     assert.ok(app.includes(`'${id}'`) || app.includes(id), `App.jsx 缺少 ${id} 路由`);
   }
