@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { APP_VERSION, BADGE_SYLLABUS, GOLD_AWARD, PRINT_PAGES, demoBook, newBook, today } from '@shared/book.js';
+import { APP_VERSION, BADGE_SYLLABUS, GOLD_AWARD, PRINT_PAGES, demoBook, isDemoBook, newBook, today } from '@shared/book.js';
+import { OFFICIAL_PAGE_COUNT } from '@shared/officialPages.js';
 import { useBook, useReadOnly } from '../bookContext.js';
 import { H, Page } from '../components/Form.jsx';
 import AwardBlock from '../components/AwardBlock.jsx';
@@ -10,6 +11,7 @@ import { Icon, cx, useToast } from '../ui.jsx';
 import { Link } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
 import { LegalNote } from '../components/Legal.jsx';
+import { demoLoadConfirm, demoLoadedToast } from '../components/DemoNotice.jsx';
 
 /* ============================================================
    數位附錄：逐項進度（數位延伸）、同步、備份、列印
@@ -82,7 +84,7 @@ export function AppendixPage() {
             type="button"
             className="btn btn--primary btn--sm"
             onClick={() => {
-              download(`cubbook-backup-${slugify(book.member?.nameZh || book.member?.scoutId)}-${today()}.json`, book);
+              download(`cubbook-${isDemoBook(book) ? 'DEMO-' : ''}backup-${slugify(book.member?.nameZh || book.member?.scoutId)}-${today()}.json`, book);
               push(isEn ? 'Full backup downloaded' : '已下載完整紀錄冊備份 JSON');
             }}
           >
@@ -158,8 +160,8 @@ export function AppendixPage() {
         </h3>
         <p className="tiny">
           {isEn 
-            ? 'A4 portrait, 8 mm margins. Empty-field dots are hidden when printing.'
-            : 'A4 直向、8mm 邊界；列印時會自動隱藏空白欄的小圓點。'}
+            ? `A4 portrait, 10 mm margins. Cover + official pages 1–${OFFICIAL_PAGE_COUNT} = ${PRINT_PAGES.length} A4 sheets. Empty-field dots are hidden when printing.`
+            : `A4 直向、10mm 邊界；封面＋官方第 1–${OFFICIAL_PAGE_COUNT} 頁，共 ${PRINT_PAGES.length} 張 A4。列印時會自動隱藏空白欄的小圓點。`}
         </p>
         <div className="appxbtns">
           <Link to="/print" className="btn btn--gold btn--sm">
@@ -180,13 +182,13 @@ export function AppendixPage() {
             type="button"
             className="btn btn--ghost btn--sm"
             onClick={() => {
-              if (window.confirm(isEn ? 'Load sample data? Current unsaved content is replaced.' : '確定載入示範紀錄冊？目前未匯出的內容會被取代。')) {
+              if (window.confirm(demoLoadConfirm(isEn))) {
                 replace(demoBook());
-                push(isEn ? 'Sample book loaded' : '已載入示範紀錄冊');
+                push(demoLoadedToast(isEn));
               }
             }}
           >
-            {isEn ? 'Load Sample Book' : '載入示範紀錄冊'}
+            {isEn ? 'Load Demo Book (fictional)' : '載入示範紀錄冊（虛構資料）'}
           </button>
           <button
             type="button"
@@ -201,6 +203,11 @@ export function AppendixPage() {
             {isEn ? 'Reset to Blank Book' : '清空重設為空白冊'}
           </button>
         </div>
+        <p className="tiny">
+          {isEn
+            ? 'The demo book is a complete, fictional Golden Bauhinia Award application: all 72 items, activity badges, renewals and the PT/67 and PT/68 fields. Every printed page is marked “SAMPLE ONLY — FOR TESTING — NOT FOR SUBMISSION”, signature boxes only show “SAMPLE SIGNATURE”, and CUBSBADGE sync is disabled.'
+            : '示範紀錄冊是一份完整但全屬虛構的金紫荊獎章申請樣本：72 項進度、活動徽章、會員續期及 PT/67、PT/68 欄位一應俱全。每一頁列印都印有「示範樣本，只供測試，不可遞交」，簽署欄只顯示「示範簽署」，並已停用 CUBSBADGE 同步。'}
+        </p>
       </section>
 
 
@@ -243,8 +250,8 @@ export function PrintBook({ pages }) {
         </Link>
         <span>
           {isEn
-            ? `All ${PRINT_PAGES.length} pages (A4 portrait)`
-            : `整本《幼童軍紀錄冊》共 ${PRINT_PAGES.length} 頁列印預覽`}
+            ? `Cover + official pages 1–${OFFICIAL_PAGE_COUNT} · ${PRINT_PAGES.length} A4 sheets (portrait)`
+            : `整本《幼童軍紀錄冊》：封面＋官方第 1–${OFFICIAL_PAGE_COUNT} 頁，共 ${PRINT_PAGES.length} 張 A4`}
         </span>
         <button type="button" className="btn btn--gold btn--sm" onClick={() => window.print()}>
           <Icon name="print" size={14} /> {isEn ? 'Print / Save PDF' : '列印／存成 PDF'}

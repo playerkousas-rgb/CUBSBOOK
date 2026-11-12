@@ -32,7 +32,7 @@ export default function ParentView({ onShowQr, onExit }) {
     .slice(0, 8);
 
   const name = (isEn ? m.nameEn || m.nameZh : m.nameZh || m.nameEn) || (isEn ? 'Unnamed member' : '未填姓名');
-  const troop = [m.pack, m.group, m.unit].filter(Boolean).join(' · ') || (isEn ? 'Cub Scout Pack' : '幼童軍團');
+  const troop = [m.group, m.pack].filter(Boolean).join(' · ') || (isEn ? 'Cub Scout Pack' : '幼童軍團');
   const idText = m.scoutId || m.memberNo || '—';
 
   const earnedAwards = stats.awards.filter(

@@ -2343,7 +2343,7 @@ textarea.write__input { min-height: calc(var(--rows, 2) * 24px - 4px); line-heig
 .ptnotes, .ptfollow { font-size: 11px; color: #333; line-height: 1.5; }
 .ptblank { min-height: 22px; border-bottom: 1px solid #999; }
 
-/* 整本 19 頁列印檢視 */
+/* 整本列印檢視（封面＋官方第 1–32 頁） */
 .printall { display: flex; flex-direction: column; gap: 18px; }
 .printall__bar {
   display: flex;
@@ -6183,4 +6183,170 @@ html[data-print-preview] .write--multi.is-empty {
   .ptgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ptcell--s3, .ptcell--s4 { grid-column: span 2; }
   .ptsignrow, .ptendorse { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ==========================================================================
+   示範紀錄冊標示（虛構資料：只供測試，不可遞交，不可同步）
+   金黃底配深墨字；列印時即使沒有勾選「背景圖形」，深色邊框與文字仍然清晰可見。
+   ========================================================================== */
+.demo-notice {
+  margin: 0;
+  padding: 5px 10px;
+  border: 2px solid #2b1a04;
+  border-radius: 3px;
+  background: #ead040;
+  color: #2b1a04;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1.35;
+  text-align: center;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.formsindex .demo-notice { margin-top: 10px; }
+
+.sheet__demo {
+  position: absolute;
+  left: 14px;
+  right: 46px;
+  bottom: 11px;
+  z-index: 3;
+  width: fit-content;
+  max-width: calc(100% - 60px);
+  padding: 2px 7px;
+  border: 1px solid #2b1a04;
+  border-radius: 2px;
+  background: #ead040;
+  color: #2b1a04;
+  font-family: var(--sans);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.demo-sign {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px dashed #5f4208;
+  border-radius: 2px;
+  color: #5f4208;
+  background: transparent;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.demo-sign--mini { font-size: 7.5px; padding: 0 3px; letter-spacing: 0.02em; }
+.demo-sign--line { font-size: 9px; }
+.demo-sign--endorse { align-self: flex-start; font-size: 11px; }
+.ptsignbox__ink .demo-sign { font-size: 12px; padding: 3px 10px; }
+.sigblock--demo .sigblock__empty { cursor: default; }
+
+.demo-ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 12px;
+  padding: 6px 14px;
+  background: #ead040;
+  color: #2b1a04;
+  border-bottom: 1px solid #7a5600;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+.demo-ribbon strong { font-weight: 800; letter-spacing: 0.08em; }
+.demo-ribbon span { font-size: 11px; }
+
+.cubsync--demo { border: 1px dashed #b0891f; border-radius: 8px; padding: 10px 12px; }
+.cubsync__demo-notice {
+  margin: 6px 0;
+  padding: 5px 10px;
+  border: 1.5px solid #2b1a04;
+  border-radius: 3px;
+  background: #ead040;
+  color: #2b1a04;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+.signpanel--demo .demo-notice { margin: 8px 0; }
+.scanview > .demo-notice { margin: 8px 0; }
+
+@media print {
+  .demo-notice { font-size: 11pt; padding: 2mm 3mm; break-inside: avoid; }
+  .sheet__demo { left: 14mm; bottom: 3mm; font-size: 7.5pt; max-width: 150mm; }
+  .demo-ribbon { display: none !important; }
+}
+
+/* ==========================================================================
+   A4 申請表列印版面
+   A4 扣除 10mm 頁邊後可用闊度約 718px，會觸發上面 ≤740px 的手機斷點，
+   令資料欄及簽署欄塌成單欄、每張表格溢出到第二張紙。列印時一律還原為
+   桌面欄數並收緊字級與間距，確保 PT/67 一張、PT/68 兩張、核對清單一張。
+   ========================================================================== */
+@media print {
+  .formdoc { display: block !important; }
+  .a4sheet {
+    gap: 5px !important;
+    padding: 0 !important;
+    font-size: 10px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .ptform--unofficial { padding: 3mm !important; }
+  .ptgrid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .ptcell--s2 { grid-column: span 2 !important; }
+  .ptcell--s3 { grid-column: span 3 !important; }
+  .ptcell--s4 { grid-column: span 4 !important; }
+  .ptsignrow, .ptendorse, .ptreturn__cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+  }
+  .pthead { padding-bottom: 4px; gap: 8px; }
+  .pthead strong { font-size: 9.5px; }
+  .pthead h1 { font-size: 15px; margin: 1px 0; }
+  .pthead p { font-size: 9.5px; }
+  .pthead__code { font-size: 9.5px; padding: 2px 6px; }
+  .pthead__right { gap: 4px; }
+  .ptphoto { width: 66px; height: 82px; font-size: 8.5px; }
+  .ptsec { margin: 1px 0 0; padding: 2px 7px; font-size: 10.5px; }
+  .ptcell { padding: 1.5px 5px; }
+  .ptcell__lbl { font-size: 8px; line-height: 1.25; }
+  .a4sheet .write, .a4sheet .write--compact {
+    min-height: 16px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    font-size: 11px;
+  }
+  .a4sheet .write--multi { min-height: 0 !important; }
+  .pttable { font-size: 9px; }
+  .pttable th, .pttable td { padding: 1.5px 5px; line-height: 1.3; }
+  .pttable__code { font-size: 7.5px; }
+  .ptsignbox, .ptendorse__box { padding: 4px 6px; gap: 3px; }
+  .ptsignbox > .ptcell, .ptendorse__box > .ptcell { border: 0; padding: 0; }
+  /* 簽署線及印章位保留手簽／蓋印所需的實際尺寸，不隨字級收縮 */
+  .ptsignbox__ink { min-height: 34px; }
+  .ptblank { height: 34px; min-height: 0; }
+  .ptendorse__stamp { width: 76px; height: 76px; font-size: 8.5px; align-self: flex-end; }
+  .a4sheet .tiny { font-size: 8.5px; line-height: 1.3; margin: 0; }
+  .ptnotes, .ptfollow { font-size: 8.5px; line-height: 1.35; margin: 0; }
+  .ptfollow ul { margin: 1px 0 0; padding-left: 14px; }
+  .a4sheet .demo-notice { font-size: 9.5pt; padding: 1mm 3mm; }
+  .a4sheet .demo-sign { font-size: 9px; padding: 1px 6px; }
+  /* 日期欄的月曆按鈕只屬螢幕操作，不應印在紙上 */
+  .write__date::-webkit-calendar-picker-indicator { display: none; }
 }

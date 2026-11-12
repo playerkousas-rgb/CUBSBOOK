@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { sampleBook } from './fixtures/sampleBook.mjs';
 import {
-  demoBook,
   newBook,
   collectPendingForBadge,
   exportForBadge,
@@ -379,8 +379,8 @@ test('BOOK ⇄ BADGE 端到端：空白冊同步、只匯入已核實、申報�
   // 未經領袖核實的申報檔不可倒灌成已核實進度
   assert.throws(() => importFromBadge(out, book), /待領袖核實/);
 
-  // 示範紀錄冊：已核實項目不會被重複申報，只有自填的活動徽章需送交
-  const demo = demoBook();
+  // 一般成員樣本：已核實項目不會被重複申報，只有自填的活動徽章需送交
+  const demo = sampleBook();
   const demoOut = exportForBadge(demo, 'T12');
   assert.equal(demoOut.pendingRequests.length, 2);
   assert.deepEqual(demoOut.pendingRequests.map((r) => r.item_id), ['A22', 'A26']);

@@ -3,7 +3,9 @@ import { useBook } from '../bookContext.js';
 import { useToast, Icon, Modal } from '../ui.jsx';
 import { download, clearBook, slugify } from '../bookStore.js';
 import { APP_VERSION, demoBook, newBook, today } from '@shared/book.js';
+import { OFFICIAL_PAGE_COUNT } from '@shared/officialPages.js';
 import { LegalNote } from './Legal.jsx';
+import { demoLoadConfirm, demoLoadedToast } from './DemoNotice.jsx';
 import { navigate } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
 import { exitLeaderMode } from '../leader.js';
@@ -218,7 +220,7 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
         >
           <Icon name="seal" size={18} />
           <span>
-            <strong>{isEn ? '3 Official Forms (One-Click)' : '官方表格（一鍵生成）'}</strong>
+            <strong>{isEn ? 'Golden Bauhinia Forms (One-Click)' : '金紫荊獎章表格（一鍵生成）'}</strong>
             <em>{isEn ? 'PT/67 and PT/68 plus the 2026 checklist, auto-filled from your record book' : 'PT/67 開展通知書、PT/68 申請表及 2026 核對清單，個人資料及考核紀錄自動填入'}</em>
           </span>
         </button>
@@ -236,8 +238,8 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
             <strong>{isEn ? 'Print whole book / Save PDF' : '列印整本 / 儲存 PDF'}</strong>
             <em>
               {isEn
-                ? '19 pages, one per record-book page; A4 portrait with the official page mapping in the print checklist.'
-                : '封面＋官方 32 頁一次過，頁碼及頁序與紙本完全一致；A4 直向。'}
+                ? `Cover + official pages 1–${OFFICIAL_PAGE_COUNT} in one go (${OFFICIAL_PAGE_COUNT + 1} A4 sheets); page numbers and order match the paper book. A4 portrait.`
+                : `封面＋官方第 1–${OFFICIAL_PAGE_COUNT} 頁一次過（共 ${OFFICIAL_PAGE_COUNT + 1} 張 A4），頁碼及頁序與紙本完全一致；A4 直向。`}
             </em>
           </span>
         </button>
@@ -301,9 +303,9 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
             type="button"
             className="menu__item"
             onClick={() => {
-              if (!window.confirm(isEn ? 'Load demo book and overwrite current content?' : '載入示範紀錄冊會覆蓋目前內容，確定嗎？')) return;
+              if (!window.confirm(demoLoadConfirm(isEn))) return;
               replace(demoBook());
-              push(isEn ? 'Demo record book loaded' : '已載入示範紀錄冊');
+              push(demoLoadedToast(isEn));
               navigate('/p/contents');
               onClose();
             }}
@@ -311,7 +313,11 @@ export default function MenuDialog({ open, onClose, onShowQr, leader = false, le
             <Icon name="book" size={18} />
             <span>
               <strong>{isEn ? 'Load Demo Record Book' : '載入示範紀錄冊'}</strong>
-              <em>{isEn ? 'Explore all features with sample Cub Scout records' : '以陳小狼的示範資料試玩所有功能'}</em>
+              <em>
+                {isEn
+                  ? 'A complete fictional Golden Bauhinia application for print testing — not for submission, cannot sync'
+                  : '完整但虛構的金紫荊獎章申請樣本，只供測試列印；不可遞交，亦不可同步'}
+              </em>
             </span>
           </button>
         )}

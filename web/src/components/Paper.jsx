@@ -3,6 +3,7 @@ import { SECTIONS, PAGE_TOTAL } from '@shared/book.js';
 import { Crest, Icon, Modal, cx } from '../ui.jsx';
 import { Link } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
+import { DemoSheetTag } from './DemoNotice.jsx';
 
 /** 單頁紙本內頁（對齊 ROVERBOOK v15 紙張質感與頁眉頁腳） */
 export function Sheet({ id, no, title, en, children, className = '', dense = false, badge, kind = '', banner = true }) {
@@ -26,6 +27,8 @@ export function Sheet({ id, no, title, en, children, className = '', dense = fal
       )}
       <div className="sheet__body">{children}</div>
       {no && no !== '—' && kind !== 'divider' && <span className="sheet__folio">{no}</span>}
+      {/* 示範紀錄冊：封面及每一頁（含整本列印）都帶標示，抽出任何一頁都不會被當成正式紀錄。 */}
+      <DemoSheetTag />
     </article>
   );
 }

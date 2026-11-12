@@ -76,3 +76,50 @@ export const COVER = {
 export const OFFICIAL_PAGE_COUNT = OFFICIAL_PAGES.length;
 
 export const groupOf = (no) => OFFICIAL_GROUPS.find((g) => no >= g.from && no <= g.to);
+
+/**
+ * 紙本章節 → 官方頁碼（單一真相）。
+ * 所有介面文案、表格附件清單及列印對照一律由這裡推導，不得另行手寫頁碼，
+ * 以免殘留其他支部 BOOK 或舊版排版的頁數。
+ */
+const noOf = (pred) => OFFICIAL_PAGES.filter(pred).map((p) => p.no);
+
+export const PAPER_SECTIONS = {
+  personal: { zh: '個人摘要', en: 'Personal Details', pages: noOf((p) => p.kind.startsWith('personal-')) },
+  scouting: { zh: '童軍紀錄', en: 'Scouting Record', pages: noOf((p) => p.kind === 'scouting') },
+  renewal: { zh: '會員資格', en: 'Renewal of Membership', pages: noOf((p) => p.kind === 'renewal') },
+  transfer: { zh: '轉旅及遷移地址', en: 'Transfer of Group / Change of Address', pages: noOf((p) => p.kind === 'transfer') },
+  promise: { zh: '誓詞、規律及銘言', en: 'Promise, Law and Motto', pages: [6] },
+  progressRecord: { zh: '個人進度紀錄', en: 'Personal Progress Record', pages: noOf((p) => p.kind === 'progress-record') },
+  serviceStar: { zh: '服務年星', en: 'Service Star', pages: noOf((p) => p.kind === 'service-star') },
+  L1: { zh: '會員章', en: 'Membership Badge', pages: noOf((p) => p.group === 'membership') },
+  L2: { zh: '幼童軍體驗章', en: 'C.S. Experience Badge', pages: noOf((p) => p.award === 'L2') },
+  L3: { zh: '幼童軍歷奇章', en: 'C.S. Adventure Award', pages: noOf((p) => p.award === 'L3') },
+  L4: { zh: '幼童軍高級歷奇章', en: 'C.S. Adventure Crest Award', pages: noOf((p) => p.award === 'L4') },
+  'OT-GB': { zh: '金紫荊獎章', en: 'Golden Bauhinia Award', pages: noOf((p) => p.award === 'OT-GB') },
+  scoutLink: { zh: '童軍先修章', en: 'Scout Link Badge', pages: noOf((p) => p.kind === 'scout-link') },
+  activity: { zh: '活動徽章紀錄', en: 'Activity Badges Record', pages: noOf((p) => p.kind === 'activity') },
+  log: { zh: '活動及服務紀錄', en: 'Activities & Services Record', pages: noOf((p) => p.kind === 'activity-log') },
+};
+
+/** `[1,2,3,4,10,11,13]` → `1–4、10–11、13`（英文以 `, ` 分隔）。 */
+export function formatPageList(numbers, lang = 'zh') {
+  const sorted = [...new Set((numbers || []).map(Number).filter((n) => Number.isInteger(n) && n > 0))].sort((a, b) => a - b);
+  const runs = [];
+  for (const n of sorted) {
+    const last = runs[runs.length - 1];
+    if (last && n === last[1] + 1) last[1] = n;
+    else runs.push([n, n]);
+  }
+  return runs.map(([a, b]) => (a === b ? String(a) : `${a}–${b}`)).join(lang === 'en' ? ', ' : '、');
+}
+
+/** 多個章節鍵 → 合併後的頁碼陣列（順序去重）。 */
+export function pagesOfSections(keys) {
+  return [...new Set((keys || []).flatMap((k) => PAPER_SECTIONS[k]?.pages || []))].sort((a, b) => a - b);
+}
+
+/** `['personal','scouting']` → `1–3`。 */
+export function pageRefOfSections(keys, lang = 'zh') {
+  return formatPageList(pagesOfSections(keys), lang);
+}

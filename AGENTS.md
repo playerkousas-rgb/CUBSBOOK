@@ -47,8 +47,10 @@ node scripts/preflight_v1.0.mjs .
 | 想改 | 改哪裡 | 之後要跑 |
 | :--- | :--- | :--- |
 | 綱要項目／活動徽章 | `cubbadge/data/items.json`（上游） | `npm run syllabus && npm test` |
-| 內頁版面 | `web/src/pages/Book{Front,Training,Back}.jsx` | `npm test`（頁數契約） |
-| 樣式／配色 | `web/src/styles.css`（`--cover-bg`、`--vs-red`、`--foil`） | `npm test`（WCAG 契約） |
+| 內頁版面 | `web/src/pages/Official.jsx`（`PCover`、`P01`–`P32`）+ `shared/officialPages.js` | `npm test`（頁數契約） |
+| 紙本頁碼文案 | 只改 `shared/officialPages.js` 的 `PAPER_SECTIONS`；清單由 `shared/forms.js` 推導，**不得手寫頁碼** | `npm test`（頁碼契約） |
+| 示範紀錄冊 | `shared/book.js` 的 `demoBook()` + `shared/demo.js`；必須保持全部虛構、零簽名圖片、每頁有標示、三層禁止同步 | `npm test`（示範契約） |
+| 樣式／配色 | `web/src/styles.css`（`--cover-bg`、`--cub-yellow`、`--foil`） | `npm test`（WCAG 契約） |
 | 表格欄位 | `shared/forms.js` + `web/src/pages/Forms.jsx` | `npm test` |
 | 二維碼格式 | `shared/transfer.js` | `npm test`（`CB1`／`CB1S` 契約） |
 | 同步契約 | `api/cubbadge.js` + `shared/book.js` | `npm test`（403／pending 契約） |

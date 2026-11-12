@@ -9,11 +9,11 @@ npm test
 ## 測試範圍
 
 - `tests/book_and_syllabus.test.mjs`
-  - 官方 32 頁頁碼映射（`PRINT_PAGES` 共 32 頁、無缺頁重覆、附錄不列印）；
+  - 官方 32 頁頁碼映射（`PRINT_PAGES`＝封面＋32 頁共 33 張、無缺頁重覆、附錄不列印）；
   - 2026 年第十版綱要與 `cubbadge/data/items.json` **逐個 ID 相同**（72 個細項、49 個活動徽章、fixture sha256）；BOOK 鍵 ⇄ 官方 `badgeId` 雙向可逆；
   - 五階獎章（會員章／銅箭／銀箭／金箭／金紫荊）項目數 `9／12／16／18／17`；興趣範疇「兩個不同類別、每類一個」；
   - `SCOUT ID` 前導零容錯、移除舊 `ymis`、身份證只保留首四碼；
-  - 金紫荊 126 個月（十歲半）資格；示範紀錄冊統計與續期狀態；
+  - 金紫荊 126 個月（十歲半）資格；部分完成的成員樣本（`tests/fixtures/sampleBook.mjs`）統計與續期狀態；
   - BOOK → BADGE 匯出必須 `status: 'pending'`、`confirmed: false`、零個人資料、BOOK 鍵轉官方編號、已在雲端 pending 者不重複；BADGE → BOOK 只收已核實、`pendingRequests` 永不錄入、空白冊可同步、他人資料整份拒絕。
 - `tests/forms_and_transfer.test.mjs`
   - `PT/67`・`PT/68` 官方欄位與頁數；2026 新制只提供**非官方**核對清單（不得出現 `PT/XX` 編號）；
@@ -32,6 +32,13 @@ npm test
   - 完全離線的端到端流程：建立空白冊 → 填寫 → 統計 → `PT/67`/`PT/68` → `CB1` 出示 → `CB1S` 核簽 → 32 頁列印 → JSON 備份；
   - `probeCubBadgeBridge` 對靜態主機 HTML fallback、404、壞 payload、離線、逾時、無 fetch 一律安全降級；
   - 只有可選同步卡可觸及 `/api`；第 17 頁制服清單可剔選並持久化。
+- `tests/demo_and_pages.test.mjs`
+  - 紙本頁碼：`PAPER_SECTIONS` 與 `OFFICIAL_PAGES` 頁種逐一對應；`PT/67`・`PT/68` 附件清單及列印檢查清單的頁碼全部由章節推導；舊冊頁碼文案不得重現；
+  - 示範紀錄冊：72 項齊備、時間線自洽、`PT/67`・`PT/68` 每格非空、零簽名圖片／近照／已核實標記；
+  - 示範標示：四張 A4 表格及紀錄冊每頁均有「示範樣本，只供測試，不可遞交」，簽署欄只顯示「示範簽署」；
+  - 同步封鎖：共用邏輯、同步卡、`/api/cubbadge`（403 且零轉發）三層均拒絕示範資料。
+  - 列印版面：A4 可用闊度（約 718px）落入手機斷點時，申請表仍維持四欄及並排簽署欄，三款表格共 4 張 A4。
+- `tests/fixtures/sampleBook.mjs`：非示範的一般成員固定樣本，供同步／核簽／匯出測試使用。
 - `tests/activity_levels.test.mjs`
   - 官方 7 枚分級活動徽章（A18／A26／A27／A29／A33／A35／A39 × 初／中／高）逐級同步契約；
   - BOOK → cubbadge 逐級申報（`level` 欄位、`A26-E` pending 鍵）、已核實一級不再重送；

@@ -17,6 +17,14 @@ import {
 } from './syllabus.js';
 import { COVER, OFFICIAL_PAGES } from './officialPages.js';
 import {
+  DEMO_NOTICE,
+  DEMO_SCOUT_ID,
+  DEMO_SYNC_BLOCKED,
+  assertNotDemo,
+  isDemoBook,
+  isDemoScoutId,
+} from './demo.js';
+import {
   LEVEL_KEYS,
   LEVEL_LABEL,
   isLevelKey,
@@ -56,7 +64,9 @@ export {
   withLevel,
 };
 
-export const APP_VERSION = 'v1.2.9';
+export { DEMO_NOTICE, DEMO_SCOUT_ID, DEMO_SYNC_BLOCKED, assertNotDemo, isDemoBook, isDemoScoutId };
+
+export const APP_VERSION = 'v1.3.0';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 
@@ -74,8 +84,9 @@ export function formatDate(value) {
 }
 
 // ------------------------------------------------------------------ 頁序
-// 紙本《幼童軍紀錄冊》章節次序 → CUBBOOK 頁碼（逐一對應，另加數位附錄）。
-// 紙本官方頁碼（PT/67、PT/68 要求附上第 1–3、5、10–15 頁）另在列印檢查清單列明。
+// 紙本《幼童軍紀錄冊》2026 年版：封面（不計頁碼）＋官方第 1–32 頁；CUBBOOK 頁碼與紙本逐頁相同，
+// 另加不列印的數位附錄。PT/67、PT/68 須附的紀錄冊副本頁碼由 `shared/forms.js` 依
+// `shared/officialPages.js` 推導，不在此手寫。
 /**
  * 官方 32 頁（香港童軍總會《幼童軍紀錄冊》2026 年版）
  * 頁碼、頁序、標題一律照官方；數位附錄不計入頁碼。
@@ -170,7 +181,6 @@ export function newBook(partial = {}) {
       dob: '',
       school: '',
       primaryLevel: '',
-      religion: '',
       phone: '',
       email: '',
       addressZh: '',
@@ -182,30 +192,23 @@ export function newBook(partial = {}) {
       parentPhone: '',
       emergencyName: '',
       emergencyPhone: '',
-      allergies: '',
       pack: '',
       group: '',
       district: '',
       region: '',
-      sponsoringAuthority: '',
       groupAddress: '',
       gsl: '',
-      gslPhone: '',
       csl: '',
       cslPhone: '',
       dateJoined: '',
+      ageOnJoining: '',
       dateInvestiture: '',
-      dateScoutMovement: '',
       ...(partialMember || {}),
     },
-    scouting: {
-      grasshopper: { from: '', to: '', unit: '', post: '', award: '' },
-      cub: { from: '', to: '', unit: '', post: '', award: '' },
-      scout: { from: '', to: '', unit: '', post: '', award: '' },
-    },
+    /** 官方第 5 頁：轉旅（3 行）及遷移地址（5 行） */
     transfers: [],
     addressChanges: [],
-    detailChanges: [],
+    /** 官方第 4 頁：會員資格按年續期（8 行） */
     renewals: [],
     /** 官方第 8 頁：個人進度紀錄（各獎章獲取日期） */
     personalProgress: {
@@ -221,16 +224,14 @@ export function newBook(partial = {}) {
     },
     /** 官方第 9 頁：服務年星（一至六年） */
     serviceStars: { y1: '', y2: '', y3: '', y4: '', y5: '', y6: '' },
-    /** 官方第 10–20 頁：核心／興趣範疇的主考人、日期、簽署（鍵＝範疇代碼） */
+    /** 官方第 13、14、16、18、20 頁：核心範疇／童軍先修章的主考人及日期（鍵＝範疇代碼） */
     domains: {},
     /** 官方第 15、17、19 頁：興趣範疇（三選二） */
     interest: {},
-    /** 官方第 12–18 頁：遲加入者只完成核心範疇的 ☐ */
+    /** 官方第 13、14、16 頁：遲加入者只完成核心範疇的 ☐ */
     lateJoin: {},
-    /** 官方第 27–30 頁：活動及服務紀錄 */
+    /** 官方第 28–31 頁：活動及服務紀錄（每頁 12 行，共 48 行） */
     activities: [],
-    service: [],
-    awardsLog: [],
     progress: {},
     otherBadges: {},
     pages: {},
@@ -504,7 +505,7 @@ export function allStats(book) {
   const awards = ALL_AWARDS.map((a) => ({ ...badgeStats(book, a.id), award: a }));
   const total = awards.reduce((n, a) => n + a.total, 0);
   const done = awards.reduce((n, a) => n + a.done, 0);
-  // 「已獲獎章」= 全部細項完成，或已在第 15 頁／獎章頁記錄頒發日期（領袖頒發即算）。
+  // 「已獲獎章」= 全部細項完成，或已在該獎章的官方頁（第 10–19 頁）記錄頒發／完成日期。
   const earned = awards.filter(
     (a) => a.complete || Boolean(book?.pages?.[`award_${a.award.id}`]?.date),
   );
@@ -529,12 +530,14 @@ export function latestRenewal(book) {
   );
 }
 
-export function membershipStatus(book) {
+export function membershipStatus(book, refDate = new Date()) {
   const last = latestRenewal(book);
+  const ref = refDate instanceof Date ? refDate : new Date(refDate);
+  const refIso = Number.isNaN(ref.getTime()) ? today() : ref.toISOString().slice(0, 10);
   return {
     renewal: last,
     validUntil: last?.validUntil || null,
-    active: Boolean(last?.validUntil && last.validUntil >= today()),
+    active: Boolean(last?.validUntil && last.validUntil >= refIso),
   };
 }
 
@@ -623,6 +626,8 @@ function refSets(keys) {
  * 同一枚 A26 的初級與中級是兩個獨立申報，日期與核實狀態互不覆蓋。
  */
 export function collectPendingForBadge(book, remoteConfirmed = {}, remotePendingIds = []) {
+  // 示範資料全部虛構：永遠沒有任何項目可送交正式系統。
+  if (isDemoBook(book) || isDemoScoutId(scoutId(book?.member))) return [];
   const confirmed = refSets(Object.keys(remoteConfirmed || {}));
   const pending = refSets(remotePendingIds || []);
   const skip = (bookId, level) =>
@@ -698,6 +703,7 @@ export function collectPendingForBadge(book, remoteConfirmed = {}, remotePending
  * 全部 pending、confirmed:false。
  */
 export function exportForBadge(book, troopId = '') {
+  assertNotDemo(book);
   const sid = scoutId(book?.member);
   const items = collectPendingForBadge(book);
   const pendingProgress = {};
@@ -747,6 +753,8 @@ export function exportForBadge(book, troopId = '') {
  * - 空白簿（未填任何個人資料）只要帶同 SCOUT ID 亦即可綁定及拉齊進度。
  */
 export function importFromBadge(json, srcBook, { expectedScoutId = '' } = {}) {
+  // 示範紀錄冊不可與真實帳戶的已核實進度混合，亦不可綁定真實 SCOUT ID。
+  assertNotDemo(srcBook);
   if (!json || typeof json !== 'object') throw new Error('檔案格式不正確');
   if (
     json.schema === SYNC_SCHEMA ||
@@ -930,86 +938,234 @@ export function importFromBadge(json, srcBook, { expectedScoutId = '' } = {}) {
 /** 整本列印頁序（不包括數位附錄及目錄）。 */
 export const PRINT_PAGES = SECTIONS.filter((s) => s.id !== 'appendix');
 
-/** 示範紀錄冊：只示範版面，不假裝任何未經領袖核實的日期。 */
+// 示範紀錄冊：完整的「金紫荊獎章申請」模擬樣本，供真機測試全冊及 PT/67・PT/68 列印。
+// 全部內容虛構：`meta.demo` 標記、保留的全零 SCOUT ID、「示範」字樣的旅團及領袖稱謂；
+// 不含任何簽名圖片，亦不帶 `confirmedByBadge`（示範資料從未經任何領袖核實）。
+const DEMO_LEADER = '示範團長';
+const DEMO_EXAMINER = '示範考驗員';
+
+const addDays = (iso, days) => {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+};
+
+/** 各獎章的示範時間線：首項日期、每項相隔日數、頒發／完成日期。 */
+const DEMO_AWARD_PLAN = {
+  L1: { start: '2023-09-16', step: 7, awarded: '2023-11-25', certNo: 'DEMO-L1-0001' },
+  L2: { start: '2024-01-13', step: 14, awarded: '2024-06-22', certNo: 'DEMO-L2-0001' },
+  L3: { start: '2024-09-07', step: 14, awarded: '2025-04-26', certNo: 'DEMO-L3-0001' },
+  L4: { start: '2025-05-10', step: 14, awarded: '2026-01-17', certNo: 'DEMO-L4-0001' },
+  // 最後一項 2026-10-17：示範成員（2016-04-12 出生）當日已滿十歲半（126 個月）。
+  'OT-GB': { start: '2026-03-07', step: 14, awarded: '2026-10-17', certNo: 'DEMO-GB-0001' },
+};
+
+/** 核心範疇的選修／替代完成方式（附錄下拉選單）。 */
+const DEMO_ELECTIVES = {
+  'L3-CARING-04': 'OT-A06',
+  'L4-SKILLS-04': 'CAMPING',
+  'L4-CARING-04': 'OT-A09-CHILD-PROTECTION',
+  'L4-CARING-05': 'OT-A08',
+  'OT-GB-SKILLS-02': 'i+ii',
+  'OT-GB-SKILLS-03': 'OT-A01',
+  'OT-GB-SKILLS-04': 'CONTENT',
+  'OT-GB-SKILLS-05': 'OT-A02',
+  'OT-GB-CARING-01': 'OT-A05',
+  'OT-GB-CARING-05': 'OT-A04',
+  'OT-GB-COUNTRY-04': 'OT-A10',
+  'OT-GB-FAMILY-01': 'OT-A42',
+};
+
+/** 興趣範疇：每個獎章選兩個不同類別，各一枚活動徽章，且不與較低階獎章重複。 */
+const DEMO_INTEREST = {
+  L3: { CREATIVE: ['OT-A12', '2025-02-08'], SPORTS: ['OT-A28', '2025-03-08'] },
+  L4: { NATURE: ['OT-A22', '2025-08-16'], SPORTS: ['OT-A32', '2025-11-15'] },
+  'OT-GB': { CREATIVE: ['OT-A19', '2026-06-13'], NATURE: ['OT-A24', '2026-08-15'] },
+};
+
+/** 核心項目所用的活動徽章及其他示範徽章（日期須不遲於引用它的項目）。 */
+const DEMO_BADGES = {
+  'OT-A06': '2024-10-19',
+  'OT-A09-CHILD-PROTECTION': '2025-08-02',
+  'OT-A08': '2025-08-23',
+  'OT-A01': '2026-04-04',
+  'OT-A02': '2026-05-02',
+  'OT-A05': '2026-05-16',
+  'OT-A04': '2026-07-11',
+  'OT-A10': '2026-08-22',
+  'OT-A42': '2026-10-03',
+};
+
+/** 分級活動徽章：逐級一行，用作檢查第 24–26 頁的初／中／高級列印。 */
+const DEMO_LEVELED = {
+  'OT-A26': { E: '2025-03-15', I: '2026-05-30' },
+  'OT-A39': { E: '2024-07-20', I: '2025-07-19', A: '2026-07-18' },
+};
+
+const DEMO_ACTIVITIES = [
+  ['2023-11-25', '宣誓儀式（示範）'],
+  ['2024-03-16', '旅團大會操'],
+  ['2024-07-13', '暑期日營'],
+  ['2024-11-09', '區幼童軍大會操'],
+  ['2025-01-25', '社區長者中心服務'],
+  ['2025-04-26', '歷奇章頒發禮'],
+  ['2025-07-12', '隊長／副隊長訓練班'],
+  ['2025-10-18', '郊野公園遠足'],
+  ['2025-12-20', '賣旗日服務'],
+  ['2026-01-17', '高級歷奇章頒發禮'],
+  ['2026-04-04', '兩日一夜露營'],
+  ['2026-05-16', '社區清潔服務'],
+  ['2026-06-20', '探訪護老院服務'],
+  ['2026-07-11', '隊長訓練班（領導才能）'],
+];
+
+/** 示範紀錄冊：全部虛構，只供測試，不可遞交亦不可同步。 */
 export function demoBook() {
-  const book = newBook();
+  const book = newBook({ meta: { demo: true } });
   book.member = {
     ...book.member,
     nameZh: '陳小狼',
     nameEn: 'CHAN Siu-long',
-    scoutId: '0012345678',
-    gender: 'M',
+    scoutId: DEMO_SCOUT_ID,
+    memberNo: DEMO_SCOUT_ID,
+    gender: '男',
     dob: '2016-04-12',
-    primaryLevel: '小四',
-    school: '沙田第一小學',
-    region: '新界東地域',
-    district: '沙田北區',
-    group: '沙田第 12 旅',
-    pack: '沙田第 12 旅幼童軍團',
-    csl: '陳志軒',
-    cslPhone: '9123 4567',
-    six: '棕狼隊',
     pob: '香港',
-    dateJoined: '2023-09-01',
-    dateInvestiture: '2023-11-25',
-    groupAddress: '沙田新城市中央廣場 1 座 12 樓',
-    hkidPrefix: 'A123456',
-    dateOfIssue: '2023-09-01',
-    addressZh: '沙田禾輋邨康和樓 1203 室',
+    hkidPrefix: 'A123',
+    primaryLevel: '小五',
+    school: '示範小學',
+    phone: '0000 0001',
+    email: 'demo@example.invalid',
+    addressZh: '新界示範邨示範樓 12 樓 3 室',
+    addressEn: 'Flat 3, 12/F, Demo House, Demo Estate, N.T.',
     parentName: '陳大文',
-    parentPhone: '9876 5432',
+    parentRelation: '父',
+    parentPhone: '0000 0002',
     emergencyName: '陳大文（父）',
-    emergencyPhone: '9876 5432',
+    emergencyPhone: '0000 0002',
+    six: '棕狼隊',
+    region: '示範地域',
+    district: '示範區',
+    group: '示範第 12 旅',
+    pack: '示範第 12 旅幼童軍團',
+    groupAddress: '新界示範道 1 號示範童軍中心',
+    gsl: '示範旅長',
+    csl: DEMO_LEADER,
+    cslPhone: '0000 0003',
+    dateJoined: '2023-09-02',
+    ageOnJoining: '7',
+    dateInvestiture: DEMO_AWARD_PLAN.L1.awarded,
+    dateOfIssue: '2023-09-02',
   };
-  const seed = [
-    ['L1-A', '2023-09-16'],
-    ['L1-B', '2023-09-23'],
-    ['L1-C', '2023-09-30'],
-    ['L1-D', '2023-10-07'],
-    ['L1-E', '2023-10-14'],
-    ['L1-F', '2023-10-21'],
-    ['L1-G', '2023-10-28'],
-    ['L1-H', '2023-11-04'],
-    ['L1-I', '2023-11-11'],
-    ['L2-SKILLS-01', '2024-01-13'],
-    ['L2-SKILLS-02', '2024-01-20'],
-    ['L2-CARING-01', '2024-02-03'],
-    ['L3-SKILLS-01', '2025-01-11'],
-    ['L3-SKILLS-02', '2025-01-18'],
-  ];
-  seed.forEach(([id, date]) => {
-    book.progress[id] = { date, confirmedByBadge: true, confirmedAt: new Date().toISOString() };
-  });
-  book.otherBadges['OT-A01'] = { date: '2025-03-15', cert: 'ACT/2025/0181', confirmedByBadge: true };
-  book.otherBadges['OT-A22'] = { date: '2025-05-10', cert: 'ACT/2025/0244' };
-  book.otherBadges['OT-A26'] = { levels: { E: { date: '2025-03-15' } }, date: '2025-03-15' };
-  book.pages.award_L1 = { date: '2023-11-25', certNo: 'MB/2023/0912', presentedBy: '陳志軒' };
+
+  // 72 個進度細項：逐項日期及考驗員姓名（純文字，不含簽名圖片、不標示已核實）。
+  for (const award of ALL_AWARDS) {
+    const plan = DEMO_AWARD_PLAN[award.id];
+    let index = 0;
+    for (const segment of award.segments) {
+      let last = '';
+      for (const item of segment.items) {
+        last = addDays(plan.start, index * plan.step);
+        book.progress[item.id] = {
+          date: last,
+          assessor: award.id === 'L1' ? DEMO_LEADER : DEMO_EXAMINER,
+          ...(DEMO_ELECTIVES[item.id] ? { elective: DEMO_ELECTIVES[item.id] } : {}),
+        };
+        index += 1;
+      }
+      if (segment.items.length && award.id !== 'L1') {
+        book.domains[segment.code] = { examiner: DEMO_EXAMINER, date: last };
+      }
+    }
+    book.pages[`award_${award.id}`] = { date: plan.awarded, certNo: plan.certNo, presentedBy: DEMO_LEADER };
+  }
+  for (const [id, electiveId] of Object.entries(DEMO_ELECTIVES)) {
+    if (DEMO_BADGES[electiveId]) book.progress[id].cert = `DEMO-${toBadgeId(electiveId)}`;
+  }
+
+  // 活動徽章（第 21–27 頁）及興趣範疇（第 15、17、19 頁）
+  for (const [id, date] of Object.entries(DEMO_BADGES)) {
+    book.otherBadges[id] = { date, cert: `DEMO-${toBadgeId(id)}` };
+  }
+  for (const [awardId, picks] of Object.entries(DEMO_INTEREST)) {
+    const badges = {};
+    for (const [domain, [badgeId, date]] of Object.entries(picks)) {
+      badges[domain] = { badgeId, examiner: DEMO_EXAMINER, date };
+      book.otherBadges[badgeId] = { date, cert: `DEMO-${toBadgeId(badgeId)}` };
+    }
+    book.interest[awardId] = { chosen: Object.keys(picks), badges };
+  }
+  for (const [id, levels] of Object.entries(DEMO_LEVELED)) {
+    const rows = Object.fromEntries(Object.entries(levels).map(([level, date]) => [level, { date }]));
+    book.otherBadges[id] = { levels: rows, date: latestLevelDate(rows), cert: `DEMO-${toBadgeId(id)}` };
+  }
+
+  // 童軍先修章（第 20 頁）
+  book.domains['SL-1'] = { examiner: DEMO_EXAMINER, date: '2026-09-05' };
+  book.domains['SL-2'] = { examiner: DEMO_EXAMINER, date: '2026-09-19' };
+  book.domains['SL-3'] = { examiner: DEMO_EXAMINER, date: '2026-10-03' };
+  book.pages['award_OT-SL'] = { date: '2026-10-03' };
+
+  // 第 8–9 頁：個人進度紀錄及服務年星
   book.personalProgress = {
     ...book.personalProgress,
-    membership: '2023-11-25',
-    experience: '2024-06-15',
+    membership: DEMO_AWARD_PLAN.L1.awarded,
+    experience: DEMO_AWARD_PLAN.L2.awarded,
+    adventure: DEMO_AWARD_PLAN.L3.awarded,
+    crest: DEMO_AWARD_PLAN.L4.awarded,
+    goldenBauhinia: '2026-11-07',
+    scoutLink: '2026-10-03',
+    second: '2025-09-06',
+    sixer: '2026-04-11',
   };
-  book.serviceStars = { ...book.serviceStars, y1: '2024-09-01', y2: '2025-09-01' };
-  book.domains = {
-    'L2-SKILLS': { examiner: '陳志軒', date: '2024-03-09' },
-    'L2-CARING': { examiner: '陳志軒', date: '2024-04-13' },
-    'L2-COUNTRY': { examiner: '陳志軒', date: '2024-05-11' },
-    'L2-FAMILY': { examiner: '陳志軒', date: '2024-06-08' },
-    'L3-SKILLS': { examiner: '陳志軒', date: '2025-01-11' },
-    'SL-1': { examiner: '陳志軒', date: '2025-06-14' },
-  };
-  book.interest = { L3: { chosen: ['CREATIVE', 'SPORTS'], badges: { CREATIVE: { badgeId: 'OT-A12', examiner: '陳志軒', date: '2025-02-08' }, SPORTS: { badgeId: 'OT-A28', examiner: '陳志軒', date: '2025-03-08' } } } };
-  book.activities = [
-    { date: '2025-10-04', text: '旅團大會操' },
-    { date: '2025-11-15', text: '沙田區幼童軍大會操' },
-    { date: '2025-12-20', text: '社區長者中心服務' },
-  ];
+  book.serviceStars = { ...book.serviceStars, y1: '2024-09-07', y2: '2025-09-06', y3: '2026-09-05' };
+
+  // 第 4–5 頁：會員資格、轉旅及遷移地址
   book.renewals = [
-    { from: '2024-01-01', validUntil: '2024-12-31', leaderName: '陳志軒' },
-    { from: '2025-01-01', validUntil: '2025-12-31', leaderName: '陳志軒' },
-    { from: '2026-01-01', validUntil: '2027-12-31', leaderName: '陳志軒' },
+    { from: '2023-09-02', validUntil: '2024-03-31', leaderName: DEMO_LEADER },
+    { from: '2024-04-01', validUntil: '2025-03-31', leaderName: DEMO_LEADER },
+    { from: '2025-04-01', validUntil: '2026-03-31', leaderName: DEMO_LEADER },
+    { from: '2026-04-01', validUntil: '2027-03-31', leaderName: DEMO_LEADER },
   ];
-  book.transfers = [{ date: '2025-08-01', group: '沙田第 15 旅' }];
-  book.addressChanges = [{ date: '2025-08-15', address: '沙田石門安群街 3 號' }];
+  book.transfers = [];
+  book.addressChanges = [{ date: '2025-08-16', address: '新界示範邨示範樓 12 樓 3 室' }];
+
+  // 第 28–31 頁：活動及服務紀錄（首頁 12 行寫滿，次頁續 2 行）
+  book.activities = DEMO_ACTIVITIES.map(([date, text]) => ({ date, text }));
+
+  // 表格專用欄位：PT/67 於開展考驗前遞交，PT/68 於完成全部項目後遞交。
+  const gold = DEMO_AWARD_PLAN['OT-GB'];
+  book.forms.pt67 = {
+    age: '9',
+    primaryLevel: '小四',
+    planStartDate: gold.start,
+    planFinishDate: '2026-10-31',
+    plannedItems:
+      '甲、核心範疇：童軍技能章、關己愛人章、國家與社區章、童軍家庭章（4.1.1 至 4.4.2 共 17 項）。\n乙、興趣範疇：多元創藝（攝影章）、科學與大自然（氣象章）。\n（示範資料，只供列印測試）',
+    applicantDate: '2026-01-24',
+    cslDate: '2026-01-24',
+    dcName: '示範區總監',
+    dcDate: '2026-02-07',
+  };
+  book.forms.pt68 = {
+    age: '10',
+    campDates: '04/04/2026 至 05/04/2026',
+    serviceDates: '16/05/2026、20/06/2026',
+    leadershipDates: '11/07/2026 隊長訓練班（示範）',
+    applicantDate: gold.awarded,
+    nominationName: DEMO_LEADER,
+    nominationDate: gold.awarded,
+    recommendationName: '示範區總監',
+    recommendationDate: '2026-10-24',
+    approvalName: '示範地域總監',
+    approvalDate: '2026-10-31',
+    receivedDate: '2026-10-27',
+    goldenCertNo: gold.certNo,
+    certIssueDate: '2026-11-07',
+    awardDate: '2026-11-07',
+    remarks: '示範資料，只供列印測試。',
+  };
+  book.forms.gbac = { age: '10' };
+
   return book;
 }

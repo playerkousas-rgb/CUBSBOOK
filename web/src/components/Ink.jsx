@@ -4,6 +4,8 @@ import { shrinkSignature } from '../signature.js';
 import { today } from '@shared/book.js';
 import { useLang } from '../i18n.jsx';
 import { useReadOnly } from '../bookContext.js';
+import { DEMO_NOTICE } from '@shared/demo.js';
+import { DemoSignMark, useIsDemo } from './DemoNotice.jsx';
 
 const INK_COLOR = '#241605';
 
@@ -149,8 +151,11 @@ export function SignModal({
   defaultName = '',
   defaultTitle = '',
   showMeta = true,
+  allowDemo = false,
 }) {
   const { isEn } = useLang();
+  // 示範紀錄冊不可加入任何簽名圖片；領袖核簽面板簽的是領袖自己的名字，另行以 allowDemo 放行。
+  const demoLocked = useIsDemo() && !allowDemo;
   const [ink, setInk] = useState(null);
   const [name, setName] = useState(defaultName);
   const [role, setRole] = useState(defaultTitle);
@@ -167,6 +172,28 @@ export function SignModal({
   }, [open, defaultName, defaultTitle]);
 
   if (!open) return null;
+
+  if (demoLocked) {
+    return (
+      <Modal
+        onClose={onClose}
+        eyebrow={isEn ? 'SAMPLE' : '示範樣本'}
+        title={isEn ? 'Signing Is Disabled in the Demo Book' : '示範紀錄冊不設簽署'}
+        subtitle={isEn ? DEMO_NOTICE.en : DEMO_NOTICE.zh}
+      >
+        <p className="tiny" data-demo-sign-locked>
+          {isEn
+            ? 'The demo record book never stores signature images; signature boxes only show the words “SAMPLE SIGNATURE”. Start your own record book to sign for real.'
+            : '示範紀錄冊不會儲存任何簽名圖片，簽署欄只顯示「示範簽署」字樣。如要真正簽署，請先建立自己的紀錄冊。'}
+        </p>
+        <div className="modal__actions">
+          <button type="button" className="btn btn--primary" onClick={onClose}>
+            {isEn ? 'Close' : '關閉'}
+          </button>
+        </div>
+      </Modal>
+    );
+  }
 
   const submit = async () => {
     if (!ink) return;
@@ -220,7 +247,24 @@ export function SignModal({
 export function SignatureBlock({ label, en, value, onChange, defaultName = '', defaultTitle = '' }) {
   const { isEn } = useLang();
   const readOnly = useReadOnly();
+  const demo = useIsDemo();
   const [open, setOpen] = useState(false);
+
+  if (demo) {
+    return (
+      <div className="sigblock sigblock--demo">
+        <div className="sigblock__head">
+          <span className="frow__label">
+            {isEn && en ? en : label}
+            {!isEn && en && <em>{en}</em>}
+          </span>
+        </div>
+        <div className="sigblock__empty sigblock__empty--readonly">
+          <DemoSignMark />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="sigblock">

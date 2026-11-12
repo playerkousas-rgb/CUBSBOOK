@@ -17,6 +17,10 @@ import {
   splitLevelRef,
   toBookRef,
   withLevel,
+  DEMO_SYNC_BLOCKED,
+  assertNotDemo,
+  isDemoBook,
+  isDemoScoutId,
 } from './book.js';
 
 export const TRANSFER_PREFIX = 'CB1';
@@ -50,8 +54,8 @@ export const TRANSFER_OPTIONS = [
   },
   {
     key: 'otherBadges',
-    label: '活動徽章及專科徽章',
-    en: 'Activity & Specialist Badges',
+    label: '活動徽章',
+    en: 'Activity Badges',
     hint: '活動徽章取得日期及證書編號',
   },
   {
@@ -110,6 +114,8 @@ export function buildPayload(book, selection = []) {
     sel: TRANSFER_OPTIONS.filter((o) => chosen.has(o.key)).map((o) => o.key),
   };
   const m = book?.member || {};
+  // 示範紀錄冊的二維碼帶有示範標記：接收一方會顯示「示範樣本」，且不可據此簽發核簽回傳碼。
+  if (isDemoBook(book)) payload.demo = true;
 
   if (chosen.has('particulars')) {
     payload.member = pick(m, [
@@ -173,7 +179,7 @@ export function buildPayload(book, selection = []) {
   }
   if (chosen.has('renewals')) {
     const renewals = (book?.renewals || [])
-      .map((r) => pick(r, ['date', 'validUntil', 'note', 'leaderName']))
+      .map((r) => pick(r, ['from', 'date', 'validUntil', 'note', 'leaderName']))
       .filter((r) => Object.keys(r).length > 0);
     if (renewals.length) payload.renewals = renewals;
   }
@@ -184,8 +190,9 @@ export function buildPayload(book, selection = []) {
       if (Object.keys(row).length) awards[id] = row;
     });
     if (Object.keys(awards).length) payload.awards = awards;
-    const invest = pick(book?.pages?.p15 || {}, ['investitureDate', 'promiseDate', 'cubPromiseYear']);
-    if (Object.keys(invest).length) payload.investiture = invest;
+    // 宣誓日期在官方第 10–11 頁（會員章）填寫，儲存於 member.dateInvestiture。
+    const investitureDate = clean(m.dateInvestiture);
+    if (investitureDate) payload.investiture = { investitureDate };
   }
   if (chosen.has('signatures')) {
     const signatures = {};
@@ -296,7 +303,17 @@ export async function encodeTransfer(book, selection) {
   return encodePayload(buildPayload(book, selection));
 }
 
-export async function encodeSignoff({ member, leader, items, otherBadges, note }) {
+/** 示範成員（虛構資料）的出示碼不可簽發核簽回傳碼。 */
+export const isDemoPayload = (payload) =>
+  payload?.demo === true ||
+  isDemoScoutId(payload?.member?.scoutId || payload?.member?.memberNo || payload?.scoutId);
+
+export async function encodeSignoff({ member, leader, items, otherBadges, note, demo = false }) {
+  if (demo === true || isDemoScoutId(member?.scoutId || member?.memberNo)) {
+    const err = new Error('示範資料屬虛構內容，領袖不可為示範紀錄冊簽發核簽回傳碼。');
+    err.code = DEMO_SYNC_BLOCKED.code;
+    throw err;
+  }
   const who = typeof leader === 'string' ? { name: leader } : leader || {};
   const payload = {
     t: KIND_SIGNOFF,
@@ -371,6 +388,8 @@ export async function decodeTransfer(rawInput) {
 
 export function applySignoff(book, payload) {
   if (!payload || payload.t !== KIND_SIGNOFF) throw new Error('這不是有效的領袖核簽單');
+  // 示範紀錄冊不接受任何真實領袖簽署（示範資料不含簽名圖片，亦不可被核實）。
+  assertNotDemo(book);
   if (payload?.member?.scoutId) {
     const myId = normalizeScoutId(book?.member?.scoutId || book?.member?.memberNo);
     if (myId && !sameScoutId(payload.member.scoutId, myId)) {
