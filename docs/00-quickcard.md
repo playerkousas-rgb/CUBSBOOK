@@ -9,6 +9,7 @@
 | **本機儲存鍵** | `cubbook.book.v1`（紀錄冊主體）、`cubbook.lang`（語言 `zh`/`en`）、`cubbook.last`（上次頁面）、`cubbook.signoff.applied.v1`（已寫入核簽序號）、`cubbook.cubbadge.member.v1`（同步身分） |
 | **互通格式** | `cubbadge.pending.v1`（以 `scoutId` 對齊 `L1-*`…`L4-*`、`OT-*`；送出前轉回 `cubbadge` 官方 `badgeId`） |
 | **二維碼協定** | `CB1.<base64url(gzip(JSON))>`（壓縮優先）、`CB1P.`（未壓縮後備）、`CB1S.`（領袖核簽），上限 `2400` 字元 |
+| **服務平台嵌入** | `vercel.json` 回應 `Content-Security-Policy: frame-ancestors 'self' https://member-portal-sigma-swart.vercel.app`（無 `X-Frame-Options`）；平台 `<iframe>` 須帶 `allow="camera; clipboard-write"`；平台內資料與獨立版分開儲存，以備份 JSON 搬移 |
 | **版權與聲明** | `Copyright © 2026 SCOUT SYSTEM — All Rights Reserved`（見 [`../LICENSE`](../LICENSE)）＋ 非官方獨立工具聲明，只出現於封面頁腳、數位附錄、選單「關於」 |
 
 ## 常用指令
@@ -32,3 +33,5 @@ node scripts/preflight_v1.0.mjs .                  # 開局與交付總閘門
 3. **表格列印出現頁首網址或邊界裁切**：列印對話框選 `A4`、邊界「預設／無」、勾選「背景圖形」、取消「頁首及頁尾」；`PT/68` 兩頁按總會要求列印。
 4. **同步顯示「尚未登入 cubbadge」**：在數位附錄重新輸入 SCOUT ID 與 `cubbadge` 密碼；BOOK 不會儲存密碼，只保存登入 token 於本次工作階段。
 5. **輸入 SCOUT ID 後拉不到進度**：確認該旅團已在伺服器設定 `CUBBADGE_ORIGIN` 或 `TROOP_<id>_*`，且成員在 `cubbadge` 內的角色可讀取自己的進度；`pendingRequests` 不會出現在紀錄冊。
+6. **在服務平台內看不到原有紀錄冊**：平台內（iframe）與獨立版分開儲存。到獨立版開啟選單 →「匯出備份」，再在平台內歡迎頁按「匯入備份」。iPhone／iPad 及 Safari 可能在關閉瀏覽器後清除平台內的資料，每次填寫後請匯出備份。
+7. **在服務平台內開不到相機**：檢查平台的 `<iframe>` 是否帶 `allow="camera"`，以及平台自身的 `Permissions-Policy` 有否禁用 `camera`；未修正前可用掃描頁的「貼上代碼」或開啟獨立版。

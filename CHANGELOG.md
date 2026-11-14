@@ -2,6 +2,27 @@
 
 本專案採用語義化版本（Semantic Versioning），每次更新同步對齊 `package.json`、`shared/book.js` 及 `web/index.html`。
 
+## [v1.3.1] — 2026-11-14
+
+### 變更（Changed · 容許「服務平台」以 iframe 嵌入）
+
+- **部署安全標頭**：`vercel.json` 移除 `X-Frame-Options: DENY`，改為 `Content-Security-Policy: frame-ancestors 'self' https://member-portal-sigma-swart.vercel.app`，只容許 CUBBOOK 自身及服務平台嵌入，其他網站仍由瀏覽器攔截。沒有改設 `SAMEORIGIN`（同樣會擋住跨網站嵌入）。`X-Content-Type-Options`、`Referrer-Policy` 及 `Permissions-Policy: camera=(self), microphone=(), geolocation=()` 不變。
+- **相機掃描不受影響**：獨立版照舊；在服務平台內，平台的 `<iframe>` 須帶 `allow="camera; clipboard-write"` 委派權限（瀏覽器規定，BOOK 一方無法代為開啟）。
+
+### 新增（Added · 嵌入模式提示）
+
+- 瀏覽器把跨網站 iframe 的本機儲存按頂層網站分割，所以**服務平台內的紀錄冊與獨立版是兩份資料，舊資料不會自動出現**。新增 `web/src/components/EmbedNotice.jsx`，只在被嵌入時顯示，獨立開啟時版面完全不變：
+  - **歡迎頁**：說明資料分開儲存，並列出兩步搬移方法（獨立版選單「匯出備份」→ 平台內「匯入備份」），附「開啟獨立版（新分頁）」。
+  - **已有紀錄冊時的頂部提示條**：提醒離開前匯出備份（iPhone／iPad 及 Safari 可能在關閉瀏覽器後清除平台內的資料），提供「匯出備份」「開啟獨立版」「知道了」（只在本次工作階段隱藏，不列印）。
+  - **選單**：平台內無法「加到手機主畫面」，該項改為「開啟獨立版（新分頁）」。
+- 新增 `shared/embed.js`（服務平台來源、`frame-ancestors` 字串、`isEmbedded`）作為單一真相；新增 [`docs/adr/0003-portal-iframe-embedding.md`](docs/adr/0003-portal-iframe-embedding.md)，`README.md` 及速查卡補上嵌入寫法與限制。
+
+### 測試（Tests）
+
+- 新增 `tests/embed_contract.test.mjs`（7 項）：白名單精確等於 `'self'` 加服務平台、`X-Frame-Options`／`SAMEORIGIN` 不得重現、相機權限保留、嵌入偵測、備份／還原文案中英分開、不得有反嵌入跳轉、文件同步。
+- 以無頭 Chromium 按 `vercel.json` 的標頭實測（26 項全數通過）：服務平台可嵌入、其他網站被攔截、平台內掃描頁鏡頭啟動、平台內讀不到獨立版資料、匯入／匯出備份、確認對話框、重新載入後資料仍在、Service Worker 離線開啟。
+- Service Worker 快取升至 `cubbook-cache-v10`。
+
 ## [v1.3.0] — 2026-11-12
 
 ### 修正（Fixed · 紙本頁碼對照全面覆核）

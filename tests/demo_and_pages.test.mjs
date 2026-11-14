@@ -589,12 +589,12 @@ test('申請表列印版面：A4 可用闊度落入手機斷點時仍維持四�
   assert.equal(sheets, 4);
 });
 
-test('版本一致：v1.3.0、Service Worker 快取同步換版', () => {
-  assert.equal(APP_VERSION, 'v1.3.0');
-  assert.equal(JSON.parse(read('package.json')).version, '1.3.0');
+test('版本一致：v1.3.1、Service Worker 快取同步換版', () => {
+  assert.equal(APP_VERSION, 'v1.3.1');
+  assert.equal(JSON.parse(read('package.json')).version, '1.3.1');
   const html = read('web/index.html');
-  assert.equal((html.match(/v1\.3\.0/g) || []).length, 5);
-  assert.ok(read('web/public/sw.js').includes("const CACHE_NAME = 'cubbook-cache-v9'"));
-  assert.ok(read('CHANGELOG.md').includes('## [v1.3.0]'));
-  assert.ok(read('README.md').includes('`v1.3.0`'));
+  assert.equal((html.match(/v1\.3\.1/g) || []).length, 5);
+  assert.ok(read('web/public/sw.js').includes("const CACHE_NAME = 'cubbook-cache-v10'"));
+  assert.ok(read('CHANGELOG.md').includes('## [v1.3.1]'));
+  assert.ok(read('README.md').includes('`v1.3.1`'));
 });

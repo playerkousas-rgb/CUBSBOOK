@@ -55,3 +55,4 @@ node scripts/preflight_v1.0.mjs .
 | 二維碼格式 | `shared/transfer.js` | `npm test`（`CB1`／`CB1S` 契約） |
 | 同步契約 | `api/cubbadge.js` + `shared/book.js` | `npm test`（403／pending 契約） |
 | 圖示 | `scripts/generate_icons.mjs` | `npm run icons && npm test` |
+| 服務平台嵌入白名單 | `vercel.json`（`frame-ancestors`）+ `shared/embed.js` + `web/src/components/EmbedNotice.jsx`；**不得**加回 `X-Frame-Options`／`SAMEORIGIN`，`camera=(self)` 不得移除 | `npm test`（嵌入契約） |

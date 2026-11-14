@@ -6350,3 +6350,66 @@ html[data-print-preview] .write--multi.is-empty {
   /* 日期欄的月曆按鈕只屬螢幕操作，不應印在紙上 */
   .write__date::-webkit-calendar-picker-indicator { display: none; }
 }
+
+/* ==========================================================================
+   服務平台 iframe 嵌入模式提示（只在被嵌入時出現；獨立開啟不渲染）
+   ========================================================================== */
+
+.embednote {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1.5px solid #7a5600;
+  border-left-width: 5px;
+  border-radius: 8px;
+  background: #fbf3d0;
+  color: #2b1a04;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.embednote h2 { margin: 0 0 4px; font-family: var(--serif); font-size: 15px; color: #2b1a04; }
+.embednote p { margin: 0 0 6px; }
+.embednote ol { margin: 0 0 6px; padding-left: 20px; }
+.embednote li + li { margin-top: 2px; }
+.embednote__warn { font-weight: 700; }
+.embednote .btn { text-decoration: none; }
+
+.embedbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 12px;
+  padding: 7px 14px;
+  background: linear-gradient(90deg, #241605, #3a2708);
+  border-bottom: 1px solid rgba(234, 208, 64, 0.5);
+  color: #f2e4b2;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.embedbar > span:first-child { flex: 1 1 260px; min-width: 0; }
+.embedbar strong { color: #ead040; letter-spacing: 0.04em; }
+.embedbar__actions { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.embedbar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 11px;
+  border: 1px solid rgba(234, 208, 64, 0.55);
+  border-radius: 999px;
+  background: transparent;
+  color: #f2e4b2;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.embedbar__btn:hover { background: rgba(234, 208, 64, 0.16); }
+.embedbar__btn--main { background: #ead040; border-color: #ead040; color: #2b1a04; }
+.embedbar__btn--main:hover { background: #f0d85e; }
+
+a.menu__item { color: inherit; text-decoration: none; }
+
+@media print {
+  .embedbar, .embednote { display: none !important; }
+}

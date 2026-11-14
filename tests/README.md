@@ -26,6 +26,9 @@ npm test
   - `login` 只回傳 `token` + `ymis`；`load` 過濾他人紀錄與個人資料；`submitPending` 只轉發 `requestComplete`；
   - `sanitizePendingSubmissions` 剝除 PII、轉官方編號、去重、日期合法性、200 項上限；
   - 端到端：空白冊同步、只匯入已核實、申報永不自我核實。
+- `tests/embed_contract.test.mjs`
+  - 服務平台 iframe 嵌入：`vercel.json` 的 `frame-ancestors` 白名單只含 `'self'` 及服務平台、全倉庫不得出現 `X-Frame-Options`／`SAMEORIGIN`、`Permissions-Policy` 保留 `camera=(self)`；
+  - `isEmbedded` 偵測、嵌入提示的備份／還原文案（中英分開）、獨立版以新分頁開啟、不得有反嵌入跳轉程式碼、文件同步。
 - `tests/parent_mode.test.mjs`
   - 家長模式（第二部手機）：鏡像獨立儲存與退出清除、由 QR 與 cubbadge 匯出、pending 不入冊、家長模組零 `fetch`、只寫家長 store、零輸入欄位、圖示改黃且不含森林綠。
 - `tests/standalone_book.test.mjs`
