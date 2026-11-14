@@ -2,7 +2,7 @@
 
 > **幼童軍個人隨身離線電子紀錄冊** —— 逐頁對應香港童軍總會《幼童軍紀錄冊》官方 32 頁（2026 年版）及 2026 年第十版《幼童軍訓練綱要》，支援就地打字／手寫簽名、一鍵生成及列印 `PT/67`・`PT/68` 官方表格、成員⇄領袖純離線二維碼核簽，以及與 `cubbadge` 旅團進度表的**純進度、零個人資料**雙向同步。
 
-- **目前版本**：`v1.3.0`（2026-11-12）
+- **目前版本**：`v1.3.1`（2026-11-14）
 - **示範紀錄冊**：一份完整但全屬虛構的金紫荊獎章申請樣本，只供測試版面及 A4 列印。每頁印有「示範樣本，只供測試，不可遞交」，簽署欄只顯示「示範簽署」，並在共用邏輯、介面及 `/api/cubbadge` 三層禁止同步（`shared/demo.js`）。
 - **架構形態**：離線優先 PWA（React + Vite + Service Worker，`localStorage` 本機儲存，零帳號、零雲端上傳；可選配 Vercel `/api/leader` 與 `/api/cubbadge` 伺服器端接口）
 - **圖示／favicon（家族版式）**：對齊 `VSBOOK`／`ROVERBOOK`／`SCOUTBOOK` 的出街圖標——圓角深金布面（`#664c0e → #3a2a08 → #14100a`）＋內嵌幼童軍黃金線＋家族共用水滴環＋下方支部「C」；9 個圖示、`favicon.svg`、ICO 與 OG 圖一律由 `npm run icons` 決定性產生。金色只用 `#f0d85e → #ead040 → #c0a21c`，**森林綠、酒紅、海軍藍一律不用**，留給其他 BOOK。並排對照見 [`docs/icon-family-preview.png`](docs/icon-family-preview.png)。
@@ -74,6 +74,30 @@ node scripts/preflight_v1.0.mjs .
 | `TROOP_<id>_NAME` / `_EN` / `_BACKEND` / `_APIKEY` | 否 | 個別旅團覆寫（`_BACKEND` 必須是 `script.google.com/macros/s/…/exec`）。 |
 | `CUBBOOK_PROXY_TEST` | 否 | 僅本機開發設 `1`，允許 `127.0.0.1` 測試後端。 |
 
+### 嵌入「服務平台」（iframe）
+
+全站回應以下安全標頭（`vercel.json`），**只容許 BOOK 自身及服務平台嵌入**；`X-Frame-Options` 已移除，亦不得改設 `SAMEORIGIN`（兩者都會擋住跨網站嵌入）：
+
+```
+Content-Security-Policy: frame-ancestors 'self' https://member-portal-sigma-swart.vercel.app
+```
+
+服務平台一方的嵌入寫法（相機掃描及「複製代碼」須由平台委派權限）：
+
+```html
+<iframe src="https://cubsbook.vercel.app/" allow="camera; clipboard-write"></iframe>
+```
+
+| 項目 | 平台內（iframe） | 獨立版 |
+| :--- | :--- | :--- |
+| 相機掃描 | 可用，但 `<iframe>` 必須帶 `allow="camera"`；平台自身的 `Permissions-Policy` 不可把 `camera` 設為 `()` | 不變 |
+| 本機儲存 | 與獨立版**分開儲存**（瀏覽器按頂層網站分割），舊資料不會自動出現；Safari／iPhone／iPad 關閉瀏覽器後可能清除 | 不變 |
+| 備份／還原 | 可用：歡迎頁「匯入備份」、提示條及選單「匯出備份」 | 不變 |
+| 離線 | 該裝置在平台內連網開啟一次後才有快取，而且只有平台頁面仍然開著（或平台自身支援離線）時才用得上 | 不變 |
+| 加到主畫面 | 不適用；選單改為「開啟獨立版（新分頁）」 | 不變 |
+
+**把獨立版的舊資料搬入平台**：在獨立版開啟選單 →「匯出備份」下載 JSON → 在服務平台內開啟 CUBBOOK → 歡迎頁按「匯入備份」選取該檔案。反方向相同。平台如使用 `sandbox`，須列出 `allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads`。決策背景見 [`docs/adr/0003-portal-iframe-embedding.md`](docs/adr/0003-portal-iframe-embedding.md)。
+
 ---
 
 ## 倉庫導航
@@ -89,9 +113,9 @@ node scripts/preflight_v1.0.mjs .
 | [`docs/00-quickcard.md`](docs/00-quickcard.md) | 一頁速查卡（日常運作與除錯） |
 | [`docs/design-review.md`](docs/design-review.md) | 390 / 768 / 1440 三斷點視覺與互動巡檢紀錄 |
 | [`docs/cubbadge-patch.md`](docs/cubbadge-patch.md) | `cubbadge` `Code.gs` 規則五修正指引（PBKDF2 10000、pending 去重、`OT-*` 寫入「其他獎章」） |
-| [`docs/adr/README.md`](docs/adr/README.md) | 架構決策紀錄（技術棧、純前端 QR 與版權保護） |
+| [`docs/adr/README.md`](docs/adr/README.md) | 架構決策紀錄（技術棧、純前端 QR 與版權保護、服務平台 iframe 嵌入白名單） |
 | [`docs/out-of-scope/README.md`](docs/out-of-scope/README.md) | 明確不做事項及姊妹專案分工 |
-| `shared/` | 資料模型 `book.js`、第十版綱要 `syllabus.js`、官方表格 `forms.js`、`CB1` 二維碼協定 `transfer.js` |
+| `shared/` | 資料模型 `book.js`、第十版綱要 `syllabus.js`、官方表格 `forms.js`、`CB1` 二維碼協定 `transfer.js`、服務平台嵌入契約 `embed.js` |
 | `api/` | `leader.js`（領袖密碼）與 `cubbadge.js`（零金鑰純進度橋接） |
 | `web/` | React + Vite 前端、PWA `sw.js`、`web/public/icons/` 九件套 |
 | [`scripts/README.md`](scripts/README.md) | 真理倉守衛腳本、綱要產生器與圖示產生器說明 |

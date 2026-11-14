@@ -23,6 +23,7 @@ import {
 import { AppendixPage, PrintBook } from './pages/Appendix.jsx';
 import { FormDoc, FormsAll, FormsIndex } from './pages/Forms.jsx';
 import { DemoRibbon } from './components/DemoNotice.jsx';
+import { EmbedRibbon } from './components/EmbedNotice.jsx';
 import ParentView from './pages/ParentView.jsx';
 import ParentConnect from './pages/ParentConnect.jsx';
 import { HashSnapshotViewer, Scan, ScanView, Signoff } from './pages/Scan.jsx';
@@ -292,6 +293,10 @@ function BookApp({ book, saveIssue, leader, leaderReady, parent }) {
       )}
 
       {!printAll && !scanPath && !leaderRoute && !parentConnectRoute && <DemoRibbon />}
+
+      {!printAll && !scanPath && !leaderRoute && !parentConnectRoute && (
+        <EmbedRibbon book={book} canBackup={!leader && !parent} />
+      )}
 
       {!online && (
         <div className="offlinebar no-print" role="status">

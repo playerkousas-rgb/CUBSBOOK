@@ -66,7 +66,7 @@ export {
 
 export { DEMO_NOTICE, DEMO_SCOUT_ID, DEMO_SYNC_BLOCKED, assertNotDemo, isDemoBook, isDemoScoutId };
 
-export const APP_VERSION = 'v1.3.0';
+export const APP_VERSION = 'v1.3.1';
 export const STORE_KEY = 'cubbook.book.v1';
 export const LEGACY_STORE_KEYS = [];
 
