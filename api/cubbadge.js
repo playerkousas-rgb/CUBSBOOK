@@ -257,6 +257,34 @@ export function filterPersonalConfirmedLoad(raw, targetYmis) {
 }
 
 /**
+ * 清洗 cubbadge `getServiceRecords` 回傳的個人服務紀錄：
+ * 只保留已核實（非 rejected）且不含個人資料的欄位。
+ */
+export function filterPersonalServiceRecords(raw) {
+  if (!raw || typeof raw !== 'object' || !raw.success || !Array.isArray(raw.records)) return [];
+  const out = [];
+  for (const rec of raw.records) {
+    if (!rec || typeof rec !== 'object') continue;
+    const status = String(rec.status || 'approved').trim().toLowerCase();
+    if (status === 'rejected') continue;
+    const activity = String(rec.activity || '').trim().slice(0, 120);
+    const date = String(rec.date || '').trim().slice(0, 10);
+    if (!activity && !date) continue;
+    const id = String(rec.id || '').trim().slice(0, 48);
+    const hours = Number(rec.hours || 0);
+    const place = String(rec.place || '').trim().slice(0, 80);
+    out.push({
+      ...(id ? { id } : {}),
+      activity,
+      date,
+      ...(Number.isFinite(hours) && hours > 0 ? { hours } : {}),
+      ...(place ? { place } : {}),
+    });
+  }
+  return out;
+}
+
+/**
  * 清洗成員送交 cubbadge「待領袖核實」的申報項目：只保留項目代號及日期，
  * 任何姓名、電話、地址、家長資料或相片欄位一律丟棄；BOOK 內部編號亦在此轉為
  * cubbadge 官方編號，確保 BADGE 毋須認識 BOOK 的命名。
@@ -468,11 +496,18 @@ export default async function handler(req, res) {
     if (action === 'load') {
       const ymis = String(rawData.ymis || '').trim().slice(0, 32);
       if (!ymis) return sendJson(res, 400, { success: false, error: '缺少童軍成員編號（SCOUT ID）' });
-      const rawJson = await callBadgeAction({ origin, directTroop, troopId, action: 'load', data: { token } });
+      const [rawJson, serviceRes] = await Promise.all([
+        callBadgeAction({ origin, directTroop, troopId, action: 'load', data: { token } }),
+        callBadgeAction({ origin, directTroop, troopId, action: 'getServiceRecords', data: { token, target_ymis: ymis } }).catch(() => null),
+      ]);
       if (!rawJson || typeof rawJson !== 'object') {
         return sendJson(res, 502, { success: false, error: 'cubbadge 後端回應異常' });
       }
-      return sendJson(res, 200, filterPersonalConfirmedLoad(rawJson, ymis));
+      const filtered = filterPersonalConfirmedLoad(rawJson, ymis);
+      if (filtered.success) {
+        filtered.serviceRecords = filterPersonalServiceRecords(serviceRes);
+      }
+      return sendJson(res, 200, filtered);
     }
 
     if (action === 'submitPending') {
