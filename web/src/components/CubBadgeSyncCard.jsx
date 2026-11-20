@@ -172,10 +172,12 @@ function CubBadgeSyncLive({ readOnly = false }) {
 
       const res = importFromBadge(json, book, { expectedScoutId: activeSession.ymis });
       replace(res.book);
+      const serviceMsgEn = res.importedServices ? `, ${res.importedServices} service records` : '';
+      const serviceMsgZh = res.importedServices ? `及 ${res.importedServices} 筆服務紀錄` : '';
       push(
         isEn
-          ? `Imported ${res.imported} leader-confirmed items${res.skippedPending ? ` (${res.skippedPending} unconfirmed skipped)` : ''}`
-          : `已無條件錄入 ${res.imported} 項領袖已核實進度${
+          ? `Imported ${res.imported} leader-confirmed items${serviceMsgEn}${res.skippedPending ? ` (${res.skippedPending} unconfirmed skipped)` : ''}`
+          : `已無條件錄入 ${res.imported} 項領袖已核實進度${serviceMsgZh}${
               res.skippedPending ? `（另有 ${res.skippedPending} 項待領袖核實，未錄入）` : ''
             }`,
       );

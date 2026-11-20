@@ -918,6 +918,50 @@ export function importFromBadge(json, srcBook, { expectedScoutId = '' } = {}) {
     }
   }
 
+  // 服務紀錄：由 cubbadge `getServiceRecords` 匯入到第 28–31 頁「活動及服務紀錄」（`activities`）
+  let importedServices = 0;
+  if (Array.isArray(json.serviceRecords) && json.serviceRecords.length) {
+    const existing = Array.isArray(next.activities) ? next.activities.slice() : [];
+    const seenIds = new Set(existing.map((r) => r?.badgeRecordId).filter(Boolean));
+    const seenKeys = new Set(
+      existing
+        .filter((r) => r?.date || r?.text)
+        .map((r) => `${String(r.date || '').trim()}|${String(r.text || '').trim()}`),
+    );
+
+    for (const rec of json.serviceRecords) {
+      if (!rec || typeof rec !== 'object') continue;
+      const status = String(rec.status || 'approved').trim().toLowerCase();
+      if (status === 'rejected') continue;
+      const id = String(rec.id || '').trim();
+      const date = String(rec.date || '').trim().slice(0, 10);
+      const activity = String(rec.activity || '').trim();
+      const hours = Number(rec.hours || 0);
+      const place = String(rec.place || '').trim();
+      const parts = [];
+      if (activity) parts.push(activity);
+      if (Number.isFinite(hours) && hours > 0) parts.push(`（${hours}小時）`);
+      if (place) parts.push(parts.length ? `· ${place}` : place);
+      const text = parts.join(' ').trim();
+      if (!date && !text) continue;
+      if (id && seenIds.has(id)) continue;
+      const key = `${date}|${text}`;
+      if (seenKeys.has(key)) continue;
+
+      const entry = { date, text, ...(id ? { badgeRecordId: id } : {}) };
+      const emptyIdx = existing.findIndex((r) => !r?.text && !r?.date);
+      if (emptyIdx !== -1) {
+        existing[emptyIdx] = entry;
+      } else {
+        existing.push(entry);
+      }
+      if (id) seenIds.add(id);
+      seenKeys.add(key);
+      importedServices += 1;
+    }
+    next.activities = existing;
+  }
+
   // 空白簿免填個人資料即可同步：只綁定編號，不寫入任何個人資料。
   if (!scoutId(next.member) && targetId) {
     next.member = { ...next.member, scoutId: targetId, memberNo: targetId };
@@ -931,7 +975,7 @@ export function importFromBadge(json, srcBook, { expectedScoutId = '' } = {}) {
     lastBadgeSyncMatchedBy: matchedBy || '',
   };
 
-  return { book: next, imported, skippedPending, matchedBy };
+  return { book: next, imported, importedServices, skippedPending, matchedBy };
 }
 
 // ------------------------------------------------------------------ 列印及示範資料

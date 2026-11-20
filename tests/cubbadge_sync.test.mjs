@@ -385,3 +385,38 @@ test('BOOK ⇄ BADGE 端到端：空白冊同步、只匯入已核實、申報�
   assert.equal(demoOut.pendingRequests.length, 2);
   assert.deepEqual(demoOut.pendingRequests.map((r) => r.item_id), ['A22', 'A26']);
 });
+
+test('filterPersonalServiceRecords & importFromBadge：匯入服務紀錄並去重、零個人資料', async () => {
+  const { filterPersonalServiceRecords } = await import('../api/cubbadge.js');
+  const cleaned = filterPersonalServiceRecords({
+    success: true,
+    records: [
+      { id: 'SRV_1', activity: '賣旗日服務', date: '2026-10-10', hours: 3, place: '旺角', status: 'approved', name: '陳小狼' },
+      { id: 'SRV_2', activity: '已拒絕項目', date: '2026-10-11', status: 'rejected' },
+    ],
+  });
+  assert.equal(cleaned.length, 1);
+  assert.deepEqual(cleaned[0], {
+    id: 'SRV_1',
+    activity: '賣旗日服務',
+    date: '2026-10-10',
+    hours: 3,
+    place: '旺角',
+  });
+
+  const { newBook } = await import('../shared/book.js');
+  const book = newBook({ member: { scoutId: '00123456' } });
+  book.activities = [{ date: '2026-09-01', text: '本機手寫活動' }];
+
+  const res1 = importFromBadge({ progress: {}, serviceRecords: cleaned }, book, { expectedScoutId: '00123456' });
+  assert.equal(res1.importedServices, 1);
+  assert.equal(res1.book.activities.length, 2);
+  assert.equal(res1.book.activities[0].text, '本機手寫活動');
+  assert.equal(res1.book.activities[1].date, '2026-10-10');
+  assert.match(res1.book.activities[1].text, /賣旗日服務.*3小時.*旺角/);
+
+  // 再次匯入同一筆服務紀錄不會重複
+  const res2 = importFromBadge({ progress: {}, serviceRecords: cleaned }, res1.book, { expectedScoutId: '00123456' });
+  assert.equal(res2.importedServices, 0);
+  assert.equal(res2.book.activities.length, 2);
+});
