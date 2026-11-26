@@ -2,7 +2,7 @@
 
 > **幼童軍個人隨身離線電子紀錄冊** —— 逐頁對應香港童軍總會《幼童軍紀錄冊》官方 32 頁（2026 年版）及 2026 年第十版《幼童軍訓練綱要》，支援就地打字／手寫簽名、一鍵生成及列印 `PT/67`・`PT/68` 官方表格、成員⇄領袖純離線二維碼核簽，以及與 `cubbadge` 旅團進度表的**純進度、零個人資料**雙向同步。
 
-- **目前版本**：`v1.3.1`（2026-11-14）
+- **目前版本**：`v1.3.2`（2026-11-26）
 - **示範紀錄冊**：一份完整但全屬虛構的金紫荊獎章申請樣本，只供測試版面及 A4 列印。每頁印有「示範樣本，只供測試，不可遞交」，簽署欄只顯示「示範簽署」，並在共用邏輯、介面及 `/api/cubbadge` 三層禁止同步（`shared/demo.js`）。
 - **架構形態**：離線優先 PWA（React + Vite + Service Worker，`localStorage` 本機儲存，零帳號、零雲端上傳；可選配 Vercel `/api/leader` 與 `/api/cubbadge` 伺服器端接口）
 - **圖示／favicon（家族版式）**：對齊 `VSBOOK`／`ROVERBOOK`／`SCOUTBOOK` 的出街圖標——圓角深金布面（`#664c0e → #3a2a08 → #14100a`）＋內嵌幼童軍黃金線＋家族共用水滴環＋下方支部「C」；9 個圖示、`favicon.svg`、ICO 與 OG 圖一律由 `npm run icons` 決定性產生。金色只用 `#f0d85e → #ead040 → #c0a21c`，**森林綠、酒紅、海軍藍一律不用**，留給其他 BOOK。並排對照見 [`docs/icon-family-preview.png`](docs/icon-family-preview.png)。
@@ -62,6 +62,15 @@ node scripts/preflight_v1.0.mjs .
    - **2026 新制資料核對清單**（非官方，1 頁；官方表格編號待總會公布）
 5. **純離線二維碼**：`CB1.`（gzip）／`CB1P.`（未壓縮）／`CB1S.`（領袖核簽）＋ `#v=` 連結，上限 2,400 字元；出示前逐項剔選，預設全不選。
 6. **`cubbadge` 純進度同步（可選）**：見規則 3；登入只回傳 `token` 與 `ymis`，不帶姓名、電話、地址、家長資料、相片。偵測失敗（純靜態主機、SPA fallback 回傳 HTML、404、逾時）一律降級為獨立模式，介面另提供本機 JSON 交換。
+
+### 指定入口白名單（Store Gate）
+
+依真理倉 `playerkousas-rgb/readme`（`docs/50` SG1–SG19、`docs/60`）與用戶確認，CUBBOOK 採頂層跳板 `entry-gate`（不對本機紀錄冊使用 `iframe-only`）：`appKey: 'cubsbook'`、`mode: 'entry-gate'`、`portalIds: ['appstore']`、`silentPortalIds: ['library', 'member']`、`allowStandalone: true`、`autoRedirectSeconds: 0`、`supportNudge` 關閉。由 SCOUT APP STORE、通告圖書館或成員系統進入時放行，並以 `sessionStorage` 記住同分頁通行；直接開啟的新工作階段會顯示中文／英文白名單提示卡及唯一的 APP STORE 按鈕（不啟動紀錄冊主程式及 Service Worker 註冊）；已安裝主畫面 PWA（`display-mode: standalone`）直接放行。頂欄及歡迎頁提供常駐低調「讚好／收藏」（英 `Like / Save`）連結，經 `ScoutStoreGate.getAppStoreUrl('cubsbook')` 開新分頁回主站詳情卡（`slug` 對照主站 `migrations/20261116-app-slug-seed.sql` 核實），不直連主站 Supabase、列印自動隱藏、`ScoutStoreGate` 未載入時保持隱藏。
+
+- **誠實限制與私隱邊界**：此閘屬前端入口導流，不是身份驗證或加密安全邊界；來源 `Referer` 及 `sessionStorage` 可被技術繞過，`/api/leader` 與 `/api/cubbadge` 亦不受前端閘限制（依 SG12 不設後端簽票）。若閘門腳本未能載入，紀錄冊維持可用（fail-open），本機紀錄與完整 JSON 備份不受影響。
+- **離線、舊版與 `#v=` 連結**：須先經准許入口在線開啟並完成快取（`cubbook-cache-v11`），再於離線使用；無通行紀錄的全新離線分頁會被攔截，建議先「加入主畫面」及定期匯出完整 JSON 備份。若領袖直接開啟 `#v=` 分享連結且未有通行紀錄，點選返回主站會遺失 `#v=` 片段，須先經入口進入再重新開啟連結或於 `/scan` 掃碼。
+- **成員系統與既有嵌入**：保留原有 `vercel.json` 的 `frame-ancestors` 白名單及嵌入提示；入口瀏覽器須送出允許的 `Referer`（如入口連結帶 `noreferrer` 或瀏覽器私隱模式阻擋來源／`sessionStorage`，可能被攔或重整後須重新經入口，但不會刪除本機資料）。獨立版與平台內儲存仍分開，搬移請用完整 JSON 備份；iOS 主畫面 PWA 與 Safari 分頁亦各自獨立儲存。
+- 閘門檔案原封不動複製自真理倉 `templates/vercel/store_gate_v1.0.js`（HEAD `6ebfdd72a1ea5a5e83df4a6644fc66d0236df98e`，該檔最近提交 `65654a9928931ca9a6309b45628e3583bd205ecd`），置於 `web/public/store_gate_v1.0.js`，建置時輸出至 `dist/store_gate_v1.0.js`。
 
 ### Vercel 環境變數
 

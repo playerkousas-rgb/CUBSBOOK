@@ -56,3 +56,4 @@ node scripts/preflight_v1.0.mjs .
 | 同步契約 | `api/cubbadge.js` + `shared/book.js` | `npm test`（403／pending 契約） |
 | 圖示 | `scripts/generate_icons.mjs` | `npm run icons && npm test` |
 | 服務平台嵌入白名單 | `vercel.json`（`frame-ancestors`）+ `shared/embed.js` + `web/src/components/EmbedNotice.jsx`；**不得**加回 `X-Frame-Options`／`SAMEORIGIN`，`camera=(self)` 不得移除 | `npm test`（嵌入契約） |
+| 指定入口白名單（Store Gate） | `web/public/store_gate_v1.0.js`（由真理倉原封不動複製）+ `web/index.html` + `web/src/main.jsx` + `web/src/components/StoreSupport.jsx` + `vercel.json`（排除 rewrite）+ `web/public/sw.js` | `npm test`（白名單契約） |

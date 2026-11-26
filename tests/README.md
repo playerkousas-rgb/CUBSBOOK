@@ -29,6 +29,8 @@ npm test
 - `tests/embed_contract.test.mjs`
   - 服務平台 iframe 嵌入：`vercel.json` 的 `frame-ancestors` 白名單只含 `'self'` 及服務平台、全倉庫不得出現 `X-Frame-Options`／`SAMEORIGIN`、`Permissions-Policy` 保留 `camera=(self)`；
   - `isEmbedded` 偵測、嵌入提示的備份／還原文案（中英分開）、獨立版以新分頁開啟、不得有反嵌入跳轉程式碼、文件同步。
+- `tests/store_gate.test.mjs`
+  - 指定入口白名單（Store Gate）：入口來源精確比對（APP STORE）與靜默放行（圖書館、成員系統）、防前綴偽造、工作階段通行與主畫面 PWA 豁免、封鎖儲存降級、直開遮罩（單按鈕、SG19 簡短中英文文案、隱藏底層）、HTML `<head>` 掛載次序、攔截時不啟動 React／SW、SW 離線預快取、Vercel SPA rewrite 排除、以及 SG18「讚好／收藏」連結（已核實 slug `cubsbook`、`[hidden]` fail-safe、列印隱藏、配色與無障礙）；屬本機模擬，不能取代真機與實際入口實測。
 - `tests/parent_mode.test.mjs`
   - 家長模式（第二部手機）：鏡像獨立儲存與退出清除、由 QR 與 cubbadge 匯出、pending 不入冊、家長模組零 `fetch`、只寫家長 store、零輸入欄位、圖示改黃且不含森林綠。
 - `tests/standalone_book.test.mjs`

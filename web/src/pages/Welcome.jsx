@@ -6,6 +6,7 @@ import { navigate } from '../router.jsx';
 import { useLang } from '../i18n.jsx';
 import { demoLoadedToast } from '../components/DemoNotice.jsx';
 import { EmbedWelcomeNote } from '../components/EmbedNotice.jsx';
+import StoreSupport from '../components/StoreSupport.jsx';
 
 export default function Welcome({ onReady, onLeader, onParent }) {
   const { push } = useToast();
@@ -107,9 +108,12 @@ export default function Welcome({ onReady, onLeader, onParent }) {
               <em>{isEn ? 'Cub Scout Record Book' : '幼童軍紀錄冊'}</em>
             </span>
           </div>
-          <button type="button" className="btn btn--onpaper btn--sm" onClick={toggle}>
-            <Icon name="globe" size={13} /> {isEn ? '中文' : 'EN'}
-          </button>
+          <div className="welcome__topbar-actions">
+            <StoreSupport onPaper />
+            <button type="button" className="btn btn--onpaper btn--sm" onClick={toggle}>
+              <Icon name="globe" size={13} /> {isEn ? '中文' : 'EN'}
+            </button>
+          </div>
         </div>
 
         <h1>{isEn ? 'This record book is yours.' : '這本紀錄冊，是你的。'}</h1>

@@ -6413,3 +6413,47 @@ a.menu__item { color: inherit; text-decoration: none; }
 @media print {
   .embedbar, .embednote { display: none !important; }
 }
+
+/* ==========================================================================
+   SG18 主站「讚好／收藏」常駐連結（非阻塞、幼童軍金黃×深墨配色、列印隱藏）
+   ========================================================================== */
+
+.welcome__topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.store-support {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 40px;
+  min-width: 40px;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: var(--foil-soft);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+.store-support:hover { background: rgba(234, 208, 64, 0.14); }
+.store-support--paper { color: #5f4208; }
+.store-support--paper:hover { background: rgba(122, 86, 0, 0.1); }
+.store-support[hidden] { display: none; }
+.store-support:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+@media (max-width: 430px) {
+  .chipbar .store-support { padding: 0 6px; }
+  .chipbar .store-support span:last-child { display: none; }
+  .welcome__topbar { gap: 6px; }
+  .welcome__topbar .store-support { padding: 0 6px; font-size: 11px; }
+}
+
+@media print {
+  .store-support { display: none !important; }
+}

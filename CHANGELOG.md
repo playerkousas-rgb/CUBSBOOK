@@ -2,6 +2,15 @@
 
 本專案採用語義化版本（Semantic Versioning），每次更新同步對齊 `package.json`、`shared/book.js` 及 `web/index.html`。
 
+## [v1.3.2] — 2026-11-26
+
+### 新增（Added · 指定入口白名單與主站讚好／收藏連結）
+
+- **指定入口白名單（Store Gate，對齊真理倉 SG1–SG19）**：原封不動複製 `playerkousas-rgb/readme` 之 `templates/vercel/store_gate_v1.0.js` 至 `web/public/store_gate_v1.0.js`，並於 `web/index.html` `<head>` 緊接 `<meta charset>` 與語系偵測後啟用 `mode: 'entry-gate'`（`appKey: 'cubsbook'`、`portalIds: ['appstore']`、`silentPortalIds: ['library', 'member']`、`allowStandalone: true`、`autoRedirectSeconds: 0`、`supportNudge` 關閉）。由 SCOUT APP STORE、通告圖書館或成員系統進入皆放行，直開網址攔截卡只顯示單一 APP STORE 按鈕；已安裝主畫面 PWA 豁免；被攔截時 `web/src/main.jsx` 不啟動主介面且不註冊 Service Worker。
+- **SG18 常駐「讚好／收藏」回跳連結**：新增 `web/src/components/StoreSupport.jsx`（掛載於頂欄與歡迎頁），經 `ScoutStoreGate.getAppStoreUrl('cubsbook')` 開新分頁回主站詳情卡（slug 對照主站 migration 核實）；`ScoutStoreGate` 未載入時保持隱藏、支援中英分離、遵循幼童軍金黃×深墨配色、觸控高度 ≥ 40px、列印自動隱藏、零 Supabase 直連、零新增 `localStorage` 鍵。
+- **離線與部署路由配合**：`vercel.json` 的 SPA rewrite 明確排除 `/store_gate_v1.0.js`（原有成員系統 `frame-ancestors` CSP 標頭維持不變）；`web/public/sw.js` 預快取並服務 `/store_gate_v1.0.js`，快取版本升至 `cubbook-cache-v11`。
+- **測試與文件**：新增 `tests/store_gate.test.mjs` 覆蓋入口比對、靜默放行、工作階段與主畫面豁免、遮罩契約、HTML／SW／rewrite／主程式守衛與 SG18 支持連結；同步更新 `README.md`、`SCOPE.md`、`AGENTS.md`、`docs/00-quickcard.md` 與 `tests/README.md`，明確記錄前端閘非安全邊界、離線新分頁及 `#v=` 分享連結限制。
+
 ## [v1.3.1] — 2026-11-14
 
 ### 變更（Changed · 容許「服務平台」以 iframe 嵌入）

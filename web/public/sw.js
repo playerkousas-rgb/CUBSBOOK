@@ -1,9 +1,10 @@
 /* CUBBOOK Service Worker — 確保露營、遠足及離線集會現場仍可完整開啟與讀寫紀錄冊。 */
 
-const CACHE_NAME = 'cubbook-cache-v10';
+const CACHE_NAME = 'cubbook-cache-v11';
 const SHELL = [
   '/',
   '/index.html',
+  '/store_gate_v1.0.js',
   '/manifest.webmanifest',
   '/favicon.svg',
   '/favicon.ico',
@@ -94,6 +95,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   if (
+    url.pathname === '/store_gate_v1.0.js' ||
     url.pathname.startsWith('/assets/') ||
     url.pathname.startsWith('/icons/') ||
     url.pathname.startsWith('/img/') ||

@@ -6,6 +6,10 @@
 
 **幼童軍個人隨身離線電子紀錄冊** —— 逐頁對應香港童軍總會《幼童軍紀錄冊》官方 32 頁（2026 年版）及 2026 年第十版《幼童軍訓練綱要》，支援就地打字／手寫與簽名、一鍵生成及列印 `PT/67`・`PT/68` 兩張官方表格、成員⇄領袖二維碼傳送與核簽回傳，以及與 `cubbadge` 純進度互通。
 
+## 入口管制（2026-11-26 用戶確認）
+
+依真理倉 `playerkousas-rgb/readme`（`docs/50` SG1–SG19、`docs/60`）採 `mode: 'entry-gate'`：`appKey: 'cubsbook'`、`portalIds: ['appstore']`、`silentPortalIds: ['library', 'member']`、`allowStandalone: true`、`autoRedirectSeconds: 0`、`supportNudge: false`；SG18 頂欄／歡迎頁「讚好／收藏」常駐連結使用已核實 slug `cubsbook`（來源：`website/migrations/20261116-app-slug-seed.sql`）。保留現有成員系統 iframe CSP 白名單、完整離線 JSON 備份／還原、家長只讀鏡像與本機資料；嚴禁對紀錄冊改用 `iframe-only`。前端閘不作 `/api` 安全邊界；跨站 `Referer` 被抑制、iOS 主畫面與 Safari 儲存分家及無通行紀錄的新離線分頁限制均已列於 `README.md`。
+
 ## 目標受眾
 
 1. **香港幼童軍成員（7.5–12 歲）及其家長**：在手機或平板日常紀錄團集會、露營、服務與活動徽章，當面向領袖／主考出示二維碼核簽，並在申請金紫荊獎章時一鍵自動填妥及列印官方表格。
