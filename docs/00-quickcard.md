@@ -10,6 +10,7 @@
 | **互通格式** | `cubbadge.pending.v1`（以 `scoutId` 對齊 `L1-*`…`L4-*`、`OT-*`；送出前轉回 `cubbadge` 官方 `badgeId`） |
 | **二維碼協定** | `CB1.<base64url(gzip(JSON))>`（壓縮優先）、`CB1P.`（未壓縮後備）、`CB1S.`（領袖核簽），上限 `2400` 字元 |
 | **服務平台嵌入** | `vercel.json` 回應 `Content-Security-Policy: frame-ancestors 'self' https://member-portal-sigma-swart.vercel.app`（無 `X-Frame-Options`）；平台 `<iframe>` 須帶 `allow="camera; clipboard-write"`；平台內資料與獨立版分開儲存，以備份 JSON 搬移 |
+| **指定入口白名單** | `web/public/store_gate_v1.0.js` 採 `entry-gate`（`appKey: 'cubsbook'`、`portalIds: ['appstore']`、`silentPortalIds: ['library', 'member']`、`allowStandalone: true`、`supportNudge` 關閉）；頂欄與歡迎頁提供 SG18「讚好／收藏」連結（`?app=cubsbook`），不直連主站資料庫、列印隱藏 |
 | **版權與聲明** | `Copyright © 2026 SCOUT SYSTEM — All Rights Reserved`（見 [`../LICENSE`](../LICENSE)）＋ 非官方獨立工具聲明，只出現於封面頁腳、數位附錄、選單「關於」 |
 
 ## 常用指令
